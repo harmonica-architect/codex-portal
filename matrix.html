@@ -970,11 +970,9 @@ document.getElementById('tutorialSkip').onclick = () => {
   document.getElementById('tutorialOverlay').style.display = 'none';
 };
 
-// Click outside tutorial box = skip
+/* Click anywhere on overlay = dismiss (matrix is fully covered, all clicks hit overlay) */
 document.getElementById('tutorialOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('tutorialOverlay')) {
-    document.getElementById('tutorialSkip').click();
-  }
+  document.getElementById('tutorialSkip').click();
 });
 
 /* ── INIT ── */
