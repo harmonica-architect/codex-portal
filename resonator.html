@@ -178,6 +178,7 @@ body {
   align-items: center; justify-content: center;
   padding: 2rem; gap: 1.5rem;
   animation: fadeIn 0.5s ease;
+  cursor: pointer;
 }
 .tutorial-overlay.hidden { display: none; }
 
@@ -199,6 +200,7 @@ body {
   padding: 0.5rem 0.7rem; background: var(--surface);
   border: 1px solid var(--border); border-radius: 6px;
   animation: slideInRight 0.4s ease backwards;
+  cursor: default;
 }
 .tutorial-step:nth-child(1) { animation-delay: 0.1s; }
 .tutorial-step:nth-child(2) { animation-delay: 0.2s; }
@@ -718,6 +720,22 @@ document.getElementById('tutorialSkip')?.addEventListener('click', () => {
   document.getElementById('tutorialOverlay').classList.add('hidden');
   tutorialDone = true;
 });
+
+
+// Click outside tutorial box = skip
+document.getElementById('tutorialOverlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('tutorialOverlay')) {
+    document.getElementById('tutorialSkip')?.click();
+  }
+});
+
+// Broadcast coherence + phase to shared localStorage for cross-tool sync
+setInterval(() => {
+  if (breathActive) {
+    localStorage.setItem('codex_coherence_update', coherence.toString());
+    localStorage.setItem('codex_phase_update', String(breathPhase === 'inhale' ? 0 : breathPhase === 'hold' ? 2 : 4));
+  }
+}, 300);
 
 /* ── BREATH GUIDANCE SYSTEM ── */
 function playGuidanceTone(freq, dur = 0.6) {

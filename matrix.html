@@ -972,6 +972,7 @@ document.getElementById('tutorialSkip').onclick = () => {
 
 /* Click anywhere on overlay = dismiss (matrix is fully covered, all clicks hit overlay) */
 document.getElementById('tutorialOverlay').addEventListener('click', e => {
+  e.stopPropagation(); // prevent drag-rect or cell clicks
   document.getElementById('tutorialSkip').click();
 });
 
@@ -982,6 +983,50 @@ renderSaved();
 updateIntensityPanel();
 updatePreview();
 setTimeout(revealWave, 250);
+
+// Listen for coherence sync from Resonator/Wheel via shared state
+window.addEventListener('storage', e => {
+  if (e.key === 'codex_coherence_update') {
+    const coh = parseFloat(e.newValue) || 0;
+    updateCoherenceReactivity(coh);
+  }
+  if (e.key === 'codex_phase_update') {
+    const phase = parseInt(e.newValue) || 0;
+    highlightBreathRow(phase);
+  }
+});
+
+// Coherence-reactive cell glow
+function updateCoherenceReactivity(coh) {
+  if (coh < 30) {
+    document.querySelectorAll('.m-cell').forEach(c => c.style.boxShadow = '');
+    return;
+  }
+  const intensity = (coh - 30) / 70;
+  document.querySelectorAll('.m-cell.selected').forEach(c => {
+    c.style.boxShadow = `0 0 ${6 + intensity*14}px rgba(232,200,106,${0.2 + intensity*0.4})`;
+  });
+}
+
+// Breath row highlight (phase 0=inhale,1=hold,2=exhale,3=still,4=inhale,5=hold)
+const BREATH_ROW_IDX = 6; // row index for Breath Phase layer
+const PHASE_ROWS = [0,1,2,3,4,5]; // inhale,inhale,hold,hold,exhale,exhale
+const BREATH_HIGHLIGHT_COLS = [1,4,6,10,16,18]; // corresponding angular positions
+
+function highlightBreathRow(phase) {
+  document.querySelectorAll('.m-cell').forEach(c => {
+    const r = +c.dataset.row;
+    if (r === BREATH_ROW_IDX) {
+      const col = +c.dataset.col;
+      // Highlight the columns that match current phase
+      c.style.background = BREATH_HIGHLIGHT_COLS[phase] === col
+        ? 'rgba(232,200,106,0.15)'
+        : '';
+    } else {
+      c.style.background = '';
+    }
+  });
+}
 setTimeout(showTutorial, 500);
 
 /* ── BUTTONS ── */
