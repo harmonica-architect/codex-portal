@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Resonator — Codex Alignment</title>
+<style>
+:root {
+  --bg: #07070f;
+  --surface: #0e0e1a;
+  --border: #1e1e32;
+  --text: #d8d0c0;
+  --muted: #6a6050;
+  --gold: #e8c86a;
+  --indigo: #4a3a6a;
+  --emerald: #2a5a4a;
+  --gold-dim: rgba(232,200,106,0.15);
+  --night-gold: #a080d0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  overflow-x: hidden;
+}
+
+/* ── RESPONSIVE SCALING ── */
+.resonator-container {
+  position: relative;
+  width: min(380px, 92vw);
+  height: min(380px, 92vw);
+  margin: 0.5rem 0;
+  cursor: pointer;
+}
+canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}
+.header { text-align: center; margin-bottom: 0.5rem; }
+.title { font-size: clamp(0.65rem, 2.5vw, 0.75rem); letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.25rem; }
+.subtitle { font-size: clamp(0.55rem, 2vw, 0.65rem); color: var(--muted); letter-spacing: 0.2em; }
+
+/* ── RESONATOR INFO (HOVER) ── */
+.resonator-info {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+  background: rgba(7,7,15,0.92);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--gold);
+  max-width: min(280px, 80vw);
+  z-index: 10;
+}
+.resonator-container:hover .resonator-info { opacity: 1; }
+.freq-display { font-size: 0.6rem; color: var(--gold); letter-spacing: 0.15em; margin-bottom: 0.4rem; }
+.resonance-text { font-size: 0.72rem; color: var(--text); line-height: 1.6; }
+
+/* ── COHERENCE METER ── */
+.coherence-section { width: 100%; max-width: min(380px, 92vw); margin: 0.5rem 0; }
+.coh-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+.coh-label { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; min-width: 70px; }
+.coh-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.coh-bar { height: 100%; background: linear-gradient(90deg, var(--emerald), var(--gold), var(--indigo)); border-radius: 3px; transition: width 0.15s linear; width: 0%; }
+.coh-value { font-size: 0.7rem; color: var(--gold); min-width: 40px; text-align: right; }
+.coh-accuracy { font-size: 0.58rem; color: var(--muted); margin-top: 0.2rem; text-align: right; letter-spacing: 0.1em; }
+
+/* ── BREATH INDICATOR ── */
+.breath-indicator { margin: 0.6rem 0; text-align: center; }
+.breath-phase { font-size: clamp(0.65rem, 2.5vw, 0.72rem); letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.4rem; transition: color 0.3s; }
+.breath-bar-wrap { width: min(200px, 60vw); height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto; overflow: hidden; }
+.breath-fill { height: 100%; background: linear-gradient(90deg, var(--emerald), var(--gold), var(--indigo)); width: 0%; transition: width 0.08s linear; }
+
+/* ── CYCLE CONFIG ── */
+.cycle-config {
+  margin: 0.6rem 0;
+  padding: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: min(380px, 92vw);
+}
+.cycle-config-title { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+.cycle-inputs { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.cycle-field { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.cycle-field label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.cycle-field input {
+  width: 52px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.3rem 0.2rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.cycle-field input:focus { border-color: var(--gold); }
+.cycle-presets { display: flex; gap: 0.3rem; justify-content: center; flex-wrap: wrap; }
+.preset-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+.preset-btn:hover, .preset-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.cycle-note { font-size: 0.58rem; color: var(--muted); text-align: center; margin-top: 0.3rem; font-style: italic; }
+
+/* ── AUDIO CONTROLS ── */
+.audio-controls {
+  margin: 0.8rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+.audio-row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+.audio-label { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; min-width: 80px; }
+
+/* TOGGLE BUTTON — clear visual states */
+.audio-toggle {
+  position: relative;
+  width: 80px;
+  height: 34px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  cursor: pointer;
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.audio-toggle::before {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: var(--muted);
+  border-radius: 50%;
+  left: 3px;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.audio-toggle.active {
+  background: rgba(232,200,106,0.1);
+  border-color: var(--gold);
+}
+.audio-toggle.active::before {
+  left: 49px;
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(232,200,106,0.5);
+}
+.audio-toggle-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.3s;
+  pointer-events: none;
+}
+.audio-toggle.active .audio-toggle-label { color: var(--bg); }
+.audio-toggle.active .audio-toggle-label::before { content: 'ON '; }
+.audio-toggle:not(.active) .audio-toggle-label::after { content: 'OFF'; }
+
+/* VOLUME */
+.volume-row { display: flex; align-items: center; gap: 0.5rem; }
+.volume-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.volume-slider {
+  width: 100px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.volume-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+.volume-value { font-size: 0.6rem; color: var(--gold); min-width: 28px; text-align: right; }
+
+/* ── STATUS PANEL ── */
+.status-panel {
+  margin: 0.8rem 0;
+  padding: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  width: 100%;
+  max-width: min(380px, 92vw);
+}
+.status-row { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+.status-row span:first-child { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }
+.status-row span:last-child { font-size: 0.72rem; color: var(--text); }
+.coherence-big { font-size: 1.4rem; color: var(--gold); margin-bottom: 0.2rem; }
+.coherence-label { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; }
+.click-hint { margin-top: 0.5rem; font-size: 0.62rem; color: var(--muted); font-style: italic; }
+
+/* ── BREATH quality indicator ── */
+.breath-quality { margin-top: 0.4rem; }
+.quality-bar { width: 100%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 0.2rem; }
+.quality-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.2s, background 0.3s; }
+.quality-labels { display: flex; justify-content: space-between; font-size: 0.52rem; color: var(--muted); margin-top: 0.15rem; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="title">Field Resonator</div>
+  <div class="subtitle">Codex Alignment Tool — 432Hz Harmonic</div>
+</div>
+
+<!-- Resonator wheel canvas -->
+<div class="resonator-container" id="resonatorContainer">
+  <canvas id="resonatorCanvas"></canvas>
+  <div class="resonator-info">
+    <div class="freq-display">432 Hz — Monadic Spiral</div>
+    <div class="resonance-text">
+      Hover to attune. Click wheel to begin 5-5-10 alignment.<br><br>
+      Gold: Scalar Seed &nbsp;|&nbsp; Indigo: Deep Axis &nbsp;|&nbsp; Emerald: Convergence
+    </div>
+  </div>
+</div>
+
+<!-- Live Coherence Meter -->
+<div class="coherence-section">
+  <div class="coh-row">
+    <div class="coh-label">Coherence</div>
+    <div class="coh-bar-wrap"><div class="coh-bar" id="cohBar"></div></div>
+    <div class="coh-value" id="cohValue">0%</div>
+  </div>
+  <div class="coh-accuracy" id="cohAccuracy">breath sync: — </div>
+</div>
+
+<!-- Breath Indicator -->
+<div class="breath-indicator">
+  <div class="breath-phase" id="breathPhase">Ready — Click wheel to begin</div>
+  <div class="breath-bar-wrap">
+    <div class="breath-fill" id="breathFill"></div>
+  </div>
+</div>
+
+<!-- User-defined cycle config -->
+<div class="cycle-config">
+  <div class="cycle-config-title">Breath Cycle Configuration</div>
+  <div class="cycle-inputs">
+    <div class="cycle-field">
+      <label>Inhale (s)</label>
+      <input type="number" id="inhaleInput" value="5" min="1" max="30">
+    </div>
+    <div class="cycle-field">
+      <label>Hold (s)</label>
+      <input type="number" id="holdInput" value="5" min="0" max="30">
+    </div>
+    <div class="cycle-field">
+      <label>Exhale (s)</label>
+      <input type="number" id="exhaleInput" value="10" min="1" max="60">
+    </div>
+  </div>
+  <div class="cycle-presets">
+    <button class="preset-btn active" data-in="4" data-h="4" data-out="8">4-4-8</button>
+    <button class="preset-btn" data-in="5" data-h="5" data-out="10">5-5-10</button>
+    <button class="preset-btn" data-in="4" data-h="7" data-out="8">4-7-8</button>
+    <button class="preset-btn" data-in="6" data-h="0" data-out="6">6-0-6</button>
+    <button class="preset-btn" data-in="5" data-h="5" data-out="5">5-5-5</button>
+    <button class="preset-btn" data-in="3" data-h="3" data-out="6">3-3-6</button>
+  </div>
+  <div class="cycle-note">Customize your breath cycle — the field adapts to your rhythm.</div>
+</div>
+
+<!-- Audio Controls -->
+<div class="audio-controls">
+  <div class="audio-row">
+    <span class="audio-label">Resonance Tone</span>
+    <div class="audio-toggle" id="audioToggle" role="button" aria-label="Toggle audio">
+      <span class="audio-toggle-label"></span>
+    </div>
+    <div class="volume-row">
+      <span class="volume-label">Vol</span>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="30">
+      <span class="volume-value" id="volumeValue">30%</span>
+    </div>
+  </div>
+</div>
+
+<!-- Status Panel -->
+<div class="status-panel">
+  <div class="coherence-big" id="coherenceBig">0%</div>
+  <div class="coherence-label">Field Coherence</div>
+  <div class="status-row">
+    <span>Breath sync</span>
+    <span id="syncStatus">idle</span>
+  </div>
+  <div class="status-row">
+    <span>Cycle count</span>
+    <span id="cycleCount">0</span>
+  </div>
+  <div class="breath-quality">
+    <div class="quality-labels">
+      <span>off-target</span>
+      <span>entrained</span>
+    </div>
+    <div class="quality-bar">
+      <div class="quality-fill" id="qualityFill"></div>
+    </div>
+  </div>
+  <div class="click-hint">The wheel rotates at 432Hz. Breathe with the pulse.</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG & STATE
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('resonatorCanvas');
+const ctx = canvas.getContext('2d');
+
+// Canvas sizing
+function resizeCanvas() {
+  const cont = document.getElementById('resonatorContainer');
+  const size = Math.min(380, window.innerWidth * 0.92);
+  canvas.width = size;
+  canvas.height = size;
+}
+resizeCanvas();
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  drawWheel();
+});
+
+// Derived dimensions
+function dims() {
+  const s = canvas.width;
+  return {
+    cx: s / 2,
+    cy: s / 2,
+    r: s * 0.42,
+    ir: s * 0.285,
+    hr: s * 0.037
+  };
+}
+
+const SEGMENTS = 24;
+const PRIME_POS = [0, 4, 6, 10, 12, 16, 18, 22];
+const ROTATION_SPEED = 0.006;
+const COLORS = {
+  gold: '#e8c86a',
+  indigo: 'rgba(74, 58, 106, 0.7)',
+  emerald: 'rgba(42, 90, 74, 0.6)',
+  goldDim: 'rgba(232, 200, 106, 0.25)'
+};
+
+// State
+let rotation = 0;
+let coherence = 0;
+let targetCoherence = 0;
+let breathCycle = { active: false, phase: 'ready', startTime: 0, progress: 0 };
+let cycleCount = 0;
+let audioCtx = null;
+let oscillator = null;
+let gainNode = null;
+let isAudioActive = false;
+let currentVolume = 0.3;
+let breathQuality = 0; // 0-100, how on-target the user's breath is
+
+// User-defined cycle (seconds)
+let inhaleS = 5;
+let holdS = 5;
+let exhaleS = 10;
+
+function getCycleDuration() { return inhaleS + holdS + exhaleS; }
+function getCycleRatio() {
+  const t = getCycleDuration();
+  return { inhale: inhaleS / t, hold: holdS / t, exhale: exhaleS / t };
+}
+
+// ══════════════════════════════════════════════
+// AUDIO ENGINE — coherence-modulated
+// ══════════════════════════════════════════════
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function startAudio() {
+  if (!audioCtx) initAudio();
+  if (oscillator) oscillator.stop();
+
+  oscillator = audioCtx.createOscillator();
+  gainNode = audioCtx.createGain();
+
+  // Base frequency modulated by coherence
+  const baseFreq = 432 + (coherence / 100) * 48; // 432-480Hz range
+  oscillator.frequency.value = baseFreq;
+  oscillator.type = 'sine';
+
+  // Harmonic complexity grows with coherence
+  const harmGain = audioCtx.createGain();
+  harmGain.gain.value = 0;
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  // Add subtle 3rd harmonic when coherence is high
+  if (coherence > 50) {
+    const osc3 = audioCtx.createOscillator();
+    const g3 = audioCtx.createGain();
+    osc3.frequency.value = baseFreq * 3;
+    osc3.type = 'sine';
+    g3.gain.value = (coherence - 50) / 100 * 0.08;
+    osc3.connect(g3);
+    g3.connect(audioCtx.destination);
+    osc3.start();
+  }
+
+  gainNode.gain.setValueAtTime(currentVolume * 0.3, audioCtx.currentTime);
+  oscillator.start();
+  isAudioActive = true;
+}
+
+function updateAudio() {
+  if (!oscillator || !gainNode || !audioCtx) return;
+  // Modulate frequency based on coherence
+  const baseFreq = 432 + (coherence / 100) * 48;
+  oscillator.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+  // Volume breathes with breath phase
+  const phaseVolume = currentVolume * 0.3 * (0.7 + (coherence / 100) * 0.3);
+  gainNode.gain.setValueAtTime(phaseVolume, audioCtx.currentTime);
+}
+
+function stopAudio() {
+  if (oscillator) {
+    oscillator.stop();
+    oscillator = null;
+  }
+  isAudioActive = false;
+}
+
+// ══════════════════════════════════════════════
+// COHERENCE + BREATH QUALITY
+// ══════════════════════════════════════════════
+function updateCoherenceAndQuality() {
+  if (!breathCycle.active) {
+    targetCoherence = Math.max(0, targetCoherence - 1.5);
+    breathQuality = Math.max(0, breathQuality - 2);
+    return;
+  }
+
+  const elapsed = Date.now() - breathCycle.startTime;
+  const totalDur = getCycleDuration() * 1000;
+  const progress = (elapsed % totalDur) / totalDur;
+  const ratio = getCycleRatio();
+
+  let phase, phaseStart, phaseEnd;
+  if (progress < ratio.inhale) {
+    phase = 'inhale';
+    targetCoherence = 55 + progress / ratio.inhale * 25;
+    breathQuality = Math.min(100, 60 + (progress / ratio.inhale) * 30);
+  } else if (progress < ratio.inhale + ratio.hold) {
+    phase = 'hold';
+    targetCoherence = 80 + Math.sin((progress - ratio.inhale) / ratio.hold * Math.PI) * 15;
+    breathQuality = Math.min(100, 90 + Math.sin((progress - ratio.inhale) / ratio.hold * Math.PI) * 10);
+  } else {
+    const exStart = ratio.inhale + ratio.hold;
+    const exProg = (progress - exStart) / ratio.exhale;
+    phase = 'exhale';
+    targetCoherence = 60 - exProg * 25;
+    breathQuality = Math.max(0, 70 - exProg * 40);
+  }
+
+  breathCycle.phase = phase;
+
+  // Apply micro-corrections to target based on quality
+  targetCoherence = targetCoherence * (0.5 + breathQuality / 200);
+  targetCoherence = Math.min(95, Math.max(0, targetCoherence));
+}
+
+function updateCoherenceDisplay() {
+  coherence += (targetCoherence - coherence) * 0.05;
+
+  const pct = Math.round(coherence);
+  document.getElementById('cohBar').style.width = pct + '%';
+  document.getElementById('cohValue').textContent = pct + '%';
+  document.getElementById('coherenceBig').textContent = pct + '%';
+
+  // Breath quality bar
+  const qPct = Math.round(breathQuality);
+  document.getElementById('qualityFill').style.width = qPct + '%';
+  document.getElementById('qualityFill').style.background =
+    qPct > 75 ? 'var(--emerald)' : qPct > 40 ? 'var(--gold)' : 'var(--indigo)';
+
+  // Sync status
+  const syncEl = document.getElementById('syncStatus');
+  if (!breathCycle.active) {
+    syncEl.textContent = 'idle';
+    syncEl.style.color = 'var(--muted)';
+  } else if (breathQuality > 75) {
+    syncEl.textContent = 'entrained';
+    syncEl.style.color = 'var(--emerald)';
+  } else if (breathQuality > 40) {
+    syncEl.textContent = 'syncing';
+    syncEl.style.color = 'var(--gold)';
+  } else {
+    syncEl.textContent = 'drifting';
+    syncEl.style.color = 'var(--muted)';
+  }
+
+  // Breath accuracy text
+  const accEl = document.getElementById('cohAccuracy');
+  accEl.textContent = breathCycle.active
+    ? `breath sync: ${qPct}% | ${breathCycle.phase}`
+    : 'breath sync: — ';
+}
+
+// ══════════════════════════════════════════════
+// WHEEL RENDERER
+// ══════════════════════════════════════════════
+function getIcositetragonPoints(d, rot) {
+  const { cx, cy, r } = d;
+  const pts = [];
+  for (let i = 0; i < SEGMENTS; i++) {
+    const angle = (i / SEGMENTS) * Math.PI * 2 + rot - Math.PI / 2;
+    pts.push({
+      x: cx + Math.cos(angle) * r,
+      y: cy + Math.sin(angle) * r,
+      prime: PRIME_POS.includes(i)
+    });
+  }
+  return pts;
+}
+
+function drawWheel() {
+  const s = canvas.width;
+  ctx.clearRect(0, 0, s, s);
+  const d = dims();
+
+  // Background glow
+  const grad = ctx.createRadialGradient(d.cx, d.cy, 0, d.cx, d.cy, d.r);
+  grad.addColorStop(0, `rgba(232, 200, 106, ${0.04 + coherence / 100 * 0.06})`);
+  grad.addColorStop(0.5, 'rgba(74, 58, 106, 0.03)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, s, s);
+
+  // Circular grid
+  ctx.strokeStyle = COLORS.indigo;
+  ctx.lineWidth = 0.8;
+  [0.3, 0.5, 0.7, 0.9].forEach(r => {
+    ctx.beginPath();
+    ctx.arc(d.cx, d.cy, d.r * r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Triangular grid
+  const pts = getIcositetragonPoints(d, rotation);
+  ctx.strokeStyle = COLORS.goldDim;
+  ctx.lineWidth = 0.6;
+  for (let i = 0; i < SEGMENTS; i += 8) {
+    const p1 = pts[i];
+    const p2 = pts[(i + 8) % SEGMENTS];
+    const p3 = pts[(i + 16) % SEGMENTS];
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.lineTo(p3.x, p3.y);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Main icositetragon
+  ctx.strokeStyle = COLORS.gold;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  pts.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  // Pentagonal inner star (5-fold)
+  ctx.strokeStyle = COLORS.emerald;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const p = pts[(i * 5) % SEGMENTS];
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // Nodes
+  pts.forEach(p => {
+    if (p.prime) {
+      ctx.fillStyle = COLORS.gold;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // Breath pulse ring
+  if (breathCycle.active) {
+    const elapsed = Date.now() - breathCycle.startTime;
+    const totalDur = getCycleDuration() * 1000;
+    const progress = (elapsed % totalDur) / totalDur;
+    const ratio = getCycleRatio();
+
+    let pulseR = d.r;
+    if (progress < ratio.inhale) {
+      pulseR = d.r * (0.82 + (progress / ratio.inhale) * 0.18);
+    } else if (progress < ratio.inhale + ratio.hold) {
+      pulseR = d.r;
+    } else {
+      const exProg = (progress - ratio.inhale - ratio.hold) / ratio.exhale;
+      pulseR = d.r * (1 - exProg * 0.18);
+    }
+
+    const alpha = breathCycle.phase === 'hold' ? 0.7 : 0.35 + coherence / 100 * 0.3;
+    const color = breathCycle.phase === 'inhale' ? COLORS.gold :
+                  breathCycle.phase === 'hold' ? COLORS.indigo :
+                  COLORS.emerald;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(d.cx, d.cy, pulseR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Center
+  const hg = ctx.createRadialGradient(d.cx, d.cy, 0, d.cx, d.cy, d.hr * 2.5);
+  hg.addColorStop(0, `rgba(232, 200, 106, ${0.15 + coherence / 100 * 0.25})`);
+  hg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = hg;
+  ctx.beginPath();
+  ctx.arc(d.cx, d.cy, d.hr * 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#4a3a2a';
+  ctx.beginPath();
+  ctx.arc(d.cx, d.cy, d.hr, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#c8b888';
+  ctx.font = `${s * 0.032}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⊙', d.cx, d.cy);
+}
+
+// ══════════════════════════════════════════════
+// ANIMATION LOOP
+// ══════════════════════════════════════════════
+function animate() {
+  updateCoherenceAndQuality();
+  updateCoherenceDisplay();
+  updateAudio();
+  drawWheel();
+  rotation += ROTATION_SPEED;
+  requestAnimationFrame(animate);
+}
+
+// ══════════════════════════════════════════════
+// BREATH CYCLE
+// ══════════════════════════════════════════════
+function updateBreathUI() {
+  const phaseEl = document.getElementById('breathPhase');
+  const fillEl = document.getElementById('breathFill');
+  const ratio = getCycleRatio();
+  const totalDur = getCycleDuration() * 1000;
+
+  if (!breathCycle.active) {
+    phaseEl.textContent = 'Ready — Click wheel to begin';
+    phaseEl.style.color = 'var(--gold)';
+    fillEl.style.width = '0%';
+    return;
+  }
+
+  const elapsed = Date.now() - breathCycle.startTime;
+  const progress = (elapsed % totalDur) / totalDur;
+  fillEl.style.width = (progress * 100) + '%';
+
+  const labels = {
+    inhale: `Inhale — draw in (${inhaleS}s)`,
+    hold: `Hold — stabilize (${holdS}s)`,
+    exhale: `Exhale — release (${exhaleS}s)`
+  };
+  phaseEl.textContent = labels[breathCycle.phase] || 'Processing...';
+  phaseEl.style.color =
+    breathCycle.phase === 'inhale' ? 'var(--gold)' :
+    breathCycle.phase === 'hold' ? 'var(--night-gold)' :
+    'var(--emerald)';
+}
+
+// ══════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════
+document.getElementById('resonatorContainer').addEventListener('click', () => {
+  if (!breathCycle.active) {
+    breathCycle.active = true;
+    breathCycle.startTime = Date.now();
+    cycleCount++;
+    document.getElementById('cycleCount').textContent = cycleCount;
+  } else {
+    breathCycle.active = false;
+    breathCycle.phase = 'ready';
+    targetCoherence = 0;
+    breathQuality = 0;
+  }
+});
+
+// Audio toggle
+document.getElementById('audioToggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const el = document.getElementById('audioToggle');
+  if (isAudioActive) {
+    stopAudio();
+    el.classList.remove('active');
+  } else {
+    if (!audioCtx) initAudio();
+    startAudio();
+    el.classList.add('active');
+  }
+});
+
+// Volume slider
+document.getElementById('volumeSlider').addEventListener('input', (e) => {
+  currentVolume = e.target.value / 100;
+  document.getElementById('volumeValue').textContent = e.target.value + '%';
+  if (gainNode && audioCtx) {
+    gainNode.gain.setValueAtTime(currentVolume * 0.3, audioCtx.currentTime);
+  }
+});
+
+// Cycle configuration inputs
+['inhaleInput', 'holdInput', 'exhaleInput'].forEach(id => {
+  document.getElementById(id).addEventListener('change', (e) => {
+    const val = parseFloat(e.target.value) || 0;
+    if (id === 'inhaleInput') inhaleS = Math.max(1, val);
+    if (id === 'holdInput') holdS = Math.max(0, val);
+    if (id === 'exhaleInput') exhaleS = Math.max(1, val);
+    // Reset cycle timer to resync
+    if (breathCycle.active) {
+      breathCycle.startTime = Date.now();
+    }
+    updatePresetButtons();
+  });
+});
+
+// Preset buttons
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    inhaleS = parseInt(btn.dataset.in);
+    holdS = parseInt(btn.dataset.h);
+    exhaleS = parseInt(btn.dataset.out);
+    document.getElementById('inhaleInput').value = inhaleS;
+    document.getElementById('holdInput').value = holdS;
+    document.getElementById('exhaleInput').value = exhaleS;
+    if (breathCycle.active) breathCycle.startTime = Date.now();
+    updatePresetButtons();
+  });
+});
+
+function updatePresetButtons() {
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    const match = parseInt(btn.dataset.in) === inhaleS &&
+                  parseInt(btn.dataset.h) === holdS &&
+                  parseInt(btn.dataset.out) === exhaleS;
+    btn.classList.toggle('active', match);
+  });
+}
+
+// Set canvas size on load
+function setCanvasSize() {
+  const s = Math.min(380, window.innerWidth * 0.92);
+  canvas.style.width = s + 'px';
+  canvas.style.height = s + 'px';
+}
+
+// Start
+window.addEventListener('load', setCanvasSize);
+window.addEventListener('resize', setCanvasSize);
+setCanvasSize();
+animate();
+
+console.log('🜂 Field Resonator online — coherence-modulated audio active.');
+console.log('🜂 Custom breath cycles enabled. Click wheel to begin alignment.');
+</script>
+</body>
+</html>
