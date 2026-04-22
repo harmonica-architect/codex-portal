@@ -1,7 +1,6 @@
 ﻿<script>
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FIELD RESONATOR v5
-   Auto-sound Â· Tutorial Â· Unified Sound panel
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const SEGMENTS = 24;
@@ -26,7 +25,6 @@ let masterVol = 0.3;
 let selectedSnapshotGlyph = 'â–³';
 let wavePoints = [];
 let wavePhase = 0;
-let tutorialDone = false;
 let breathGuidanceOn = true;
 let difficultyLevel = 1;
 let coherenceHistory = [];
@@ -64,37 +62,6 @@ function dims() {
   const s = canvasSize;
   return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 };
 }
-
-/* â”€â”€ TUTORIAL â”€â”€ */
-function checkTutorial() {
-  tutorialDone = localStorage.getItem('resonator_tutorial_done') === '1';
-  if (tutorialDone) {
-    document.getElementById('tutorialOverlay').classList.add('hidden');
-  }
-}
-
-document.getElementById('tutorialBegin')?.addEventListener('click', () => {
-  localStorage.setItem('resonator_tutorial_done', '1');
-  document.getElementById('tutorialOverlay').classList.add('hidden');
-  tutorialDone = true;
-});
-
-document.getElementById('tutorialSkip')?.addEventListener('click', () => {
-  localStorage.setItem('resonator_tutorial_done', '1');
-  document.getElementById('tutorialOverlay').classList.add('hidden');
-  tutorialDone = true;
-});
-
-
-// Click outside tutorial box = skip (pointer-events:none on overlay, doc-level listener handles dismiss)
-document.addEventListener('click', e => {
-  const overlay = document.getElementById('tutorialOverlay');
-  if (!overlay || overlay.classList.contains('hidden')) return;
-  const box = overlay.querySelector('.tutorial-box');
-  if (box && !box.contains(e.target)) {
-    document.getElementById('tutorialSkip')?.click();
-  }
-});
 
 // Broadcast coherence + phase to shared localStorage for cross-tool sync
 setInterval(() => {
@@ -818,7 +785,6 @@ document.getElementById('btnLoadProfile')?.addEventListener('click', () => {
 document.getElementById('btnResetDefault')?.addEventListener('click', resetToDefaults);
 
 /* â”€â”€ INIT â”€â”€ */
-checkTutorial();
 syncCycleUI();
 syncDifficultyUI();
 loadProfiles();
@@ -826,4 +792,4 @@ updateStepUI();
 autoStartSound(); // â† auto-activates sound on load
 animate();
 console.log('ðŸœ‚ Field Resonator v5+ â€” Guided breath Â· Adaptive difficulty Â· Auto-sound');
-</script>
+</script>

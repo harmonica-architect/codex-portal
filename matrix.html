@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,6 +7,16 @@
 <link rel="stylesheet" href="matrix.css">
 </head>
 <body>
+
+<!-- Inline Guide Banner -->
+<div class="inline-guide">
+  <div class="guide-title">Matrix Guide</div>
+  <div class="guide-steps">
+    <span class="guide-step"><span class="guide-n">1</span> <strong>Click or drag</strong> cells to select glyphs</span>
+    <span class="guide-step"><span class="guide-n">2</span> <strong>Hover</strong> cells to read archetypes</span>
+    <span class="guide-step"><span class="guide-n">3</span> <strong>Save</strong> combinations &middot; <strong>Randomize</strong></span>
+  </div>
+</div>
 
 <div class="matrix-header">
   <div class="matrix-title">Harmonic Glyph Matrix</div>
@@ -69,28 +79,7 @@
   <span class="tooltip-arch" id="ttArch">Beginnings, potential.</span>
 </div>
 
-<!-- Tutorial -->
-<div class="tutorial-overlay" id="tutorialOverlay">
-  <div class="tutorial-box">
-    <div class="tutorial-title">◈ Matrix Guide</div>
-    <div class="tutorial-step">
-      <div class="tutorial-num">1</div>
-      <div class="tutorial-text"><strong>Click or drag</strong> across cells to select multiple glyphs. Each cell is a unique harmonic frequency mapped to an angular position on the Icositetragon.</div>
-    </div>
-    <div class="tutorial-step">
-      <div class="tutorial-num">2</div>
-      <div class="tutorial-text"><strong>Hover</strong> any cell to read its resonance archetype. Audio tones play as you select. Adjust per-glyph intensity in the sidebar.</div>
-    </div>
-    <div class="tutorial-step">
-      <div class="tutorial-num">3</div>
-      <div class="tutorial-text"><strong>Save combinations</strong> with names to build your personal harmonic library. Use <strong>Randomize</strong> to explore unexpected alignments.</div>
-    </div>
-    <div class="tutorial-btns">
-      <button class="tutorial-btn begin" id="tutorialBegin">Begin</button>
-      <button class="tutorial-btn skip" id="tutorialSkip">Skip</button>
-    </div>
-  </div>
-</div>
+<!-- Matrix — no tutorial overlay needed — guide is inline -->
 
 <script src="matrix.js"></script>
 </body>

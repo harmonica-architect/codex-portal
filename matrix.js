@@ -65,7 +65,6 @@ let audioCtx = null;
 let isDragging = false;
 let dragStart = null;
 let dragMode = false;
-let tutorialDone = localStorage.getItem('matrix_tutorial_done') === '1';
 
 /* â”€â”€ AUDIO â”€â”€ */
 function getAudioCtx() {
@@ -617,31 +616,6 @@ function revealWave() {
   });
 }
 
-/* â”€â”€ TUTORIAL â”€â”€ */
-function showTutorial() {
-  if (tutorialDone) return;
-  document.getElementById('tutorialOverlay').style.display = 'flex';
-}
-
-document.getElementById('tutorialBegin').onclick = () => {
-  tutorialDone = true;
-  localStorage.setItem('matrix_tutorial_done', '1');
-  document.getElementById('tutorialOverlay').style.display = 'none';
-  getAudioCtx(); // Unlock audio context
-  playChord([432, 528, 639], 0.2, 3.0); // Welcome chime
-};
-
-document.getElementById('tutorialSkip').onclick = () => {
-  tutorialDone = true;
-  localStorage.setItem('matrix_tutorial_done', '1');
-  document.getElementById('tutorialOverlay').style.display = 'none';
-};
-
-/* Click anywhere on overlay = dismiss (matrix is fully covered, all clicks hit overlay) */
-document.getElementById('tutorialOverlay').addEventListener('click', e => {
-  e.stopPropagation(); // prevent drag-rect or cell clicks
-  document.getElementById('tutorialSkip').click();
-});
 
 /* â”€â”€ INIT â”€â”€ */
 buildMatrix();
@@ -650,16 +624,6 @@ renderSaved();
 updateIntensityPanel();
 updatePreview();
 setTimeout(revealWave, 250);
-
-// â”€â”€ TUTORIAL: dismiss on click OUTSIDE the tutorial box (pointer-events: none on overlay) â”€â”€
-document.addEventListener('click', e => {
-  const overlay = document.getElementById('tutorialOverlay');
-  if (!overlay || overlay.style.display === 'none') return;
-  const box = overlay.querySelector('.tutorial-box');
-  if (box && !box.contains(e.target)) {
-    // Click landed on overlay background or document body outside the box â†’ skip
-    document.getElementById('tutorialSkip').click();
-  }
 });
     const coh = parseFloat(e.newValue) || 0;
     updateCoherenceReactivity(coh);
@@ -701,7 +665,6 @@ function highlightBreathRow(phase) {
     }
   });
 }
-setTimeout(showTutorial, 500);
 
 /* â”€â”€ BUTTONS â”€â”€ */
 document.getElementById('btnSaveCombo').onclick = saveCurrentCombo;
@@ -716,4 +679,4 @@ document.addEventListener('keydown', e => {
 
 console.log('ðŸœ‚ Harmonic Glyph Matrix v2 â€” Enhanced loaded');
 </script>
-</body>
+</body>

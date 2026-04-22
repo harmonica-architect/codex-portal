@@ -161,62 +161,6 @@ body {
 }
 .waveform-strip canvas { position: absolute; top: -8px; left: 0; width: 100%; height: 18px; pointer-events: none; }
 
-/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
-   TUTORIAL OVERLAY
-   Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */
-.tutorial-overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(6,6,14,0.96);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 2rem; gap: 1.5rem;
-  animation: fadeIn 0.5s ease;
-  pointer-events: none;
-}
-.tutorial-overlay.hidden { display: none; }
-
-.tutorial-glyph {
-  font-size: 4rem; color: var(--gold); display: block;
-  animation: breatheGlyph 4s ease-in-out infinite;
-}
-@keyframes breatheGlyph {
-  0%,100% { transform: scale(1); text-shadow: 0 0 10px var(--gold-glow); }
-  50% { transform: scale(1.08); text-shadow: 0 0 30px var(--gold-glow); }
-}
-
-.tutorial-title { font-size: 0.7rem; letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; }
-.tutorial-sub { font-size: 0.65rem; color: var(--muted); text-align: center; max-width: 280px; line-height: 1.7; }
-
-.tutorial-steps { display: flex; flex-direction: column; gap: 0.6rem; width: 100%; max-width: 260px; }
-.tutorial-step {
-  display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.5rem 0.7rem; background: var(--surface);
-  border: 1px solid var(--border); border-radius: 6px;
-  animation: slideInRight 0.4s ease backwards;
-  cursor: default;
-}
-.tutorial-step:nth-child(1) { animation-delay: 0.1s; }
-.tutorial-step:nth-child(2) { animation-delay: 0.2s; }
-.tutorial-step:nth-child(3) { animation-delay: 0.3s; }
-.tstep-num { font-size: 0.55rem; color: var(--gold); min-width: 20px; }
-.tstep-text { font-size: 0.65rem; color: var(--text); }
-.tstep-icon { font-size: 1.1rem; margin-left: auto; }
-
-.tutorial-btns { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
-.tutorial-btn-primary {
-  background: var(--gold); color: #06060e;
-  border: none; padding: 0.6rem 1.8rem;
-  font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
-  cursor: pointer; border-radius: 20px; font-weight: 600;
-  transition: all 0.3s;
-}
-.tutorial-btn-primary:hover { background: #e0c8a0; transform: translateY(-1px); box-shadow: 0 4px 16px var(--gold-glow); }
-.tutorial-btn-ghost {
-  background: transparent; border: 1px solid var(--border); color: var(--muted);
-  padding: 0.6rem 1rem; font-size: 0.65rem; letter-spacing: 0.15em;
-  cursor: pointer; border-radius: 20px; transition: all 0.3s;
-}
-.tutorial-btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
 
 /* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
    SIDEBAR
@@ -376,3 +320,16 @@ body {
   .main-stage { padding: 1.5rem 0.75rem; }
   .wheel-wrap { width: min(280px, 82vw); height: min(280px, 82vw); }
   .sidebar { width: 240px; }
+/* INLINE GUIDE BANNER */
+.inline-guide {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0.5rem 1rem; z-index: 50;
+  display: flex; align-items: center; gap: 1rem;
+  animation: slideDown 0.5s ease;
+}
+@keyframes slideDown { from{transform:translateY(-100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
+.guide-title { font-size: 0.55rem; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; white-space: nowrap; }
+.guide-steps { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+.guide-step { font-size: 0.58rem; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; }
+.guide-n { color: var(--gold); font-size: 0.5rem; }

@@ -206,28 +206,6 @@ body {
 .tooltip-name { color: var(--gold); font-size: 0.62rem; letter-spacing: 0.12em; display: block; margin-bottom: 0.2rem; text-transform: uppercase; }
 .tooltip-arch { color: var(--muted); font-style: italic; }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ TUTORIAL OVERLAY Ã¢â€â‚¬Ã¢â€â‚¬ */
-.tutorial-overlay {
-  position: fixed; inset: 0; background: rgba(7,7,15,0.92); z-index: 10000;
-  display: flex; align-items: center; justify-content: center; padding: 1rem;
-  pointer-events: none; /* covers matrix but doesn't block clicks Ã¢â‚¬â€ document listener handles dismiss */
-  cursor: default; /* visual indicator only */
-}
-.tutorial-box {
-  background: var(--surface); border: 1px solid var(--gold); border-radius: 10px;
-  padding: 1.5rem; max-width: 400px; width: 100%; text-align: center;
-  pointer-events: auto; /* box captures clicks (Begin/Skip), overlay is transparent */
-  cursor: default;
-}
-.tutorial-title { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.8rem; }
-.tutorial-step { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.7rem; text-align: left; }
-.tutorial-num { background: var(--gold); color: #07070f; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; flex-shrink: 0; }
-.tutorial-text { font-size: 0.62rem; color: var(--text); line-height: 1.6; }
-.tutorial-text strong { color: var(--gold); }
-.tutorial-btns { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
-.tutorial-btn { padding: 0.4rem 1.2rem; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; border-radius: 16px; transition: all 0.2s; }
-.tutorial-btn.begin { background: var(--gold); color: #07070f; border: 1px solid var(--gold); font-weight: 600; }
-.tutorial-btn.skip { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ DRAG SELECTION RECTANGLE Ã¢â€â‚¬Ã¢â€â‚¬ */
 .drag-rect {
@@ -237,3 +215,14 @@ body {
 }
 
 /* Close hint */
+/* INLINE GUIDE BANNER */
+.inline-guide {
+  width: 100%; max-width: min(900px, 98vw);
+  display: flex; gap: 1.2rem; flex-wrap: wrap; align-items: center;
+  padding: 0.5rem 0.8rem;
+  background: rgba(232,200,106,0.05); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.4rem;
+}
+.guide-title { font-size: 0.55rem; letter-spacing: 0.25em; color: var(--gold); text-transform: uppercase; white-space: nowrap; }
+.guide-steps { display: flex; gap: 1rem; flex-wrap: wrap; }
+.guide-step { font-size: 0.58rem; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; }
+.guide-n { color: var(--gold); font-size: 0.5rem; }
