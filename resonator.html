@@ -3,394 +3,948 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Field Resonator — Codex Alignment</title>
+<title>Field Resonator — Monadic Spiral</title>
 <style>
 :root {
-  --bg: #07070f; --surface: #0e0e1a; --border: #1e1e32;
-  --text: #d8d0c0; --muted: #6a6050;
-  --gold: #e8c86a; --indigo: #4a3a6a; --emerald: #2a5a4a;
-  --gold-dim: rgba(232,200,106,0.15);
+  --bg: #06060e;
+  --surface: #0b0b16;
+  --border: #16162a;
+  --text: #b8b4c8;
+  --muted: #444460;
+  --gold: #d4b896;
+  --gold-dim: rgba(212,184,150,0.12);
+  --gold-glow: rgba(212,184,150,0.25);
+  --breath-in: #7a6a9a;
+  --breath-hold: #8a7aaa;
+  --breath-out: #5a7a6a;
+  --active: #c4a87a;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
 body {
-  background: var(--bg); color: var(--text);
+  background: var(--bg);
+  color: var(--text);
   font-family: 'Segoe UI', system-ui, sans-serif;
-  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-  padding: 0.75rem; overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
 }
 
-/* ── RESPONSIVE LAYOUT ── */
-.header { text-align: center; margin-bottom: 0.5rem; }
-.title { font-size: clamp(0.65rem, 2.5vw, 0.75rem); letter-spacing: 0.4em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.25rem; }
-.subtitle { font-size: clamp(0.55rem, 2vw, 0.65rem); color: var(--muted); letter-spacing: 0.2em; }
-
-.resonator-wrap { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: min(420px, 96vw); }
-
-/* ── WHEEL + WAVEFORM SIDE BY SIDE ── */
-.meters-row { display: flex; gap: 0.8rem; width: 100%; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
-
-.resonator-col { display: flex; flex-direction: column; align-items: center; }
-.resonator-container {
-  position: relative; cursor: pointer;
-  width: min(200px, 46vw); height: min(200px, 46vw);
+/* ══════════════════════════════════════════════
+   MAIN LAYOUT — sidebar + main
+   ══════════════════════════════════════════════ */
+.resonator-shell {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
 }
-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-.resonator-info {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-  pointer-events: none; opacity: 0; transition: opacity 0.5s;
-  background: rgba(7,7,15,0.92); padding: 0.6rem; border-radius: 6px;
-  border: 1px solid var(--gold); max-width: min(160px, 42vw); z-index: 10;
-}
-.resonator-container:hover .resonator-info { opacity: 1; }
-.freq-display { font-size: 0.58rem; color: var(--gold); letter-spacing: 0.12em; margin-bottom: 0.3rem; }
-.resonance-text { font-size: 0.68rem; color: var(--text); line-height: 1.5; }
 
-/* ── WAVEFORM VISUALIZER ── */
-.waveform-col { display: flex; flex-direction: column; align-items: center; }
-.waveform-container {
-  position: relative; cursor: pointer;
-  width: min(200px, 46vw); height: min(200px, 46vw);
-  background: rgba(7,7,15,0.9); border: 1px solid var(--border); border-radius: 8px;
+/* ── MAIN STAGE ── */
+.main-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  transition: margin-right 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.main-stage.sidebar-open { margin-right: 260px; }
+
+.stage-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.stage-title {
+  font-size: 0.6rem;
+  letter-spacing: 0.5em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.stage-subtitle {
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+}
+
+/* ── WHEEL CONTAINER ── */
+.wheel-wrap {
+  position: relative;
+  width: min(320px, 80vw);
+  height: min(320px, 80vw);
+  margin-bottom: 1.5rem;
+}
+.wheel-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: filter 0.5s;
+}
+.wheel-canvas.attract { filter: blur(0px); }
+.wheel-canvas.active { filter: none; }
+
+/* Attract ring */
+.attract-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  pointer-events: none;
+  transition: all 0.5s;
+}
+.wheel-canvas.attract ~ .attract-ring {
+  border-color: var(--muted);
+  animation: attractPulse 3s ease-in-out infinite;
+}
+@keyframes attractPulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.04); opacity: 0.8; }
+}
+
+/* Step progress arc */
+.step-arc {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.step-arc svg { width: 100%; height: 100%; }
+.step-arc-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 2;
+}
+.step-arc-fill {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 314;
+  stroke-dashoffset: 314;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 0 3px var(--gold-glow));
+}
+
+/* Wheel center info */
+.wheel-center-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  min-width: 80px;
+}
+.center-glyph {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 0.2rem;
+  transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  opacity: 0.7;
+}
+.center-glyph.entrained { opacity: 1; text-shadow: 0 0 20px var(--gold-glow); }
+.center-freq {
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  display: block;
+}
+.center-hint {
+  font-size: 0.55rem;
+  color: var(--muted);
+  opacity: 0.5;
+  margin-top: 0.3rem;
+}
+
+/* ── STEP GUIDE ── */
+.step-guide {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.step-pip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0.3;
+  transition: all 0.5s;
+}
+.step-pip.active { opacity: 1; }
+.step-pip.done { opacity: 0.6; }
+.pip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.5s;
+}
+.step-pip.active .pip-dot {
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.step-pip.done .pip-dot { background: var(--muted); }
+.pip-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.step-pip.active .pip-label { color: var(--gold); }
+.step-connector {
+  width: 24px;
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 1rem;
+}
+
+/* ── COHERENCE BAR ── */
+.coh-arc-wrap {
+  width: min(260px, 70vw);
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+.coh-arc-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.coh-arc-track {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
   overflow: hidden;
+  position: relative;
 }
-#waveformCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-.waveform-label { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 0.3rem; }
+.coh-arc-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--breath-out), var(--breath-hold), var(--breath-in));
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.coh-pct { font-size: 0.7rem; color: var(--gold); margin-top: 0.3rem; }
 
-/* ── COHERENCE METER ── */
-.coherence-section { width: 100%; margin: 0.5rem 0; }
-.coh-row { display: flex; align-items: center; gap: 0.6rem; }
-.coh-label { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; min-width: 70px; }
-.coh-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.coh-bar { height: 100%; background: linear-gradient(90deg, var(--emerald), var(--gold), var(--indigo)); border-radius: 3px; transition: width 0.15s linear; width: 0%; }
-.coh-value { font-size: 0.7rem; color: var(--gold); min-width: 40px; text-align: right; }
-.coh-meta { font-size: 0.58rem; color: var(--muted); margin-top: 0.2rem; display: flex; justify-content: flex-end; gap: 0.8rem; }
+/* ── BREATH PHASE LABEL ── */
+.breath-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.4rem;
+  min-height: 1.2rem;
+  transition: color 0.5s;
+}
 
-/* ── BREATH INDICATOR ── */
-.breath-indicator { margin: 0.5rem 0; text-align: center; }
-.breath-phase { font-size: clamp(0.65rem, 2.5vw, 0.72rem); letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.3rem; transition: color 0.3s; }
-.breath-bar-wrap { width: min(200px, 60vw); height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto; overflow: hidden; }
-.breath-fill { height: 100%; background: linear-gradient(90deg, var(--emerald), var(--gold), var(--indigo)); width: 0%; transition: width 0.08s linear; }
+/* ── ENTRAINMENT BARS ── */
+.entrainment-strip {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.entrainment-cell {
+  width: 20px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.entrainment-cell.lit {
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold-glow);
+}
 
-/* ── CYCLE CONFIG ── */
-.cycle-config { margin: 0.5rem 0; padding: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 100%; }
-.cycle-config-title { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.4rem; }
-.cycle-inputs { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.3rem; }
-.cycle-field { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
-.cycle-field label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.cycle-field input { width: 50px; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.25rem 0.2rem; font-size: 0.72rem; border-radius: 3px; text-align: center; outline: none; transition: border-color 0.3s; }
-.cycle-field input:focus { border-color: var(--gold); }
-.cycle-presets { display: flex; gap: 0.25rem; justify-content: center; flex-wrap: wrap; }
-.preset-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.2rem 0.5rem; font-size: 0.55rem; letter-spacing: 0.08em; cursor: pointer; border-radius: 12px; transition: all 0.3s; }
-.preset-btn:hover, .preset-btn.active { border-color: var(--gold); color: var(--gold); }
-.cycle-note { font-size: 0.55rem; color: var(--muted); text-align: center; margin-top: 0.3rem; font-style: italic; }
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar.open { transform: translateX(0); }
 
-/* ── SOUNDSCAPE CONTROLS ── */
-.soundscape-config { margin: 0.5rem 0; padding: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 100%; }
-.soundscape-title { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.4rem; }
-.soundscape-layers { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.4rem; }
-.snd-layer { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
-.snd-layer label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.snd-btn {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: var(--bg); border: 1px solid var(--border);
-  color: var(--muted); font-size: 1.1rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+.sidebar-handle {
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 48px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.8rem;
   transition: all 0.3s;
 }
-.snd-btn:hover { border-color: var(--gold); color: var(--gold); transform: scale(1.08); }
-.snd-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
-.snd-btn.playing { animation: sndPulse 2s ease-in-out infinite; }
-@keyframes sndPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,200,106,0.3); } 50% { box-shadow: 0 0 0 8px rgba(232,200,106,0); } }
-.snd-vol { width: 60px; height: 3px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
-.snd-vol::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; cursor: pointer; }
+.sidebar-handle:hover { color: var(--gold); }
+.sidebar-handle:hover { border-color: var(--gold); }
 
-/* ── AUDIO CONTROLS ── */
-.audio-controls { margin: 0.5rem 0; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 100%; }
-.audio-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; justify-content: center; }
-.audio-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; min-width: 80px; }
-.audio-toggle { position: relative; width: 76px; height: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.4s; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.audio-toggle::before { content: ''; position: absolute; width: 24px; height: 24px; background: var(--muted); border-radius: 50%; left: 3px; transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-.audio-toggle.active { background: rgba(232,200,106,0.1); border-color: var(--gold); }
-.audio-toggle.active::before { left: 47px; background: var(--gold); box-shadow: 0 0 8px rgba(232,200,106,0.5); }
-.audio-toggle-label { position: relative; z-index: 1; font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: color 0.3s; pointer-events: none; }
-.audio-toggle.active .audio-toggle-label { color: var(--bg); }
-.audio-toggle.active .audio-toggle-label::before { content: 'ON'; }
-.audio-toggle:not(.active) .audio-toggle-label::after { content: 'OFF'; }
-.volume-row { display: flex; align-items: center; gap: 0.4rem; }
-.volume-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.volume-slider { width: 90px; height: 3px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
-.volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; background: var(--gold); border-radius: 50%; cursor: pointer; }
-.volume-value { font-size: 0.6rem; color: var(--gold); min-width: 28px; text-align: right; }
+.sidebar-section {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-title {
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
 
-/* ── STATUS PANEL ── */
-.status-panel { margin: 0.5rem 0; padding: 0.6rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; text-align: center; width: 100%; }
-.status-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
-.status-row span:first-child { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
-.status-row span:last-child { font-size: 0.7rem; color: var(--text); }
-.coherence-big { font-size: 1.3rem; color: var(--gold); margin-bottom: 0.15rem; }
-.coherence-label { font-size: 0.55rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.3rem; }
-.click-hint { font-size: 0.6rem; color: var(--muted); font-style: italic; margin-top: 0.3rem; }
+/* Preset cycle buttons */
+.cycle-presets-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+.cycle-preset-mini {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.35rem 0.3rem;
+  font-size: 0.58rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+  letter-spacing: 0.05em;
+}
+.cycle-preset-mini:hover { border-color: var(--gold); color: var(--gold); }
+.cycle-preset-mini.sel { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
 
-/* ── SNAPSHOT DOWNLOAD ── */
-.snapshot-section { margin: 0.5rem 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; }
-.snapshot-title { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
-.snapshot-glyphs { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: center; }
-.snap-gly { font-size: 1.5rem; padding: 0.25rem 0.4rem; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: var(--surface); color: var(--muted); transition: all 0.3s; }
+/* Manual cycle inputs */
+.cycle-inputs-mini {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.cycle-input-mini {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.cycle-input-mini label {
+  font-size: 0.5rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.cycle-input-mini input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.3rem 0.2rem;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.cycle-input-mini input:focus { border-color: var(--gold); }
+
+/* Volume */
+.vol-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.vol-row label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; min-width: 28px; }
+.vol-slider { flex: 1; height: 3px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+.vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; cursor: pointer; }
+.vol-val { font-size: 0.6rem; color: var(--gold); min-width: 30px; text-align: right; }
+
+/* Soundscape layers */
+.snd-layer-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.snd-layer-mini label { font-size: 0.58rem; color: var(--muted); min-width: 60px; }
+.snd-toggle-mini {
+  width: 36px;
+  height: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.snd-toggle-mini::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--muted);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.snd-toggle-mini.on { border-color: var(--gold); background: var(--gold-dim); }
+.snd-toggle-mini.on::before { left: 18px; background: var(--gold); }
+.snd-vol-mini { flex: 1; height: 3px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+.snd-vol-mini::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; cursor: pointer; }
+
+/* Profile save/load */
+.profile-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.35rem 0.4rem;
+  font-size: 0.65rem;
+  border-radius: 3px;
+  outline: none;
+  margin-bottom: 0.4rem;
+  transition: border-color 0.3s;
+}
+.profile-input:focus { border-color: var(--gold); }
+.profile-btns { display: flex; gap: 0.4rem; }
+.profile-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.35rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.3s;
+}
+.profile-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Sidebar close button */
+.sidebar-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.3s;
+}
+.sidebar-close:hover { color: var(--gold); }
+
+/* ── TOGGLE SIDEBAR BUTTON ── */
+.sidebar-toggle-btn {
+  position: fixed;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px 0 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-right: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  z-index: 99;
+}
+.sidebar-toggle-btn:hover { color: var(--gold); border-color: var(--gold); }
+.sidebar-toggle-btn.active { display: none; }
+
+/* ── AUDIO TOGGLE ── */
+.audio-mini-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.audio-mini-toggle label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }
+.audio-mini-pill {
+  position: relative;
+  width: 44px;
+  height: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  transition: all 0.4s;
+}
+.audio-mini-pill::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--muted);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.audio-mini-pill.on { border-color: var(--gold); }
+.audio-mini-pill.on::before { left: 24px; background: var(--gold); box-shadow: 0 0 8px var(--gold-glow); }
+
+/* ── SNAPSHOT GLYPHS ── */
+.snap-row {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.snap-gly {
+  font-size: 1.2rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--bg);
+  color: var(--muted);
+  transition: all 0.3s;
+}
 .snap-gly:hover { border-color: var(--gold); color: var(--gold); }
-.snap-gly.selected { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
-.download-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 0.35rem 1rem; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
-.download-btn:hover { background: var(--gold-dim); }
-.snapshot-note { font-size: 0.55rem; color: var(--muted); font-style: italic; }
+.snap-gly.sel { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
 
-/* ── ADAPTIVE ENTRAINMENT INDICATOR ── */
-.entrainment-indicator { margin-top: 0.4rem; padding: 0.4rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
-.entrainment-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.3rem; }
-.entrainment-bars { display: flex; gap: 0.2rem; justify-content: center; }
-.entrainment-bar { width: 6px; height: 20px; background: var(--border); border-radius: 2px; transition: all 0.3s; }
-.entrainment-bar.active { background: var(--gold); }
-.entrainment-bar.peak { background: var(--emerald); box-shadow: 0 0 4px var(--emerald); }
-.entrainment-note { font-size: 0.55rem; color: var(--muted); margin-top: 0.3rem; font-style: italic; }
+/* ── WAVEFORM (subtle arc) ── */
+.waveform-strip {
+  width: min(200px, 60vw);
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  margin: 0.8rem auto;
+  position: relative;
+  overflow: visible;
+}
+.waveform-strip canvas {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  pointer-events: none;
+}
+
+/* ── MICRO-ANIMATIONS ── */
+@keyframes shimmer {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+.shimmer { animation: shimmer 2s ease-in-out infinite; }
+
+@keyframes breathePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+.breathe-anim { animation: breathePulse var(--breathe-dur, 20s) ease-in-out infinite; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.5s ease; }
+
+@keyframes slideInRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-in-right { animation: slideInRight 0.4s ease; }
+
+/* ── SLIDER base ── */
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  height: 3px; background: var(--border); border-radius: 2px; outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  background: var(--gold); border-radius: 50%; cursor: pointer;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 500px) {
+  .main-stage { padding: 1.5rem 0.75rem; }
+  .wheel-wrap { width: min(280px, 82vw); height: min(280px, 82vw); }
+  .sidebar { width: 240px; }
+}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="title">Field Resonator</div>
-  <div class="subtitle">Monadic Spiral — 432Hz Harmonic Alignment</div>
-</div>
 
-<div class="resonator-wrap">
+<div class="resonator-shell">
 
-  <!-- Wheel + Waveform side by side -->
-  <div class="meters-row">
-    <div class="resonator-col">
-      <div class="resonator-container" id="resonatorContainer">
-        <canvas id="resonatorCanvas"></canvas>
-        <div class="resonator-info">
-          <div class="freq-display">432 Hz — Monadic Spiral</div>
-          <div class="resonance-text">Hover to attune.<br>Click to begin.<br><br>Gold: Scalar<br>Indigo: Axis<br>Emerald: Flow</div>
+  <!-- ═══ MAIN STAGE ═══ -->
+  <div class="main-stage" id="mainStage">
+
+    <div class="stage-header">
+      <div class="stage-title">Field Resonator</div>
+      <div class="stage-subtitle" id="stageSubtitle">Monadic Spiral · 432Hz</div>
+    </div>
+
+    <!-- Step guide pips -->
+    <div class="step-guide" id="stepGuide">
+      <div class="step-pip active" data-step="1">
+        <div class="pip-dot"></div>
+        <div class="pip-label">Attune</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-pip" data-step="2">
+        <div class="pip-dot"></div>
+        <div class="pip-label">Breathe</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-pip" data-step="3">
+        <div class="pip-dot"></div>
+        <div class="pip-label">Resonate</div>
+      </div>
+    </div>
+
+    <!-- Wheel -->
+    <div class="wheel-wrap" id="wheelWrap">
+      <canvas id="resonatorCanvas" class="wheel-canvas attract" width="320" height="320"></canvas>
+      <div class="attract-ring"></div>
+
+      <!-- Step progress arc -->
+      <div class="step-arc">
+        <svg viewBox="0 0 110 110">
+          <circle class="step-arc-track" cx="55" cy="55" r="50" />
+          <circle class="step-arc-fill" id="stepArcFill" cx="55" cy="55" r="50" />
+        </svg>
+      </div>
+
+      <!-- Center -->
+      <div class="wheel-center-info">
+        <span class="center-glyph" id="centerGlyph">⊙</span>
+        <span class="center-freq" id="centerFreq">432 Hz</span>
+        <span class="center-hint" id="centerHint">click to begin</span>
+      </div>
+    </div>
+
+    <!-- Breath phase -->
+    <div class="breath-label" id="breathLabel"></div>
+
+    <!-- Coherence arc -->
+    <div class="coh-arc-wrap">
+      <div class="coh-arc-label">Field Coherence</div>
+      <div class="coh-arc-track">
+        <div class="coh-arc-fill" id="cohArcFill"></div>
+      </div>
+      <div class="coh-pct" id="cohPct">0%</div>
+    </div>
+
+    <!-- Waveform strip (subtle) -->
+    <div class="waveform-strip" id="waveformStrip">
+      <canvas id="waveCanvas" width="200" height="18"></canvas>
+    </div>
+
+    <!-- Entrainment strip -->
+    <div class="entrainment-strip" id="entrainmentStrip">
+      <div class="entrainment-cell" data-i="0"></div>
+      <div class="entrainment-cell" data-i="1"></div>
+      <div class="entrainment-cell" data-i="2"></div>
+      <div class="entrainment-cell" data-i="3"></div>
+      <div class="entrainment-cell" data-i="4"></div>
+      <div class="entrainment-cell" data-i="5"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebarClose">✕</button>
+
+    <!-- Breath Cycle -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Breath Cycle</div>
+      <div class="cycle-presets-mini" id="cyclePresetsMini">
+        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="10">5·5·10</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="8">4·4·8</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="7" data-out="8">4·7·8</button>
+        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6">6·0·6</button>
+        <button class="cycle-preset-mini" data-in="5" data-h="5" data-out="5">5·5·5</button>
+        <button class="cycle-preset-mini" data-in="3" data-h="3" data-out="6">3·3·6</button>
+      </div>
+      <div class="cycle-inputs-mini">
+        <div class="cycle-input-mini">
+          <label>In</label>
+          <input type="number" id="inhaleMini" value="5" min="1" max="30">
+        </div>
+        <div class="cycle-input-mini">
+          <label>Hold</label>
+          <input type="number" id="holdMini" value="5" min="0" max="30">
+        </div>
+        <div class="cycle-input-mini">
+          <label>Out</label>
+          <input type="number" id="exhaleMini" value="10" min="1" max="60">
         </div>
       </div>
     </div>
 
-    <div class="waveform-col">
-      <div class="waveform-container" id="waveformContainer" title="Waveform — breath to collapse">
-        <canvas id="waveformCanvas"></canvas>
+    <!-- Audio -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Audio</div>
+      <div class="audio-mini-toggle" id="audioMiniToggle">
+        <label>Resonance Tone</label>
+        <div class="audio-mini-pill" id="audioMiniPill"></div>
       </div>
-      <div class="waveform-label">Wave Collapse</div>
-    </div>
-  </div>
-
-  <!-- Live Coherence Meter -->
-  <div class="coherence-section">
-    <div class="coh-row">
-      <div class="coh-label">Coherence</div>
-      <div class="coh-bar-wrap"><div class="coh-bar" id="cohBar"></div></div>
-      <div class="coh-value" id="cohValue">0%</div>
-    </div>
-    <div class="coh-meta">
-      <span id="breathSyncLabel">breath sync: —</span>
-      <span id="userCountLabel">field: —</span>
-    </div>
-  </div>
-
-  <!-- Breath Indicator -->
-  <div class="breath-indicator">
-    <div class="breath-phase" id="breathPhase">Ready — Click wheel to begin</div>
-    <div class="breath-bar-wrap"><div class="breath-fill" id="breathFill"></div></div>
-  </div>
-
-  <!-- Adaptive entrainment bars -->
-  <div class="entrainment-indicator" id="entrainmentIndicator">
-    <div class="entrainment-label">Adaptive Breath Entrainment</div>
-    <div class="entrainment-bars" id="entrainmentBars">
-      <div class="entrainment-bar" data-i="0"></div>
-      <div class="entrainment-bar" data-i="1"></div>
-      <div class="entrainment-bar" data-i="2"></div>
-      <div class="entrainment-bar" data-i="3"></div>
-      <div class="entrainment-bar" data-i="4"></div>
-    </div>
-    <div class="entrainment-note">Bars show how well your breath matches the field frequency</div>
-  </div>
-
-  <!-- User-defined cycle config -->
-  <div class="cycle-config">
-    <div class="cycle-config-title">Breath Cycle Configuration</div>
-    <div class="cycle-inputs">
-      <div class="cycle-field"><label>Inhale (s)</label><input type="number" id="inhaleInput" value="5" min="1" max="30"></div>
-      <div class="cycle-field"><label>Hold (s)</label><input type="number" id="holdInput" value="5" min="0" max="30"></div>
-      <div class="cycle-field"><label>Exhale (s)</label><input type="number" id="exhaleInput" value="10" min="1" max="60"></div>
-    </div>
-    <div class="cycle-presets">
-      <button class="preset-btn active" data-in="5" data-h="5" data-out="10">5-5-10</button>
-      <button class="preset-btn" data-in="4" data-h="4" data-out="8">4-4-8</button>
-      <button class="preset-btn" data-in="4" data-h="7" data-out="8">4-7-8</button>
-      <button class="preset-btn" data-in="6" data-h="0" data-out="6">6-0-6</button>
-      <button class="preset-btn" data-in="5" data-h="5" data-out="5">5-5-5</button>
-      <button class="preset-btn" data-in="3" data-h="3" data-out="6">3-3-6</button>
-    </div>
-  </div>
-
-  <!-- Multi-layered soundscape -->
-  <div class="soundscape-config">
-    <div class="soundscape-title">Monadic Spiral Soundscapes</div>
-    <div class="soundscape-layers">
-      <div class="snd-layer">
-        <label>432Hz Seed</label>
-        <button class="snd-btn" id="snd432" data-f="432" title="432Hz — Scalar seed">△</button>
-        <input type="range" class="snd-vol" id="vol432" min="0" max="100" value="30">
-      </div>
-      <div class="snd-layer">
-        <label>528Hz Bloom</label>
-        <button class="snd-btn" id="snd528" data-f="528" title="528Hz — Symbol emergence">△</button>
-        <input type="range" class="snd-vol" id="vol528" min="0" max="100" value="20">
-      </div>
-      <div class="snd-layer">
-        <label>639Hz Bridge</label>
-        <button class="snd-btn" id="snd639" data-f="639" title="639Hz — Inversion">◁△▷</button>
-        <input type="range" class="snd-vol" id="vol639" min="0" max="100" value="15">
-      </div>
-      <div class="snd-layer">
-        <label>741Hz Axis</label>
-        <button class="snd-btn" id="snd741" data-f="741" title="741Hz — Deep axis">◇</button>
-        <input type="range" class="snd-vol" id="vol741" min="0" max="100" value="15">
-      </div>
-      <div class="snd-layer">
-        <label>852Hz Return</label>
-        <button class="snd-btn" id="snd852" data-f="852" title="852Hz — Convergence">◇</button>
-        <input type="range" class="snd-vol" id="vol852" min="0" max="100" value="10">
+      <div class="vol-row">
+        <label>Vol</label>
+        <input type="range" class="vol-slider" id="volSliderMini" min="0" max="100" value="30">
+        <span class="vol-val" id="volValMini">30%</span>
       </div>
     </div>
-    <div class="cycle-note">Activate multiple tones to build harmonic complexity. Higher coherence amplifies the field resonance.</div>
-  </div>
 
-  <!-- Audio Controls -->
-  <div class="audio-controls">
-    <div class="audio-row">
-      <span class="audio-label">Resonance Tone</span>
-      <div class="audio-toggle" id="audioToggle" role="button"><span class="audio-toggle-label"></span></div>
-      <div class="volume-row">
-        <span class="volume-label">Vol</span>
-        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="30">
-        <span class="volume-value" id="volumeValue">30%</span>
+    <!-- Soundscapes -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Soundscapes</div>
+      <div id="soundscapeLayers">
+        <div class="snd-layer-mini">
+          <label>432 △</label>
+          <div class="snd-toggle-mini" data-f="432" id="sndToggle432"></div>
+          <input type="range" class="snd-vol-mini" id="sndVol432" min="0" max="100" value="30">
+        </div>
+        <div class="snd-layer-mini">
+          <label>528 △</label>
+          <div class="snd-toggle-mini" data-f="528" id="sndToggle528"></div>
+          <input type="range" class="snd-vol-mini" id="sndVol528" min="0" max="100" value="20">
+        </div>
+        <div class="snd-layer-mini">
+          <label>639 ◁▷</label>
+          <div class="snd-toggle-mini" data-f="639" id="sndToggle639"></div>
+          <input type="range" class="snd-vol-mini" id="sndVol639" min="0" max="100" value="15">
+        </div>
+        <div class="snd-layer-mini">
+          <label>741 ◇</label>
+          <div class="snd-toggle-mini" data-f="741" id="sndToggle741"></div>
+          <input type="range" class="snd-vol-mini" id="sndVol741" min="0" max="100" value="15">
+        </div>
+        <div class="snd-layer-mini">
+          <label>852 ◇</label>
+          <div class="snd-toggle-mini" data-f="852" id="sndToggle852"></div>
+          <input type="range" class="snd-vol-mini" id="sndVol852" min="0" max="100" value="10">
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Status Panel -->
-  <div class="status-panel">
-    <div class="coherence-big" id="coherenceBig">0%</div>
-    <div class="coherence-label">Field Coherence</div>
-    <div class="status-row"><span>Breath phase</span><span id="statusPhase">idle</span></div>
-    <div class="status-row"><span>Cycle count</span><span id="cycleCount">0</span></div>
-    <div class="status-row"><span>Entrainment</span><span id="entrainmentStatus">—</span></div>
-    <div class="click-hint">The Monadic Spiral breathes through the field. Click wheel to begin alignment.</div>
-  </div>
-
-  <!-- Session Snapshot Download -->
-  <div class="snapshot-section">
-    <div class="snapshot-title">Codex Sigil — Session Snapshot</div>
-    <div class="snapshot-glyphs" id="snapshotGlyphs">
-      <button class="snap-gly" data-g="△">△</button>
-      <button class="snap-gly" data-g="◁△▷">◁△▷</button>
-      <button class="snap-gly" data-g="◇">◇</button>
-      <button class="snap-gly" data-g="⬟">⬟</button>
-      <button class="snap-gly" data-g="△̅">△̅</button>
-      <button class="snap-gly" data-g="⊕">⊕</button>
-      <button class="snap-gly" data-g="⊗">⊗</button>
-      <button class="snap-gly" data-g="◈">◈</button>
+    <!-- Snapshot -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Codex Sigil</div>
+      <div class="snap-row">
+        <button class="snap-gly sel" data-g="△">△</button>
+        <button class="snap-gly" data-g="◁△▷">◁△▷</button>
+        <button class="snap-gly" data-g="◇">◇</button>
+        <button class="snap-gly" data-g="⬟">⬟</button>
+        <button class="snap-gly" data-g="△̅">△̅</button>
+        <button class="snap-gly" data-g="⊕">⊕</button>
+      </div>
+      <div class="profile-btns">
+        <button class="profile-btn" id="btnSaveSnapshot">Seal Sigil</button>
+        <button class="profile-btn" id="btnDownloadSnapshot">Download</button>
+      </div>
     </div>
-    <button class="download-btn" id="btnDownloadSnapshot">Download Codex Sigil</button>
-    <div class="snapshot-note">Select a glyph, then download your session as a sealed Codex sigil image.</div>
+
+    <!-- Profile -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Resonance Profile</div>
+      <input type="text" class="profile-input" id="profileNameInput" placeholder="Profile name..." maxlength="20">
+      <div class="profile-btns">
+        <button class="profile-btn" id="btnSaveProfile">Save</button>
+        <button class="profile-btn" id="btnLoadProfile">Load</button>
+        <button class="profile-btn" id="btnDeleteProfile">Del</button>
+      </div>
+      <div id="profileList" style="margin-top:0.5rem;"></div>
+    </div>
+
   </div>
 
 </div>
 
+<!-- Sidebar toggle (floating) -->
+<button class="sidebar-toggle-btn active" id="sidebarToggleBtn">⚙</button>
+
 <script>
-// ══════════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════
+   FIELD RESONATOR v4 — Minimalist Immersive
+   Monadic Spiral · 3-step guided flow
+   ══════════════════════════════════════════════ */
+
 const SEGMENTS = 24;
 const PRIME_POS = [0, 4, 6, 10, 12, 16, 18, 22];
-const ROTATION_SPEED = 0.006;
-const BASE_FREQ = 432;
-const FREQ_RANGE = 48;
-const COLORS = { gold: '#e8c86a', indigo: 'rgba(74,58,106,0.7)', emerald: 'rgba(42,90,74,0.6)', goldDim: 'rgba(232,200,106,0.25)' };
+const ARC_CIRCUMFERENCE = 314; // 2 * PI * 50
 
-// ══════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════
-const canvas = document.getElementById('resonatorCanvas');
-const ctx = canvas.getContext('2d');
-const waveCanvas = document.getElementById('waveformCanvas');
-const waveCtx = waveCanvas.getContext('2d');
-
+/* ── STATE ── */
+let step = 1; // 1=attract, 2=breathe, 3=resonate
 let rotation = 0;
 let coherence = 0;
 let targetCoherence = 0;
-let breathCycle = { active: false, phase: 'ready', startTime: 0 };
+let breathActive = false;
+let breathPhase = 'idle';
 let cycleCount = 0;
-let breathQuality = 0;
+let entrainmentLevel = 0;
 let inhaleS = 5, holdS = 5, exhaleS = 10;
+let breathStartTime = 0;
 let audioCtx = null;
 let oscillators = {};
-let isAudioActive = false;
-let currentVolume = 0.3;
-let selectedSnapshotGlyph = '△';
+let isAudioOn = false;
+let masterVol = 0.3;
+let selectedGlyph = '△';
 let wavePoints = [];
 let wavePhase = 0;
-let entrainmentLevel = 0;
+let selectedSnapshotGlyph = '△';
 
-// Waveform state
-const WAVE_POINTS = 120;
-for (let i = 0; i < WAVE_POINTS; i++) wavePoints.push({ x: 0, y: 0 });
+/* ── CANVAS ── */
+const canvas = document.getElementById('resonatorCanvas');
+const ctx = canvas.getContext('2d');
+const waveCanvas = document.getElementById('waveCanvas');
+const waveCtx = waveCanvas.getContext('2d');
+let dpr = window.devicePixelRatio || 1;
+let canvasSize = 320;
 
-// ══════════════════════════════════════════════
-// CANVAS SIZING
-// ══════════════════════════════════════════════
-function resizeCanvas() {
-  const s = Math.min(200, window.innerWidth * 0.46);
-  canvas.width = s; canvas.height = s;
-  const ws = Math.min(200, window.innerWidth * 0.46);
-  waveCanvas.width = ws; waveCanvas.height = ws;
+function resizeCanvases() {
+  const wrap = document.getElementById('wheelWrap');
+  const s = wrap ? wrap.offsetWidth : 320;
+  canvasSize = s;
+  canvas.width = s * dpr;
+  canvas.height = s * dpr;
+  canvas.style.width = s + 'px';
+  canvas.style.height = s + 'px';
+  waveCanvas.width = waveCanvas.offsetWidth * dpr;
+  waveCanvas.height = 18 * dpr;
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+resizeCanvases();
+window.addEventListener('resize', resizeCanvases);
 
 function dims() {
-  const s = canvas.width;
-  return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.037 };
+  const s = canvasSize;
+  return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 };
 }
 
-// ══════════════════════════════════════════════
-// AUDIO ENGINE
-// ══════════════════════════════════════════════
+/* ── STEP SYSTEM ── */
+const STEP_LABELS = {
+  1: { title: 'Monadic Spiral · 432Hz', glyph: '⊙', hint: 'click to begin', sub: 'attune to the field' },
+  2: { title: 'Breath · Inhale', glyph: '△', hint: 'follow the cycle', sub: 'the field remembers' },
+  3: { title: 'Resonance Active', glyph: '◉', hint: 'sound amplifies', sub: 'coherence builds' }
+};
+
+function setStep(n) {
+  step = n;
+  updateStepUI();
+
+  // Micro-transition: play a soft tone on step change
+  playTransitionCue(n);
+
+  // Resize canvas for step 3 (extra space for soundscapes)
+  if (n === 3) {
+    document.getElementById('mainStage').classList.add('sidebar-open');
+    document.getElementById('sidebarToggleBtn').classList.remove('active');
+    document.getElementById('sidebar').classList.add('open');
+  }
+}
+
+function updateStepUI() {
+  // Pips
+  document.querySelectorAll('.step-pip').forEach(p => {
+    const s = parseInt(p.dataset.step);
+    p.classList.toggle('active', s === step);
+    p.classList.toggle('done', s < step);
+  });
+
+  // Arc fill (progress through steps)
+  const progress = (step - 1) / 2;
+  const offset = ARC_CIRCUMFERENCE - (ARC_CIRCUMFERENCE * progress);
+  document.getElementById('stepArcFill').style.strokeDashoffset = offset;
+
+  // Center info
+  const info = STEP_LABELS[step];
+  document.getElementById('centerGlyph').textContent = info.glyph;
+  document.getElementById('centerHint').textContent = info.hint;
+  document.getElementById('stageSubtitle').textContent = info.sub;
+
+  // Wheel class
+  canvas.className = 'wheel-canvas ' + (step === 1 ? 'attract' : 'active');
+
+  // Center glyph animation
+  if (step > 1) {
+    document.getElementById('centerGlyph').classList.add('entrained');
+  } else {
+    document.getElementById('centerGlyph').classList.remove('entrained');
+  }
+}
+
+/* ── AUDIO ── */
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-function createOsc(freq, vol) {
-  if (!audioCtx) initAudio();
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = 'sine';
-  o.frequency.value = freq;
-  g.gain.setValueAtTime(0, audioCtx.currentTime);
-  g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.1);
-  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
-  o.connect(g);
-  g.connect(audioCtx.destination);
-  o.start();
-  o.stop(audioCtx.currentTime + 2.5);
-}
-
-function playTone(freq, vol) {
+function createOsc(freq, vol, dur = 2) {
   try {
-    createOsc(freq, vol * 0.8);
-    createOsc(freq * 2, vol * 0.2);
-  } catch (e) {}
+    initAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + dur);
+    return o;
+  } catch (e) { return null; }
 }
 
-// Multi-layered soundscape oscillators
+function playTransitionCue(stepN) {
+  if (!isAudioOn) return;
+  const freqs = [261.6, 329.6, 392, 523.2];
+  createOsc(freqs[stepN - 1] || 432, masterVol * 0.12, 0.8);
+}
+
+function playPhaseCue(freq) {
+  if (!isAudioOn) return;
+  createOsc(freq, masterVol * 0.18, 1.2);
+}
+
 function startSoundscapeLayer(freq, vol) {
   if (!audioCtx) initAudio();
   if (oscillators[freq]) return;
@@ -407,190 +961,144 @@ function startSoundscapeLayer(freq, vol) {
 
 function stopSoundscapeLayer(freq) {
   if (oscillators[freq]) {
-    try {
-      oscillators[freq].o.stop();
-    } catch (e) {}
+    try { oscillators[freq].o.stop(); } catch (e) {}
     delete oscillators[freq];
   }
 }
 
 function updateSoundscapeVolumes() {
+  if (!isAudioOn) return;
   [432, 528, 639, 741, 852].forEach(f => {
     if (oscillators[f]) {
-      const volSlider = document.getElementById('vol' + f);
-      const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * currentVolume * 0.15;
-      // Modulate by coherence
-      oscillators[f].g.gain.setValueAtTime(vol * (0.5 + coherence / 200), audioCtx.currentTime);
+      const volSlider = document.getElementById('sndVol' + f);
+      const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.12;
+      const adjVol = vol * (0.4 + coherence / 200);
+      try { oscillators[f].g.gain.setValueAtTime(adjVol, audioCtx.currentTime); } catch (e) {}
     }
   });
 }
 
-// ══════════════════════════════════════════════
-// COHERENCE + ENTRAINMENT
-// ══════════════════════════════════════════════
+/* ── BREATH CYCLE ── */
 function getCycleDuration() { return inhaleS + holdS + exhaleS; }
 function getRatio() {
   const t = getCycleDuration();
   return { inhale: inhaleS / t, hold: holdS / t, exhale: exhaleS / t };
 }
 
-function updateCoherence() {
-  if (!breathCycle.active) {
-    targetCoherence = Math.max(0, targetCoherence - 1.5);
-    breathQuality = Math.max(0, breathQuality - 2);
-    entrainmentLevel = Math.max(0, entrainmentLevel - 3);
+const PHASE_LABELS = { idle: '', inhale: 'Inhale', hold: 'Hold', exhale: 'Exhale' };
+const PHASE_COLORS = { inhale: '#7a6a9a', hold: '#8a7aaa', exhale: '#5a7a6a' };
+
+function updateBreathState() {
+  if (!breathActive) {
+    targetCoherence = Math.max(0, targetCoherence - 2);
+    entrainmentLevel = Math.max(0, entrainmentLevel - 0.5);
     return;
   }
 
-  const elapsed = Date.now() - breathCycle.startTime;
+  const elapsed = Date.now() - breathStartTime;
   const totalDur = getCycleDuration() * 1000;
   const progress = (elapsed % totalDur) / totalDur;
   const ratio = getRatio();
 
   if (progress < ratio.inhale) {
-    breathCycle.phase = 'inhale';
-    targetCoherence = 55 + (progress / ratio.inhale) * 25;
-    breathQuality = Math.min(100, 60 + (progress / ratio.inhale) * 30);
-    entrainmentLevel = Math.min(5, Math.floor(breathQuality / 20));
+    breathPhase = 'inhale';
+    targetCoherence = 40 + (progress / ratio.inhale) * 35;
+    entrainmentLevel = Math.min(6, Math.floor((progress / ratio.inhale) * 6));
   } else if (progress < ratio.inhale + ratio.hold) {
-    breathCycle.phase = 'hold';
-    targetCoherence = 80 + Math.sin((progress - ratio.inhale) / ratio.hold * Math.PI) * 15;
-    breathQuality = Math.min(100, 90 + Math.sin((progress - ratio.inhale) / ratio.hold * Math.PI) * 10);
-    entrainmentLevel = 5;
+    breathPhase = 'hold';
+    targetCoherence = 75 + Math.sin((progress - ratio.inhale) / ratio.hold * Math.PI) * 20;
+    entrainmentLevel = 6;
   } else {
     const exProg = (progress - ratio.inhale - ratio.hold) / ratio.exhale;
-    breathCycle.phase = 'exhale';
-    targetCoherence = 60 - exProg * 25;
-    breathQuality = Math.max(0, 70 - exProg * 40);
-    entrainmentLevel = Math.max(0, Math.floor(breathQuality / 20));
+    breathPhase = 'exhale';
+    targetCoherence = Math.max(0, 60 - exProg * 30);
+    entrainmentLevel = Math.max(0, Math.floor((1 - exProg) * 6));
   }
-}
-
-function updateCoherenceDisplay() {
-  coherence += (targetCoherence - coherence) * 0.05;
-  const pct = Math.round(coherence);
-
-  document.getElementById('cohBar').style.width = pct + '%';
-  document.getElementById('cohValue').textContent = pct + '%';
-  document.getElementById('coherenceBig').textContent = pct + '%';
-  document.getElementById('breathSyncLabel').textContent = breathCycle.active ? `breath sync: ${Math.round(breathQuality)}%` : 'breath sync: —';
-  document.getElementById('entrainmentStatus').textContent = breathCycle.active ? ['drifting', 'settling', 'syncing', 'locking', 'entrained', 'entrained'][entrainmentLevel] : '—';
-
-  // Update entrainment bars
-  document.querySelectorAll('.entrainment-bar').forEach((bar, i) => {
-    bar.classList.toggle('active', i < entrainmentLevel);
-    bar.classList.toggle('peak', i === 4 && entrainmentLevel === 5);
-  });
 }
 
 function updateBreathUI() {
-  if (!breathCycle.active) {
-    document.getElementById('breathPhase').textContent = 'Ready — Click wheel to begin';
-    document.getElementById('breathFill').style.width = '0%';
-    document.getElementById('statusPhase').textContent = 'idle';
-    return;
+  // Phase label + color
+  const bl = document.getElementById('breathLabel');
+  bl.textContent = breathActive ? PHASE_LABELS[breathPhase] : '';
+  bl.style.color = PHASE_COLORS[breathPhase] || 'transparent';
+
+  // Center glyph changes with phase
+  const glyphs = { inhale: '△', hold: '◇', exhale: '◁▷', idle: step === 3 ? '◉' : '⊙' };
+  document.getElementById('centerGlyph').textContent = glyphs[breathPhase] || glyphs.idle;
+
+  // Freq display
+  if (breathActive) {
+    const freqs = { inhale: 432, hold: 528, exhale: 639 };
+    document.getElementById('centerFreq').textContent = (freqs[breathPhase] || 432) + ' Hz';
   }
 
-  const elapsed = Date.now() - breathCycle.startTime;
-  const totalDur = getCycleDuration() * 1000;
-  const progress = (elapsed % totalDur) / totalDur;
-  document.getElementById('breathFill').style.width = (progress * 100) + '%';
-
-  const labels = { inhale: 'Inhale', hold: 'Hold', exhale: 'Exhale' };
-  document.getElementById('breathPhase').textContent = labels[breathCycle.phase] || 'Processing';
-  document.getElementById('breathPhase').style.color = breathCycle.phase === 'inhale' ? 'var(--gold)' : breathCycle.phase === 'hold' ? '#a080d0' : 'var(--emerald)';
-  document.getElementById('statusPhase').textContent = breathCycle.phase;
+  // Entrainment cells
+  document.querySelectorAll('.entrainment-cell').forEach((c, i) => {
+    c.classList.toggle('lit', i < entrainmentLevel);
+  });
 }
 
-// ══════════════════════════════════════════════
-// WAVEFORM VISUALIZATION
-// ══════════════════════════════════════════════
-function drawWaveform() {
-  const s = waveCanvas.width;
-  waveCtx.clearRect(0, 0, s, s);
+function updateCoherence() {
+  coherence += (targetCoherence - coherence) * 0.04;
+  const pct = Math.round(coherence);
+  document.getElementById('cohArcFill').style.width = pct + '%';
+  document.getElementById('cohPct').textContent = pct + '%';
+}
 
-  // Background
-  waveCtx.fillStyle = 'rgba(7,7,15,0.95)';
-  waveCtx.fillRect(0, 0, s, s);
+/* ── WAVEFORM STRIP ── */
+function drawWaveformStrip() {
+  const w = waveCanvas.offsetWidth;
+  const h = 18;
+  waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
 
-  const cx = s / 2, cy = s / 2;
-  const waveRadius = s * 0.38;
-
-  // Grid rings
-  waveCtx.strokeStyle = 'rgba(232,200,106,0.06)';
-  waveCtx.lineWidth = 0.5;
-  for (let r = s * 0.15; r < s * 0.45; r += s * 0.1) {
-    waveCtx.beginPath();
-    waveCtx.arc(cx, cy, r, 0, Math.PI * 2);
-    waveCtx.stroke();
+  // Build points
+  if (wavePoints.length < 80) {
+    for (let i = 0; i < 80; i++) wavePoints.push({ v: 0.5 });
   }
-
-  // Wave collapse rings based on coherence
-  const rings = Math.floor(coherence / 20);
-  for (let r = 0; r < rings; r++) {
-    waveCtx.strokeStyle = `rgba(42,90,74,${0.3 - r * 0.05})`;
-    waveCtx.lineWidth = 1;
-    waveCtx.beginPath();
-    waveCtx.arc(cx, cy, waveRadius * ((r + 1) / 5), 0, Math.PI * 2);
-    waveCtx.stroke();
-  }
-
-  // Dynamic waveform spiral
-  wavePoints.push({ x: wavePhase, y: breathQuality });
-  if (wavePoints.length > WAVE_POINTS) wavePoints.shift();
+  wavePoints.push({ v: breathActive ? entrainmentLevel / 6 : Math.random() * 0.2 });
+  if (wavePoints.length > 80) wavePoints.shift();
 
   waveCtx.beginPath();
   wavePoints.forEach((p, i) => {
-    const angle = (i / WAVE_POINTS) * Math.PI * 2 + wavePhase;
-    const r = waveRadius * (0.5 + (p.y / 100) * 0.5);
-    const wx = cx + Math.cos(angle) * r;
-    const wy = cy + Math.sin(angle) * r;
-    if (i === 0) waveCtx.moveTo(wx, wy);
-    else waveCtx.lineTo(wx, wy);
+    const x = (i / 80) * w * dpr;
+    const y = p.v * h * dpr;
+    if (i === 0) waveCtx.moveTo(x, y);
+    else waveCtx.lineTo(x, y);
   });
-  waveCtx.strokeStyle = `rgba(232,200,106,${0.3 + coherence / 100 * 0.5})`;
-  waveCtx.lineWidth = 1.5;
+  waveCtx.strokeStyle = `rgba(212,184,150,${0.2 + coherence / 100 * 0.4})`;
+  waveCtx.lineWidth = dpr;
   waveCtx.stroke();
-
-  // Glow at center
-  const grd = waveCtx.createRadialGradient(cx, cy, 0, cx, cy, s * 0.15);
-  grd.addColorStop(0, `rgba(232,200,106,${coherence / 100 * 0.4})`);
-  grd.addColorStop(1, 'rgba(0,0,0,0)');
-  waveCtx.fillStyle = grd;
-  waveCtx.beginPath();
-  waveCtx.arc(cx, cy, s * 0.15, 0, Math.PI * 2);
-  waveCtx.fill();
-
-  wavePhase += 0.03;
 }
 
-// ══════════════════════════════════════════════
-// WHEEL RENDERER
-// ══════════════════════════════════════════════
+/* ── WHEEL RENDERER ── */
 function getIcositetragonPoints(d, rot) {
   const pts = [];
   for (let i = 0; i < SEGMENTS; i++) {
     const angle = (i / SEGMENTS) * Math.PI * 2 + rot - Math.PI / 2;
-    pts.push({ x: d.cx + Math.cos(angle) * d.r, y: d.cy + Math.sin(angle) * d.r, prime: PRIME_POS.includes(i) });
+    pts.push({
+      x: d.cx + Math.cos(angle) * d.r,
+      y: d.cy + Math.sin(angle) * d.r,
+      prime: PRIME_POS.includes(i)
+    });
   }
   return pts;
 }
 
 function drawWheel() {
-  const s = canvas.width;
+  const s = canvasSize;
   ctx.clearRect(0, 0, s, s);
   const d = dims();
 
   // Background glow
   const grad = ctx.createRadialGradient(d.cx, d.cy, 0, d.cx, d.cy, d.r);
-  grad.addColorStop(0, `rgba(232,200,106,${0.04 + coherence / 100 * 0.06})`);
+  grad.addColorStop(0, `rgba(212,184,150,${0.03 + coherence / 100 * 0.06})`);
   grad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, s, s);
 
-  // Circular grid
-  ctx.strokeStyle = COLORS.indigo;
-  ctx.lineWidth = 0.6;
+  // Grid rings
+  ctx.strokeStyle = 'rgba(22,22,42,0.8)';
+  ctx.lineWidth = 0.5;
   [0.3, 0.5, 0.7, 0.9].forEach(r => {
     ctx.beginPath();
     ctx.arc(d.cx, d.cy, d.r * r, 0, Math.PI * 2);
@@ -599,7 +1107,7 @@ function drawWheel() {
 
   // Triangular grid
   const pts = getIcositetragonPoints(d, rotation);
-  ctx.strokeStyle = COLORS.goldDim;
+  ctx.strokeStyle = 'rgba(212,184,150,0.1)';
   ctx.lineWidth = 0.5;
   for (let i = 0; i < SEGMENTS; i += 8) {
     const p1 = pts[i], p2 = pts[(i + 8) % SEGMENTS], p3 = pts[(i + 16) % SEGMENTS];
@@ -612,7 +1120,7 @@ function drawWheel() {
   }
 
   // Main icositetragon
-  ctx.strokeStyle = COLORS.gold;
+  ctx.strokeStyle = `rgba(212,184,150,${0.4 + coherence / 100 * 0.5})`;
   ctx.lineWidth = 1.2;
   ctx.beginPath();
   pts.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
@@ -620,7 +1128,7 @@ function drawWheel() {
   ctx.stroke();
 
   // Pentagonal inner
-  ctx.strokeStyle = COLORS.emerald;
+  ctx.strokeStyle = 'rgba(90,122,106,0.5)';
   ctx.lineWidth = 0.8;
   ctx.beginPath();
   for (let i = 0; i < 5; i++) {
@@ -634,232 +1142,321 @@ function drawWheel() {
   // Prime nodes
   pts.forEach(p => {
     if (p.prime) {
-      ctx.fillStyle = COLORS.gold;
+      const alpha = 0.4 + coherence / 100 * 0.6;
+      ctx.fillStyle = `rgba(212,184,150,${alpha})`;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
   // Breath pulse ring
-  if (breathCycle.active) {
-    const elapsed = Date.now() - breathCycle.startTime;
+  if (breathActive) {
+    const elapsed = Date.now() - breathStartTime;
     const totalDur = getCycleDuration() * 1000;
     const progress = (elapsed % totalDur) / totalDur;
     const ratio = getRatio();
     let pulseR = d.r;
+    let alpha = 0.4;
 
     if (progress < ratio.inhale) {
       pulseR = d.r * (0.82 + (progress / ratio.inhale) * 0.18);
+      alpha = 0.3 + coherence / 100 * 0.4;
     } else if (progress < ratio.inhale + ratio.hold) {
       pulseR = d.r;
+      alpha = 0.6;
     } else {
       const exProg = (progress - ratio.inhale - ratio.hold) / ratio.exhale;
       pulseR = d.r * (1 - exProg * 0.18);
+      alpha = 0.5 - exProg * 0.2;
     }
 
-    const alpha = breathCycle.phase === 'hold' ? 0.7 : 0.35 + coherence / 100 * 0.3;
-    const color = breathCycle.phase === 'inhale' ? COLORS.gold : breathCycle.phase === 'hold' ? COLORS.indigo : COLORS.emerald;
-    ctx.strokeStyle = color;
-    ctx.globalAlpha = alpha;
+    const colors = { inhale: 'rgba(122,106,154,', hold: 'rgba(138,122,170,', exhale: 'rgba(90,122,106,' };
+    const c = colors[breathPhase] || colors.inhale;
+    ctx.strokeStyle = c + alpha + ')';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(d.cx, d.cy, pulseR, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.globalAlpha = 1;
   }
 
-  // Center
+  // Center dot
   const hg = ctx.createRadialGradient(d.cx, d.cy, 0, d.cx, d.cy, d.hr * 2.5);
-  hg.addColorStop(0, `rgba(232,200,106,${0.15 + coherence / 100 * 0.25})`);
+  hg.addColorStop(0, `rgba(212,184,150,${0.08 + coherence / 100 * 0.2})`);
   hg.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = hg;
   ctx.beginPath();
   ctx.arc(d.cx, d.cy, d.hr * 2.5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#4a3a2a';
+
+  ctx.fillStyle = '#1e1e32';
   ctx.beginPath();
   ctx.arc(d.cx, d.cy, d.hr, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#c8b888';
-  ctx.font = `${s * 0.032}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('⊙', d.cx, d.cy);
 }
 
-// ══════════════════════════════════════════════
-// ANIMATION LOOP
-// ══════════════════════════════════════════════
+/* ── ANIMATION LOOP ── */
 function animate() {
-  updateCoherence();
-  updateCoherenceDisplay();
+  updateBreathState();
   updateBreathUI();
+  updateCoherence();
   updateSoundscapeVolumes();
   drawWheel();
-  drawWaveform();
-  rotation += ROTATION_SPEED;
+  drawWaveformStrip();
+  rotation += 0.004;
   requestAnimationFrame(animate);
 }
 
-// ══════════════════════════════════════════════
-// EVENTS
-// ══════════════════════════════════════════════
-document.getElementById('resonatorContainer').addEventListener('click', () => {
-  if (!breathCycle.active) {
-    breathCycle.active = true;
-    breathCycle.startTime = Date.now();
-    cycleCount++;
-    document.getElementById('cycleCount').textContent = cycleCount;
+/* ── WHEEL CLICK ── */
+document.getElementById('resonatorContainer')?.addEventListener('click', handleWheelClick);
+document.getElementById('wheelWrap')?.addEventListener('click', handleWheelClick);
+canvas.addEventListener('click', handleWheelClick);
+
+function handleWheelClick() {
+  if (step === 1) {
+    // Attract → Breathe
+    setStep(2);
+    startBreath();
+    if (isAudioOn) createOsc(261.6, masterVol * 0.15, 1.5);
+  } else if (step === 2) {
+    // Breathe → Resonate
+    setStep(3);
+    if (isAudioOn) createOsc(392, masterVol * 0.15, 1.5);
   } else {
-    breathCycle.active = false;
-    breathCycle.phase = 'ready';
-    targetCoherence = 0;
-    breathQuality = 0;
-    entrainmentLevel = 0;
-  }
-});
-
-// Audio toggle
-document.getElementById('audioToggle').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const el = document.getElementById('audioToggle');
-  if (isAudioActive) {
-    Object.keys(oscillators).forEach(f => stopSoundscapeLayer(parseFloat(f)));
-    isAudioActive = false;
-    el.classList.remove('active');
-  } else {
-    initAudio();
-    // Start base 432Hz layer
-    startSoundscapeLayer(432, currentVolume * 0.15);
-    isAudioActive = true;
-    el.classList.add('active');
-  }
-});
-
-// Volume
-document.getElementById('volumeSlider').addEventListener('input', (e) => {
-  currentVolume = e.target.value / 100;
-  document.getElementById('volumeValue').textContent = e.target.value + '%';
-});
-
-// Soundscape layer buttons
-[432, 528, 639, 741, 852].forEach(f => {
-  const btn = document.getElementById('snd' + f);
-  if (!btn) return;
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const vol = parseInt(document.getElementById('vol' + f).value) / 100;
-    if (oscillators[f]) {
-      stopSoundscapeLayer(f);
-      btn.classList.remove('active', 'playing');
+    // Toggle breath
+    if (breathActive) {
+      breathActive = false;
+      breathPhase = 'idle';
+      targetCoherence = Math.max(0, coherence * 0.7);
     } else {
-      startSoundscapeLayer(f, currentVolume * vol);
-      btn.classList.add('active', 'playing');
+      startBreath();
     }
-  });
-});
+  }
+}
 
-// Cycle config inputs
-['inhaleInput', 'holdInput', 'exhaleInput'].forEach(id => {
-  document.getElementById(id).addEventListener('change', (e) => {
-    const val = parseFloat(e.target.value) || 0;
-    if (id === 'inhaleInput') inhaleS = Math.max(1, val);
-    if (id === 'holdInput') holdS = Math.max(0, val);
-    if (id === 'exhaleInput') exhaleS = Math.max(1, val);
-    if (breathCycle.active) breathCycle.startTime = Date.now();
-    updatePresetButtons();
-  });
-});
+function startBreath() {
+  breathActive = true;
+  breathStartTime = Date.now();
+  cycleCount++;
+  playPhaseCue(432);
+}
 
-// Presets
-document.querySelectorAll('.preset-btn').forEach(btn => {
+/* ── CYCLE CONFIG ── */
+function syncCycleUI() {
+  document.getElementById('inhaleMini').value = inhaleS;
+  document.getElementById('holdMini').value = holdS;
+  document.getElementById('exhaleMini').value = exhaleS;
+  document.querySelectorAll('.cycle-preset-mini').forEach(b => {
+    b.classList.toggle('sel',
+      parseInt(b.dataset.in) === inhaleS &&
+      parseInt(b.dataset.h) === holdS &&
+      parseInt(b.dataset.out) === exhaleS
+    );
+  });
+}
+
+document.querySelectorAll('.cycle-preset-mini').forEach(btn => {
   btn.addEventListener('click', () => {
     inhaleS = parseInt(btn.dataset.in);
     holdS = parseInt(btn.dataset.h);
     exhaleS = parseInt(btn.dataset.out);
-    document.getElementById('inhaleInput').value = inhaleS;
-    document.getElementById('holdInput').value = holdS;
-    document.getElementById('exhaleInput').value = exhaleS;
-    if (breathCycle.active) breathCycle.startTime = Date.now();
-    updatePresetButtons();
+    syncCycleUI();
+    if (breathActive) breathStartTime = Date.now();
   });
 });
 
-function updatePresetButtons() {
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    const match = parseInt(btn.dataset.in) === inhaleS && parseInt(btn.dataset.h) === holdS && parseInt(btn.dataset.out) === exhaleS;
-    btn.classList.toggle('active', match);
+['inhaleMini', 'holdMini', 'exhaleMini'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', e => {
+    const v = parseInt(e.target.value) || 1;
+    if (id === 'inhaleMini') inhaleS = Math.max(1, v);
+    if (id === 'holdMini') holdS = Math.max(0, v);
+    if (id === 'exhaleMini') exhaleS = Math.max(1, v);
+    syncCycleUI();
+    if (breathActive) breathStartTime = Date.now();
   });
-}
+});
 
-// Snapshot glyph selection
+/* ── AUDIO TOGGLE ── */
+document.getElementById('audioMiniToggle').addEventListener('click', () => {
+  isAudioOn = !isAudioOn;
+  document.getElementById('audioMiniPill').classList.toggle('on', isAudioOn);
+  if (isAudioOn) {
+    initAudio();
+    // Start base drone
+    startSoundscapeLayer(432, masterVol * 0.12);
+  } else {
+    Object.keys(oscillators).forEach(f => stopSoundscapeLayer(parseFloat(f)));
+  }
+});
+
+document.getElementById('volSliderMini').addEventListener('input', e => {
+  masterVol = e.target.value / 100;
+  document.getElementById('volValMini').textContent = e.target.value + '%';
+});
+
+/* ── SOUNDSCAPE LAYERS ── */
+[432, 528, 639, 741, 852].forEach(f => {
+  const toggle = document.getElementById('sndToggle' + f);
+  const volSlider = document.getElementById('sndVol' + f);
+  if (!toggle) return;
+
+  toggle.addEventListener('click', () => {
+    const on = toggle.classList.contains('on');
+    if (on) {
+      toggle.classList.remove('on');
+      if (oscillators[f]) stopSoundscapeLayer(f);
+    } else {
+      toggle.classList.add('on');
+      if (isAudioOn) {
+        const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.12;
+        startSoundscapeLayer(f, vol);
+      }
+    }
+  });
+});
+
+/* ── SIDEBAR ── */
+document.getElementById('sidebarToggleBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('mainStage').classList.add('sidebar-open');
+  document.getElementById('sidebarToggleBtn').classList.remove('active');
+  if (step === 1) setStep(2);
+});
+document.getElementById('sidebarClose').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mainStage').classList.remove('sidebar-open');
+  document.getElementById('sidebarToggleBtn').classList.add('active');
+});
+document.getElementById('sidebar').addEventListener('click', e => {
+  if (e.target === document.getElementById('sidebar')) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mainStage').classList.remove('sidebar-open');
+    document.getElementById('sidebarToggleBtn').classList.add('active');
+  }
+});
+
+/* ── SNAPSHOT GLYPHS ── */
 document.querySelectorAll('.snap-gly').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.snap-gly').forEach(x => x.classList.remove('selected'));
-    btn.classList.add('selected');
+    document.querySelectorAll('.snap-gly').forEach(x => x.classList.remove('sel'));
+    btn.classList.add('sel');
     selectedSnapshotGlyph = btn.dataset.g;
   });
 });
 
-// Snapshot download
-document.getElementById('btnDownloadSnapshot').addEventListener('click', () => {
-  const sigilGlyph = selectedSnapshotGlyph;
-  const now = new Date();
-  const dateStr = now.toLocaleString().replace(/[:\s]/g, '-').replace(/,/g, '');
-  const coherencePct = Math.round(coherence);
-  const cyclePhase = breathCycle.phase || 'idle';
-  const breathLabel = inhaleS + '-' + holdS + '-' + exhaleS;
+/* ── DOWNLOAD SIGIL ── */
+document.getElementById('btnDownloadSnapshot')?.addEventListener('click', downloadSigil);
+document.getElementById('btnSaveSnapshot')?.addEventListener('click', () => {
+  const glyph = selectedSnapshotGlyph;
+  const key = 'resonator_snapshot_' + glyph;
+  const data = {
+    glyph,
+    coherence: Math.round(coherence),
+    phase: breathPhase,
+    cycle: inhaleS + '-' + holdS + '-' + exhaleS,
+    ts: Date.now()
+  };
+  localStorage.setItem(key, JSON.stringify(data));
+  alert('Sigil sealed: ' + glyph + ' — ' + Math.round(coherence) + '% coherence');
+});
 
-  // Create a sigil image
-  const imgSize = 400;
+function downloadSigil() {
+  const s = 400;
   const oc = document.createElement('canvas');
-  oc.width = imgSize; oc.height = imgSize;
+  oc.width = s; oc.height = s;
   const ox = oc.getContext('2d');
-
-  // Background
-  ox.fillStyle = '#07070f';
-  ox.fillRect(0, 0, imgSize, imgSize);
-
-  // Border
-  ox.strokeStyle = '#e8c86a';
+  ox.fillStyle = '#06060e';
+  ox.fillRect(0, 0, s, s);
+  ox.strokeStyle = '#d4b896';
   ox.lineWidth = 2;
-  ox.strokeRect(4, 4, imgSize - 8, imgSize - 8);
+  ox.strokeRect(4, 4, s - 8, s - 8);
 
-  // 24-dot circle
-  ox.fillStyle = '#e8c86a';
+  // 24 dots
+  ox.fillStyle = '#d4b896';
   for (let i = 0; i < 24; i++) {
     const a = (i / 24) * Math.PI * 2 - Math.PI / 2;
-    const r = imgSize * 0.38;
-    const x = imgSize / 2 + Math.cos(a) * r;
-    const y = imgSize / 2 + Math.sin(a) * r;
+    const r = s * 0.38;
     ox.beginPath();
-    ox.arc(x, y, PRIME_POS.includes(i) ? 4 : 2, 0, Math.PI * 2);
+    ox.arc(s / 2 + Math.cos(a) * r, s / 2 + Math.sin(a) * r, PRIME_POS.includes(i) ? 4 : 2, 0, Math.PI * 2);
     ox.fill();
   }
 
-  // Central glyph
   ox.font = 'bold 96px serif';
-  ox.fillStyle = '#e8c86a';
+  ox.fillStyle = '#d4b896';
   ox.textAlign = 'center';
   ox.textBaseline = 'middle';
-  ox.fillText(sigilGlyph, imgSize / 2, imgSize / 2);
+  ox.fillText(selectedSnapshotGlyph, s / 2, s / 2);
 
-  // Metadata text
-  ox.font = '14px monospace';
-  ox.fillStyle = '#6a6050';
-  ox.fillText(`COHERENCE ${coherencePct}% | ${cyclePhase} | ${breathLabel}s | ${dateStr}`, imgSize / 2, imgSize * 0.88);
+  ox.font = '13px monospace';
+  ox.fillStyle = '#444460';
+  ox.fillText(`COHERENCE ${Math.round(coherence)}% | ${breathPhase} | ${inhaleS}-${holdS}-${exhaleS}s`, s / 2, s * 0.87);
 
-  // Download
   const b = document.createElement('a');
   b.href = oc.toDataURL('image/png');
-  b.download = `codex-sigil-${sigilGlyph}-${coherencePct}pct-${dateStr}.png`;
+  b.download = `codex-sigil-${selectedSnapshotGlyph}-${Math.round(coherence)}pct.png`;
   b.click();
+}
+
+/* ── RESONANCE PROFILES ── */
+function loadProfiles() {
+  const list = document.getElementById('profileList');
+  if (!list) return;
+  list.innerHTML = '';
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('resonator_profile_'));
+  keys.forEach(k => {
+    const name = k.replace('resonator_profile_', '');
+    const div = document.createElement('div');
+    div.style.cssText = 'font-size:0.6rem;color:var(--muted);padding:0.25rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;';
+    div.innerHTML = `<span>${name}</span><button class="profile-btn" data-name="${name}" style="flex:none;padding:0.2rem 0.4rem;">→</button>`;
+    div.querySelector('button').addEventListener('click', () => loadProfile(name));
+    list.appendChild(div);
+  });
+}
+
+function saveProfile(name) {
+  const data = { inhaleS, holdS, exhaleS, masterVol };
+  localStorage.setItem('resonator_profile_' + name, JSON.stringify(data));
+  loadProfiles();
+}
+
+function loadProfile(name) {
+  const raw = localStorage.getItem('resonator_profile_' + name);
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    inhaleS = d.inhaleS || 5;
+    holdS = d.holdS || 5;
+    exhaleS = d.exhaleS || 10;
+    masterVol = d.masterVol || 0.3;
+    syncCycleUI();
+    document.getElementById('volSliderMini').value = masterVol * 100;
+    document.getElementById('volValMini').textContent = Math.round(masterVol * 100) + '%';
+  } catch (e) {}
+}
+
+document.getElementById('btnSaveProfile')?.addEventListener('click', () => {
+  const name = document.getElementById('profileNameInput').value.trim();
+  if (!name) return;
+  saveProfile(name);
+});
+document.getElementById('btnLoadProfile')?.addEventListener('click', () => {
+  const name = document.getElementById('profileNameInput').value.trim();
+  if (name) loadProfile(name);
+});
+document.getElementById('btnDeleteProfile')?.addEventListener('click', () => {
+  const name = document.getElementById('profileNameInput').value.trim();
+  if (name && localStorage.getItem('resonator_profile_' + name)) {
+    localStorage.removeItem('resonator_profile_' + name);
+    loadProfiles();
+  }
 });
 
-// Start
+/* ── INIT ── */
+syncCycleUI();
+loadProfiles();
+updateStepUI();
 animate();
-console.log('🜂 Field Resonator v3 — Monadic Spiral, soundscapes, waveform collapse, session snapshots.');
+console.log('🜂 Field Resonator v4 — Minimalist Immersive');
 </script>
 </body>
 </html>
