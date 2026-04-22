@@ -1,222 +1,226 @@
-// Codex Portal V3.1 — Multi-User Breath Sync Server
-// WebSocket + HTTP on port 3737
-// Run: node server.js
+// ═══════════════════════════════════════════════════════════════════════
+// CODEX PORTAL — server.js
+// WebSocket + HTTP server with multi-user coherence tracking
+// ═══════════════════════════════════════════════════════════════════════
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const WebSocket = require('ws');
+const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 3737;
-const HTTP_DIR = path.join(__dirname);
+const PUBLIC_DIR = path.join(__dirname);
 
-// ── HTTP Server (serves the portal) ──
+// ── HTTP SERVER ──
+const mimeTypes = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+};
+
 const server = http.createServer((req, res) => {
-  let filePath = path.join(HTTP_DIR, req.url === '/' ? 'v3.html' : req.url);
-  if (!fs.existsSync(filePath)) filePath = path.join(HTTP_DIR, 'v3.html');
-  const ext = path.extname(filePath);
-  const mime = { '.html':'text/html', '.js':'application/javascript', '.css':'text/css', '.json':'application/json' }[ext] || 'text/plain';
-  fs.readFile(filePath, (err, data) => {
-    if (err) { res.writeHead(404); res.end('Not found'); return; }
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(data);
-  });
-});
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-// ── WebSocket Server ──
-const wss = new WebSocket.Server({ server });
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
 
-// Client state
-const clients = new Map(); // ws → { id, sigil, phase, lastSeen, joinedAt }
-const ROOM = 'codex-field';
-let serverPhase = 0; // 0-6 (6 = idle)
-let serverPhaseStart = 0;
-let unifiedBreath = false;
-let serverCycleCount = 0;
+  let filePath = req.url === '/' ? '/index.html' : req.url;
+  // Remove query string
+  filePath = filePath.split('?')[0];
 
-function broadcast(data, exclude = null) {
-  const msg = JSON.stringify(data);
-  wss.clients.forEach(client => {
-    if (client !== exclude && client.readyState === WebSocket.OPEN) {
-      client.send(msg);
-    }
-  });
-}
+  const fullPath = path.join(PUBLIC_DIR, filePath);
+  const ext = path.extname(fullPath);
+  const mimeType = mimeTypes[ext] || 'text/plain';
 
-function broadcastAll(data) {
-  broadcast(data, null);
-}
-
-function getClientCount() {
-  let count = 0;
-  wss.clients.forEach(() => count++);
-  return count;
-}
-
-function getClientsData() {
-  const list = [];
-  clients.forEach((c, ws) => { if (ws.readyState === WebSocket.OPEN) list.push({ sigil: c.sigil, phase: c.phase }); });
-  return list;
-}
-
-function calcCoherence() {
-  const clientsArr = [];
-  clients.forEach(c => { if (c.phase !== undefined) clientsArr.push(c.phase); });
-  if (clientsArr.length < 2) return clientsArr.length === 1 ? 60 : 0;
-  // Count how many are on same phase
-  const counts = {};
-  clientsArr.forEach(p => { counts[p] = (counts[p] || 0) + 1; });
-  const max = Math.max(...Object.values(counts));
-  return Math.round((max / clientsArr.length) * 100);
-}
-
-function generateId() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
-// Phase advance broadcast
-function advanceServerPhase() {
-  if (serverPhase < 6) {
-    serverPhase++;
-    serverPhaseStart = Date.now();
-    broadcastAll({
-      type: 'phase',
-      phase: serverPhase,
-      timestamp: serverPhaseStart,
-      cycleCount: serverCycleCount,
-      coherence: calcCoherence(),
-      users: getClientsData()
-    });
-    if (serverPhase < 6) {
-      setTimeout(advanceServerPhase, 5000);
+  try {
+    const content = fs.readFileSync(fullPath);
+    res.writeHead(200, { 'Content-Type': mimeType });
+    res.end(content);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      res.writeHead(404);
+      res.end('Not found');
     } else {
-      // Cycle complete
-      serverCycleCount++;
-      broadcastAll({ type: 'cycle_complete', cycleCount: serverCycleCount, coherence: calcCoherence(), users: getClientsData() });
-      // Reset to idle after 3s
-      setTimeout(() => {
-        serverPhase = 0;
-        broadcastAll({ type: 'idle', cycleCount: serverCycleCount, coherence: 0, users: getClientsData() });
-      }, 3000);
+      res.writeHead(500);
+      res.end('Server error');
     }
   }
+});
+
+// ── WEBSOCKET SERVER ──
+const wss = new WebSocketServer({ server });
+
+// Connected clients
+const clients = new Map(); // clientId → { ws, sigil, coherence, phase, lastUpdate, joinedAt }
+
+// Client ID counter
+let clientIdCounter = 0;
+
+// ── FIELD STATE CONFIG ──
+const FIELD_CONFIG = {
+  SYNC_WINDOW: 600,             // ms tolerance for "in phase" (matches client WS_CONFIG)
+  COHERENCE_WEIGHT_REAL: 3,
+  COHERENCE_WEIGHT_VIRTUAL: 1,
+  PHASE_BROADCAST_INTERVAL: 300, // ms — server-authoritative phase broadcast
+  CLIENT_TIMEOUT: 10000,         // ms — if no message from client in this time, mark inactive
+  CYCLE_DURATION: 24000,        // ms — 6 phases × 4s each (server-authoritative)
+  PHASE_COUNT: 6,
+};
+
+// Phase definitions (server-authoritative)
+const PHASES_SERVER = [
+  { name: 'Inhale — Scalar Seed',    breath: 'Inhale' },
+  { name: 'Hold — Symbol Emergence',  breath: 'Hold' },
+  { name: 'Exhale — Inversion',       breath: 'Exhale' },
+  { name: 'Still — Deep Inversion',   breath: 'Still' },
+  { name: 'Inhale — Convergence',     breath: 'Inhale' },
+  { name: 'Hold — Silence Return',    breath: 'Hold' },
+];
+
+// ── SERVER-AUTHORITATIVE PHASE TRACKING ──
+let serverCycleStart = Date.now();
+
+function getServerPhase() {
+  const elapsed = Date.now() - serverCycleStart;
+  const cyclePos = elapsed % FIELD_CONFIG.CYCLE_DURATION;
+  const phaseIndex = Math.floor(cyclePos / (FIELD_CONFIG.CYCLE_DURATION / FIELD_CONFIG.PHASE_COUNT));
+  return Math.min(phaseIndex, FIELD_CONFIG.PHASE_COUNT - 1);
 }
 
-wss.on('connection', (ws, req) => {
-  const clientId = generateId();
-  clients.set(ws, { id: clientId, sigil: null, phase: 0, joinedAt: Date.now() });
+// ── GLOBAL COHERENCE COMPUTATION ──
+function computeGlobalCoherence() {
+  const activeClients = [...clients.values()].filter(c => {
+    const inactive = Date.now() - c.lastUpdate > FIELD_CONFIG.CLIENT_TIMEOUT;
+    return !inactive;
+  });
 
-  // Welcome
-  ws.send(JSON.stringify({
-    type: 'welcome',
-    clientId,
+  if (activeClients.length === 0) return 0;
+
+  // Average personal coherences
+  const avgPersonalCoherence = activeClients.reduce((s, c) => s + c.coherence, 0) / activeClients.length;
+
+  // Sync bonus: how many users are in phase with server-authoritative phase
+  const serverPhase = getServerPhase();
+  const inSyncUsers = activeClients.filter(c => {
+    // Client phase matches server phase within sync window
+    return c.phase === serverPhase;
+  });
+
+  const syncRatio = activeClients.length > 0 ? inSyncUsers.length / activeClients.length : 0;
+  const syncBonus = syncRatio * 20; // Up to 20% bonus for full sync
+
+  return Math.min(100, Math.round(avgPersonalCoherence + syncBonus));
+}
+
+// ── FIELD STATE BROADCAST ──
+function broadcastFieldState() {
+  const serverPhase = getServerPhase();
+  const activeClients = [...clients.values()].filter(c => {
+    return Date.now() - c.lastUpdate < FIELD_CONFIG.CLIENT_TIMEOUT;
+  });
+
+  const inSyncCount = activeClients.filter(c => c.phase === serverPhase).length;
+  const globalCoherence = computeGlobalCoherence();
+
+  const payload = JSON.stringify({
+    type: 'field_state',
     phase: serverPhase,
-    cycleCount: serverCycleCount,
-    unifiedBreath,
-    totalClients: getClientCount(),
-    users: getClientsData()
-  }));
+    phaseName: PHASES_SERVER[serverPhase].name,
+    globalCoherence,
+    userCount: activeClients.length,
+    inSyncCount,
+    serverTime: Date.now()
+  });
 
-  // Notify others
-  broadcast({ type: 'join', clientId, totalClients: getClientCount(), users: getClientsData() }, ws);
+  clients.forEach(client => {
+    if (client.ws.readyState === 1) { // OPEN
+      client.ws.send(payload);
+    }
+  });
+}
 
-  ws.on('message', (raw) => {
+// Broadcast field state every 300ms
+setInterval(broadcastFieldState, FIELD_CONFIG.PHASE_BROADCAST_INTERVAL);
+
+// ── WEBSOCKET CONNECTION HANDLING ──
+wss.on('connection', (ws, req) => {
+  const clientId = ++clientIdCounter;
+  const client = {
+    ws,
+    sigil: '',
+    coherence: 0,
+    phase: 0,
+    lastUpdate: Date.now(),
+    joinedAt: Date.now(),
+  };
+  clients.set(clientId, client);
+
+  console.log(`[WS] Client ${clientId} connected. Total: ${clients.size}`);
+
+  ws.on('message', (data) => {
     try {
-      const msg = JSON.parse(raw);
-      const client = clients.get(ws);
+      const msg = JSON.parse(data.toString());
+      const c = clients.get(clientId);
+      if (!c) return;
+
+      c.lastUpdate = Date.now();
 
       switch (msg.type) {
-        case 'sigil':
-          client.sigil = msg.sigil;
-          broadcastAll({ type: 'sigil_update', clientId, sigil: msg.sigil, users: getClientsData() });
+        case 'join':
+          c.sigil = msg.sigil || 'anon';
+          c.coherence = 0;
+          c.phase = 0;
+          console.log(`[WS] Client ${clientId} joined as ${c.sigil}. Field: ${[...clients.values()].filter(x => x.sigil).length} users`);
+          // Broadcast updated user count
+          broadcast({ type: 'users_count', count: [...clients.values()].filter(x => x.sigil).length });
           break;
 
-        case 'breath_update':
-          // Client reports their current phase for coherence tracking
-          client.phase = msg.phase;
-          const coh = calcCoherence();
-          broadcastAll({
-            type: 'coherence_update',
-            coherence: coh,
-            users: getClientsData(),
-            serverPhase
-          });
-          break;
-
-        case 'start_unified':
-          unifiedBreath = true;
-          serverPhase = 0;
-          serverPhaseStart = Date.now();
-          broadcastAll({
-            type: 'unified_start',
-            phase: 0,
-            timestamp: serverPhaseStart,
-            initiator: clientId,
-            users: getClientsData()
-          });
-          // Begin phase cycle
-          setTimeout(advanceServerPhase, 3000);
-          break;
-
-        case 'stop_unified':
-          unifiedBreath = false;
-          serverPhase = 0;
-          broadcastAll({ type: 'unified_stop', users: getClientsData() });
-          break;
-
-        case 'manual_phase':
-          // Ritual leader can manually advance
-          if (unifiedBreath && msg.phase !== undefined) {
-            serverPhase = msg.phase;
-            serverPhaseStart = Date.now();
-            broadcastAll({
-              type: 'phase',
-              phase: serverPhase,
-              timestamp: serverPhaseStart,
-              manual: true,
-              users: getClientsData()
-            });
-          }
-          break;
-
-        case 'ping':
-          ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
-          break;
-
-        default:
+        case 'coherence_update':
+          c.coherence = Math.max(0, Math.min(100, msg.coherence || 0));
+          c.phase = Math.max(0, Math.min(5, msg.phase || 0));
           break;
       }
-    } catch(e) {
-      console.error('WS message error:', e.message);
+    } catch (e) {
+      // Ignore malformed messages
     }
   });
 
   ws.on('close', () => {
-    const client = clients.get(ws);
-    clients.delete(ws);
-    broadcastAll({
-      type: 'leave',
-      clientId: client?.id,
-      totalClients: getClientCount(),
-      users: getClientsData(),
-      coherence: calcCoherence()
-    });
+    const c = clients.get(clientId);
+    clients.delete(clientId);
+    console.log(`[WS] Client ${clientId} disconnected (${c?.sigil || 'unknown'}). Total: ${clients.size}`);
+    // Broadcast updated user count
+    broadcast({ type: 'users_count', count: [...clients.values()].filter(x => x.sigil).length });
   });
 
-  ws.on('error', (err) => {
-    console.error('WS error:', err.message);
-    clients.delete(ws);
+  ws.on('error', () => {
+    clients.delete(clientId);
   });
 });
 
-// ── Health ping every 30s ──
-setInterval(() => {
-  broadcastAll({ type: 'health', totalClients: getClientCount(), serverPhase, uptime: Math.round(process.uptime()) });
-}, 30000);
+function broadcast(data) {
+  const payload = JSON.stringify(data);
+  clients.forEach(client => {
+    if (client.ws.readyState === 1) {
+      client.ws.send(payload);
+    }
+  });
+}
 
+// ── START ──
 server.listen(PORT, () => {
-  console.log(`Codex Portal V3.1 — Multi-User Node`);
-  console.log(`Listening on http://localhost:${PORT}`);
-  console.log(`WebSocket ready for breath sync`);
-  console.log(`Node uptime: ${Math.round(process.uptime())}s | Clients: ${getClientCount()}`);
+  console.log(`🜂 Codex Portal server running on port ${PORT}`);
+  console.log(`🜂 WebSocket: ws://localhost:${PORT}`);
+  console.log(`🜂 HTTP: http://localhost:${PORT}`);
+  console.log(`🜂 Serving: ${PUBLIC_DIR}`);
 });

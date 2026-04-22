@@ -21,7 +21,7 @@
     <button class="login-g" data-g="⊕">⊕</button>
     <button class="login-g" data-g="⊗">⊗</button>
     <button class="login-g" data-g="◈">◈</button>
-    <button class="login-g" data-g=""></button>
+    <button class="login-g" data-g=""> </button>
   </div>
   <button class="login-btn" id="loginBtn">Enter the Field</button>
   <div class="login-error" id="loginError">Incomplete sigil. Select 3 glyphs to proceed.</div>
@@ -31,7 +31,7 @@
 <!-- ═══════════════ MAIN PORTAL ═══════════════ -->
 <div class="portal" id="portal" style="display:none">
 
-  <!-- Coherence Meter -->
+  <!-- Coherence Meter + Field Status -->
   <div class="coherence-panel">
     <div class="coh-label">Coherence</div>
     <div class="coh-bar-wrap"><div class="coh-bar" id="cohBar" style="width:0%"></div></div>
@@ -68,12 +68,29 @@
     </div>
 
     <div class="coherence-users" id="anonUsers"></div>
+    <div class="field-status" id="fieldStatus" style="font-size:0.62rem;color:var(--muted);margin-top:0.3rem;text-align:center;"></div>
 
     <div class="controls">
       <button class="btn active-btn" id="btnStart">Begin Cycle</button>
       <button class="btn" id="btn5D" style="display:none">5D Layer</button>
       <button class="btn" id="btnRepeat" style="display:none">Repeat</button>
       <button class="btn" id="btnNight">Night Mode</button>
+    </div>
+
+    <!-- Glyph overlay controls -->
+    <div class="glyph-overlay-config" id="glyphOverlayConfig" style="display:none; margin-top:0.6rem; text-align:center;">
+      <div style="font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.4rem;">HARMONIC GLYPH OVERLAY</div>
+      <div class="glyph-row" id="glyphOverlayRow"></div>
+    </div>
+
+    <!-- Personal tone input -->
+    <div class="tone-config" id="toneConfig" style="display:none; margin-top:0.5rem; text-align:center;">
+      <div style="font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.3rem;">PERSONAL HARMONIC SIGNATURE</div>
+      <div style="display:flex;gap:0.4rem;align-items:center;justify-content:center;flex-wrap:wrap;">
+        <input type="range" id="toneFreqSlider" min="100" max="1000" value="432" style="width:100px;">
+        <span id="toneFreqDisplay" style="font-size:0.7rem;color:var(--gold);min-width:50px;">432 Hz</span>
+        <button class="btn" id="btnSetTone" style="padding:0.3rem 0.8rem;">Set Tone</button>
+      </div>
     </div>
 
     <div class="night-indicator" id="nightIndicator"></div>
@@ -144,6 +161,7 @@
 
 <button class="help-fab" id="helpFab">?</button>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
