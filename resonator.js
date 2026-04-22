@@ -86,9 +86,12 @@ document.getElementById('tutorialSkip')?.addEventListener('click', () => {
 });
 
 
-// Click outside tutorial box = skip
-document.getElementById('tutorialOverlay')?.addEventListener('click', e => {
-  if (e.target === document.getElementById('tutorialOverlay')) {
+// Click outside tutorial box = skip (pointer-events:none on overlay, doc-level listener handles dismiss)
+document.addEventListener('click', e => {
+  const overlay = document.getElementById('tutorialOverlay');
+  if (!overlay || overlay.classList.contains('hidden')) return;
+  const box = overlay.querySelector('.tutorial-box');
+  if (box && !box.contains(e.target)) {
     document.getElementById('tutorialSkip')?.click();
   }
 });

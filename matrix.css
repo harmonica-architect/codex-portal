@@ -1,5 +1,4 @@
-﻿<style>
-:root {
+﻿:root {
   --bg: #07070f; --surface: #0e0e1a; --border: #1e1e32;
   --text: #d8d0c0; --muted: #6a6050; --dim: #3a3848;
   --gold: #e8c86a; --gold-dim: rgba(232,200,106,0.15);
@@ -38,7 +37,7 @@ body {
 .matrix-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
 .matrix-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* The 12Ã—12 grid */
+/* The 12Ãƒâ€”12 grid */
 .harmonic-matrix {
   display: grid;
   grid-template-columns: 88px repeat(12, 1fr);
@@ -97,7 +96,7 @@ body {
   font-size: 0.48rem; color: var(--gold); letter-spacing: 0.08em; padding: 0.3rem;
 }
 
-/* â”€â”€ SIDEBAR â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ SIDEBAR Ã¢â€â‚¬Ã¢â€â‚¬ */
 .sidebar { display: flex; flex-direction: column; gap: 0.5rem; }
 
 /* Preview panel */
@@ -207,16 +206,18 @@ body {
 .tooltip-name { color: var(--gold); font-size: 0.62rem; letter-spacing: 0.12em; display: block; margin-bottom: 0.2rem; text-transform: uppercase; }
 .tooltip-arch { color: var(--muted); font-style: italic; }
 
-/* â”€â”€ TUTORIAL OVERLAY â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ TUTORIAL OVERLAY Ã¢â€â‚¬Ã¢â€â‚¬ */
 .tutorial-overlay {
   position: fixed; inset: 0; background: rgba(7,7,15,0.92); z-index: 10000;
   display: flex; align-items: center; justify-content: center; padding: 1rem;
-  pointer-events: none; /* covers matrix but doesn't block clicks â€” document listener handles dismiss */
+  pointer-events: none; /* covers matrix but doesn't block clicks Ã¢â‚¬â€ document listener handles dismiss */
   cursor: default; /* visual indicator only */
 }
 .tutorial-box {
   background: var(--surface); border: 1px solid var(--gold); border-radius: 10px;
   padding: 1.5rem; max-width: 400px; width: 100%; text-align: center;
+  pointer-events: auto; /* box captures clicks (Begin/Skip), overlay is transparent */
+  cursor: default;
 }
 .tutorial-title { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.8rem; }
 .tutorial-step { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.7rem; text-align: left; }
@@ -228,7 +229,7 @@ body {
 .tutorial-btn.begin { background: var(--gold); color: #07070f; border: 1px solid var(--gold); font-weight: 600; }
 .tutorial-btn.skip { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
-/* â”€â”€ DRAG SELECTION RECTANGLE â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ DRAG SELECTION RECTANGLE Ã¢â€â‚¬Ã¢â€â‚¬ */
 .drag-rect {
   position: absolute; border: 1px solid rgba(232,200,106,0.6);
   background: rgba(232,200,106,0.08); pointer-events: none; z-index: 100;
@@ -236,5 +237,3 @@ body {
 }
 
 /* Close hint */
-.close-hint { font-size: 0.55rem; color: var(--muted); text-align: center; margin-top: 0.4rem; font-style: italic; }
-</style>
