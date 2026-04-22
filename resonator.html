@@ -360,6 +360,17 @@ body {
 .sidebar-toggle-btn.active { display: flex; }
 .sidebar-toggle-btn.hidden { display: none; }
 
+/* Difficulty dots */
+.diff-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--border);
+  cursor: pointer; transition: all 0.3s;
+}
+.diff-dot.active { background: var(--gold); box-shadow: 0 0 6px var(--gold-glow); }
+.difficulty-strip { display: flex; gap: 4px; align-items: center; }
+
+/* Suggestion box */
+#suggestionBox { animation: fadeIn 0.4s ease; }
+
 /* ── ANIMATIONS ── */
 @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
 @keyframes slideInRight { from{transform:translateX(12px);opacity:0;} to{transform:translateX(0);opacity:1;} }
@@ -547,17 +558,41 @@ body {
     <div class="sidebar-section">
       <div class="sidebar-title"><span class="icon">◐</span> Breath Cycle</div>
       <div class="cycle-presets-mini" id="cyclePresetsMini">
-        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="10">5·5·10</button>
+        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="5">5·5·5</button>
+        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6">6·0·6</button>
         <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="8">4·4·8</button>
         <button class="cycle-preset-mini" data-in="4" data-h="7" data-out="8">4·7·8</button>
-        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6">6·0·6</button>
-        <button class="cycle-preset-mini" data-in="5" data-h="5" data-out="5">5·5·5</button>
+        <button class="cycle-preset-mini" data-in="5" data-h="5" data-out="10">5·5·10</button>
         <button class="cycle-preset-mini" data-in="3" data-h="3" data-out="6">3·3·6</button>
       </div>
       <div class="cycle-inputs-mini">
         <div class="cycle-input-mini"><label>In</label><input type="number" id="inhaleMini" value="5" min="1" max="30"></div>
         <div class="cycle-input-mini"><label>Hold</label><input type="number" id="holdMini" value="5" min="0" max="30"></div>
-        <div class="cycle-input-mini"><label>Out</label><input type="number" id="exhaleMini" value="10" min="1" max="60"></div>
+        <div class="cycle-input-mini"><label>Out</label><input type="number" id="exhaleMini" value="5" min="1" max="60"></div>
+      </div>
+
+      <!-- Breath Guidance -->
+      <div style="margin-top:0.7rem; padding-top:0.5rem; border-top:1px solid var(--border);">
+        <div class="sidebar-title" style="margin-bottom:0.4rem;"><span class="icon">◉</span> Breath Guidance</div>
+        <div class="srow" style="margin-bottom:0.35rem;">
+          <span class="srow-label">Guidance</span>
+          <div class="audio-mini-pill on" id="guidancePill" style="cursor:pointer;"></div>
+        </div>
+        <div class="srow">
+          <span class="srow-label">Difficulty</span>
+          <div class="difficulty-strip" id="difficultyStrip">
+            <div class="diff-dot active" data-l="1"></div>
+            <div class="diff-dot" data-l="2"></div>
+            <div class="diff-dot" data-l="3"></div>
+            <div class="diff-dot" data-l="4"></div>
+          </div>
+        </div>
+        <div id="suggestionBox" style="display:none; margin-top:0.5rem; padding:0.4rem; background:var(--gold-dim); border:1px solid var(--gold); border-radius:4px; text-align:center;">
+          <div style="font-size:0.55rem;color:var(--gold);letter-spacing:0.15em;margin-bottom:0.2rem;">SUGGESTED CYCLE</div>
+          <div id="suggestionText" style="font-size:0.7rem;color:var(--gold);margin-bottom:0.2rem;"></div>
+          <div style="font-size:0.55rem;color:var(--muted);margin-bottom:0.3rem;" id="suggestionReason"></div>
+          <button class="profile-btn" id="btnAcceptSuggestion" style="width:100%;">Accept</button>
+        </div>
       </div>
     </div>
 
@@ -616,7 +651,7 @@ let breathActive = false;
 let breathPhase = 'idle';
 let cycleCount = 0;
 let entrainmentLevel = 0;
-let inhaleS = 5, holdS = 5, exhaleS = 10;
+let inhaleS = 5, holdS = 5, exhaleS = 5;
 let breathStartTime = 0;
 let audioCtx = null;
 let oscillators = {};
@@ -626,6 +661,16 @@ let selectedSnapshotGlyph = '△';
 let wavePoints = [];
 let wavePhase = 0;
 let tutorialDone = false;
+let breathGuidanceOn = true;
+let difficultyLevel = 1;
+let coherenceHistory = [];
+let lastSuggestionTime = 0;
+let suggestedCycle = null;
+
+/* Guided breath state */
+let guidancePhase = 'none'; // 'inhale' | 'hold' | 'exhale'
+let guidanceTimer = null;
+let guidanceActive = false;
 
 /* ── CANVAS SETUP ── */
 const canvas = document.getElementById('resonatorCanvas');
@@ -674,6 +719,129 @@ document.getElementById('tutorialSkip')?.addEventListener('click', () => {
   tutorialDone = true;
 });
 
+/* ── BREATH GUIDANCE SYSTEM ── */
+function playGuidanceTone(freq, dur = 0.6) {
+  if (!breathGuidanceOn || !isAudioOn) return;
+  createOsc(freq, masterVol * 0.08, dur);
+}
+
+function playGuidanceChime() {
+  if (!breathGuidanceOn || !isAudioOn) return;
+  [523, 659, 784].forEach((f, i) => {
+    setTimeout(() => createOsc(f, masterVol * 0.06, 0.5), i * 120);
+  });
+}
+
+function startBreathGuidance() {
+  if (!breathGuidanceOn) return;
+  guidanceActive = true;
+  runGuidanceSequence();
+}
+
+function stopBreathGuidance() {
+  guidanceActive = false;
+  if (guidanceTimer) { clearTimeout(guidanceTimer); guidanceTimer = null; }
+  guidancePhase = 'none';
+}
+
+function runGuidanceSequence() {
+  if (!guidanceActive || !breathActive) return;
+
+  const ratio = getRatio();
+  const totalDur = getCycleDuration() * 1000;
+  const elapsed = Date.now() - breathStartTime;
+  const progress = (elapsed % totalDur) / totalDur;
+
+  // Determine current phase from breath state
+  let currentPhase = 'idle';
+  if (progress < ratio.inhale) currentPhase = 'inhale';
+  else if (progress < ratio.inhale + ratio.hold) currentPhase = 'hold';
+  else currentPhase = 'exhale';
+
+  if (currentPhase !== guidancePhase) {
+    guidancePhase = currentPhase;
+    if (currentPhase === 'inhale') {
+      playGuidanceTone(261.6, 0.5);  // C4
+      document.getElementById('breathLabel').textContent = '↑ Inhale';
+      document.getElementById('breathLabel').style.color = '#7a6a9a';
+    } else if (currentPhase === 'hold') {
+      playGuidanceTone(329.6, 0.5);  // E4
+      document.getElementById('breathLabel').textContent = '◆ Hold';
+      document.getElementById('breathLabel').style.color = '#8a7aaa';
+    } else if (currentPhase === 'exhale') {
+      playGuidanceTone(196, 0.5);   // G3
+      document.getElementById('breathLabel').textContent = '↓ Exhale';
+      document.getElementById('breathLabel').style.color = '#5a7a6a';
+    }
+  }
+
+  guidanceTimer = setTimeout(runGuidanceSequence, 200);
+}
+
+function checkAdaptiveSuggestion() {
+  if (difficultyLevel >= 4) return;
+  if (!breathActive) return;
+  if (Date.now() - lastSuggestionTime < 60000) return; // Only suggest every 60s
+
+  const avgCoherence = coherenceHistory.length > 0
+    ? coherenceHistory.reduce((a, b) => a + b, 0) / coherenceHistory.length
+    : 0;
+
+  if (avgCoherence > 70 && difficultyLevel === 1) {
+    suggestCycle({ in: 6, h: 0, out: 6 }, 'Coherence strong — try box breathing (6·0·6)');
+  } else if (avgCoherence > 75 && difficultyLevel === 2) {
+    suggestCycle({ in: 4, h: 4, out: 8 }, 'Excellent coherence — extend exhale with 4·4·8');
+  } else if (avgCoherence > 80 && difficultyLevel === 3) {
+    suggestCycle({ in: 4, h: 7, out: 8 }, 'Mastery detected — try 4·7·8 for deeper retention');
+  }
+}
+
+function suggestCycle(cycle, reason) {
+  suggestedCycle = cycle;
+  const box = document.getElementById('suggestionBox');
+  if (!box) return;
+  box.style.display = 'block';
+  document.getElementById('suggestionText').textContent =
+    cycle.in + '·' + cycle.h + '·' + cycle.out;
+  document.getElementById('suggestionReason').textContent = reason;
+  lastSuggestionTime = Date.now();
+  if (isAudioOn) playGuidanceChime();
+}
+
+document.getElementById('btnAcceptSuggestion')?.addEventListener('click', () => {
+  if (!suggestedCycle) return;
+  inhaleS = suggestedCycle.in;
+  holdS = suggestedCycle.h;
+  exhaleS = suggestedCycle.out;
+  syncCycleUI();
+  if (breathActive) breathStartTime = Date.now();
+  document.getElementById('suggestionBox').style.display = 'none';
+  suggestedCycle = null;
+  difficultyLevel = Math.min(4, difficultyLevel + 1);
+  syncDifficultyUI();
+});
+
+function syncDifficultyUI() {
+  document.querySelectorAll('.diff-dot').forEach(d => {
+    d.classList.toggle('active', parseInt(d.dataset.l) <= difficultyLevel);
+  });
+}
+
+document.querySelectorAll('.diff-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    difficultyLevel = parseInt(d.dataset.l);
+    syncDifficultyUI();
+    document.getElementById('suggestionBox').style.display = 'none';
+  });
+});
+
+document.getElementById('guidancePill')?.addEventListener('click', () => {
+  breathGuidanceOn = !breathGuidanceOn;
+  document.getElementById('guidancePill')?.classList.toggle('on', breathGuidanceOn);
+  if (!breathGuidanceOn) stopBreathGuidance();
+  else if (breathActive) startBreathGuidance();
+});
+
 /* ── STEP SYSTEM ── */
 const STEP_LABELS = {
   1: { title: 'Monadic Spiral · 432Hz', glyph: '⊙', hint: 'click to begin', sub: 'attune to the field' },
@@ -707,6 +875,9 @@ function updateStepUI() {
 
   // Hide tips after step 1
   document.getElementById('tipsRow').style.opacity = step === 1 ? '1' : '0';
+
+  // Check for adaptive suggestion
+  checkAdaptiveSuggestion();
 }
 
 /* ── AUDIO — auto-activated ── */
@@ -839,6 +1010,7 @@ function updateBreathState() {
   if (!breathActive) {
     targetCoherence = Math.max(0, targetCoherence - 2);
     entrainmentLevel = Math.max(0, entrainmentLevel - 0.5);
+    stopBreathGuidance();
     return;
   }
 
@@ -846,6 +1018,7 @@ function updateBreathState() {
   const totalDur = getCycleDuration() * 1000;
   const progress = (elapsed % totalDur) / totalDur;
   const ratio = getRatio();
+
 
   if (progress < ratio.inhale) {
     breathPhase = 'inhale';
@@ -860,6 +1033,12 @@ function updateBreathState() {
     breathPhase = 'exhale';
     targetCoherence = Math.max(0, 60 - exProg * 30);
     entrainmentLevel = Math.max(0, Math.floor((1 - exProg) * 6));
+  }
+
+  // Track coherence for adaptive suggestions
+  if (cycleCount > 0) {
+    coherenceHistory.push(coherence);
+    if (coherenceHistory.length > 30) coherenceHistory.shift();
   }
 }
 
@@ -1063,6 +1242,7 @@ function handleWheelClick() {
       breathActive = false;
       breathPhase = 'idle';
       targetCoherence = Math.max(0, coherence * 0.6);
+      stopBreathGuidance();
     } else {
       startBreath();
     }
@@ -1074,6 +1254,7 @@ function startBreath() {
   breathStartTime = Date.now();
   cycleCount++;
   if (isAudioOn) playPhaseCue(432);
+  startBreathGuidance();
 }
 
 document.getElementById('wheelWrap')?.addEventListener('click', handleWheelClick);
@@ -1225,7 +1406,7 @@ function loadProfile(name) {
 }
 
 function resetToDefaults() {
-  inhaleS = 5; holdS = 5; exhaleS = 10; masterVol = 0.3;
+  inhaleS = 5; holdS = 5; exhaleS = 5; masterVol = 0.3;
   syncCycleUI();
   const vs = document.getElementById('volSliderMini');
   if (vs) vs.value = 30;
@@ -1237,6 +1418,10 @@ function resetToDefaults() {
     if (f === 432) t?.classList.add('on');
     else t?.classList.remove('on');
   });
+  // Reset difficulty
+  difficultyLevel = 1;
+  syncDifficultyUI();
+  document.getElementById('suggestionBox').style.display = 'none';
 }
 
 document.getElementById('btnSaveProfile')?.addEventListener('click', () => {
@@ -1250,11 +1435,12 @@ document.getElementById('btnResetDefault')?.addEventListener('click', resetToDef
 /* ── INIT ── */
 checkTutorial();
 syncCycleUI();
+syncDifficultyUI();
 loadProfiles();
 updateStepUI();
 autoStartSound(); // ← auto-activates sound on load
 animate();
-console.log('🜂 Field Resonator v5 — Auto-sound · Tutorial · Unified panel');
+console.log('🜂 Field Resonator v5+ — Guided breath · Adaptive difficulty · Auto-sound');
 </script>
 </body>
 </html>
