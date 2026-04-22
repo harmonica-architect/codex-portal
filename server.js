@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 
-const PORT = 3737;
+const PORT = process.env.PORT || 3737;
 const HTTP_DIR = path.join(__dirname);
 
 // ── HTTP Server (serves the portal) ──
