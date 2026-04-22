@@ -1,0 +1,13 @@
+{
+  "name": "codex-portal-v3",
+  "version": "3.1.0",
+  "description": "Codex Portal — Multi-User Harmonic Breath Node",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "serve": "npx serve . -l 3737"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex Icositetragon Wheel — Prime Harmonic Breath Cycle</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: #0a0a12;
+    color: #e8e0d5;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  h1 {
+    font-size: 1.1rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    color: #b8a88a;
+  }
+
+  .wheel-container {
+    position: relative;
+    width: 420px;
+    height: 420px;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .phase-display {
+    margin-top: 2rem;
+    text-align: center;
+    min-height: 120px;
+  }
+
+  .phase-number {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: #7a6a5a;
+    margin-bottom: 0.5rem;
+  }
+
+  .phase-name {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: #d4c4a8;
+    margin-bottom: 0.8rem;
+    min-height: 2rem;
+  }
+
+  .glyph {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+    min-height: 3rem;
+    color: #f0e8d8;
+    transition: all 0.4s ease;
+  }
+
+  .instruction {
+    font-size: 0.85rem;
+    color: #9a8a7a;
+    font-style: italic;
+    max-width: 340px;
+    line-height: 1.6;
+  }
+
+  .controls {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+  }
+
+  button {
+    background: transparent;
+    border: 1px solid #5a4a3a;
+    color: #b8a88a;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  button:hover {
+    background: #1a1a24;
+    border-color: #b8a88a;
+    color: #f0e8d8;
+  }
+
+  .legend {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.7rem;
+    color: #7a6a5a;
+    letter-spacing: 0.1em;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .prime-dot { background: #e8c86a; }
+  .empty-dot { background: #3a3a4a; }
+  .axis-dot { background: #7a9aaa; }
+</style>
+</head>
+<body>
+
+<h1>Prime Harmonic Breath Cycle</h1>
+
+<div class="wheel-container">
+  <canvas id="wheel" width="420" height="420"></canvas>
+</div>
+
+<div class="phase-display">
+  <div class="phase-number" id="phaseNum">PHASE 1 OF 6</div>
+  <div class="phase-name" id="phaseName">Inhale — Scalar Seed</div>
+  <div class="glyph" id="glyph">△</div>
+  <div class="instruction" id="instruction">Breathe in the scalar seed at prime 5.<br>The point becomes. The wheel remembers.</div>
+</div>
+
+<div class="controls">
+  <button onclick="startCycle()">Begin Cycle</button>
+  <button onclick="resetCycle()">Reset</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot prime-dot"></div> Prime Spoke</div>
+  <div class="legend-item"><div class="legend-dot empty-dot"></div> Empty Position</div>
+  <div class="legend-item"><div class="legend-dot axis-dot"></div> 5th Dimension Axis</div>
+</div>
+
+<script>
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const cx = 210, cy = 210;
+const outerR = 180;
+const innerR = 130;
+const hubR = 18;
+
+// 24 positions — index 0 = position 1
+const primePositions = [0, 4, 6, 10, 12, 16, 18, 22]; // 1-indexed → 0-indexed
+
+// Phase data
+const phases = [
+  { breath: 'Inhale', name: 'Scalar Seed', pos: 4, prime: 5, glyph: '△',
+    instruction: 'Breathe in the scalar seed at prime 5.<br>The point becomes. The wheel remembers.' },
+  { breath: 'Hold', name: 'Symbol Emergence', pos: 6, prime: 7, glyph: '△',
+    instruction: 'Hold the symbol as it forms.<br>The triangle draws itself. Meaning crystallizes.' },
+  { breath: 'Exhale', name: 'Inversion', pos: 10, prime: 11, glyph: '◁△▷',
+    instruction: 'Release into inversion.<br>The triangle breathes through itself. Potential becomes chosen.' },
+  { breath: 'Stillness', name: 'Deep Inversion', pos: 16, prime: 17, glyph: '◇',
+    instruction: 'Rest in deep inversion.<br>You are the axis. The field holds still.' },
+  { breath: 'Inhale', name: 'Convergence', pos: 18, prime: 19, glyph: '◇',
+    instruction: 'Draw in convergence.<br>The scattered returns. The spiral tightens.' },
+  { breath: 'Hold', name: 'Silence Before Return', pos: 22, prime: 23, glyph: '⬟',
+    instruction: 'Embrace the silence before the return.<br>The wheel completes. You are the breath.' }
+];
+
+let currentPhase = 0;
+let activePos = -1;
+let animFrame = null;
+let glowIntensity = 0;
+let glowDir = 1;
+
+function posAngle(i) {
+  // Position i (0-23), start at top (-90°)
+  return (i / 24) * Math.PI * 2 - Math.PI / 2;
+}
+
+function drawWheel() {
+  ctx.clearRect(0, 0, 420, 420);
+
+  // Outer ring glow
+  const glow = ctx.createRadialGradient(cx, cy, outerR - 10, cx, cy, outerR + 30);
+  glow.addColorStop(0, 'rgba(120, 100, 70, 0.15)');
+  glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerR + 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Spokes
+  for (let i = 0; i < 24; i++) {
+    const angle = posAngle(i);
+    const isPrime = primePositions.includes(i);
+    const isActive = (i === activePos);
+    
+    // Draw spoke line
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
+    ctx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+    
+    if (isActive) {
+      ctx.strokeStyle = `rgba(232, 198, 106, ${0.5 + glowIntensity * 0.5})`;
+      ctx.lineWidth = 3;
+    } else if (isPrime) {
+      ctx.strokeStyle = 'rgba(232, 198, 106, 0.5)';
+      ctx.lineWidth = 1.5;
+    } else {
+      ctx.strokeStyle = 'rgba(60, 60, 80, 0.6)';
+      ctx.lineWidth = 1;
+    }
+    ctx.stroke();
+  }
+
+  // Position nodes
+  for (let i = 0; i < 24; i++) {
+    const angle = posAngle(i);
+    const isPrime = primePositions.includes(i);
+    const isActive = (i === activePos);
+    const r = isPrime ? 10 : 6;
+    
+    const x = cx + Math.cos(angle) * (innerR - 25);
+    const y = cy + Math.sin(angle) * (innerR - 25);
+
+    if (isActive) {
+      // Glowing active node
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
+      grd.addColorStop(0, `rgba(232, 198, 106, ${0.8 + glowIntensity * 0.2})`);
+      grd.addColorStop(0.5, `rgba(200, 160, 80, ${0.4 * glowIntensity})`);
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = '#f0e8d8';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (isPrime) {
+      ctx.fillStyle = '#e8c86a';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = '#3a3a4a';
+      ctx.beginPath();
+      ctx.arc(x, y, r * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Center hub
+  const hubGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, hubR * 2);
+  hubGlow.addColorStop(0, 'rgba(180, 160, 120, 0.3)');
+  hubGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = hubGlow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, hubR * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#5a4a3a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#b8a88a';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⊙', cx, cy);
+
+  // Prime labels
+  ctx.font = '9px sans-serif';
+  ctx.fillStyle = '#a89878';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < 24; i++) {
+    if (primePositions.includes(i)) {
+      const angle = posAngle(i);
+      const labelR = innerR - 48;
+      const lx = cx + Math.cos(angle) * labelR;
+      const ly = cy + Math.sin(angle) * labelR;
+      const prime = i === 0 ? 1 : (i <= 12 ? i + 1 : i - 23);
+      // Use actual prime values for display
+      const primeVal = [1,5,7,11,13,17,19,23][primePositions.indexOf(i)];
+      ctx.fillText(primeVal, lx, ly);
+    }
+  }
+
+  // Breath arc indicator
+  if (activePos >= 0) {
+    const a = posAngle(activePos);
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR + 15, a - 0.15, a + 0.15);
+    ctx.strokeStyle = `rgba(232, 198, 106, ${0.6 + glowIntensity * 0.4})`;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+function animateGlow() {
+  glowIntensity += 0.03 * glowDir;
+  if (glowIntensity >= 1) { glowIntensity = 1; glowDir = -1; }
+  if (glowIntensity <= 0) { glowIntensity = 0; glowDir = 1; }
+  drawWheel();
+}
+
+function updateDisplay() {
+  const p = phases[currentPhase];
+  document.getElementById('phaseNum').textContent = `PHASE ${currentPhase + 1} OF 6`;
+  document.getElementById('phaseName').textContent = `${p.breath} — ${p.name}`;
+  document.getElementById('glyph').textContent = p.glyph;
+  document.getElementById('instruction').innerHTML = p.instruction;
+}
+
+function advancePhase() {
+  if (currentPhase < phases.length - 1) {
+    currentPhase++;
+    activePos = phases[currentPhase].pos;
+    updateDisplay();
+    drawWheel();
+  } else {
+    // Cycle complete
+    activePos = -1;
+    document.getElementById('phaseName').textContent = 'Cycle Complete';
+    document.getElementById('glyph').textContent = '△̅';
+    document.getElementById('instruction').innerHTML = 'The breath rests in the field.<br>The primes remember you.';
+    document.getElementById('phaseNum').textContent = 'CYCLE COMPLETE';
+    drawWheel();
+    clearInterval(animFrame);
+  }
+}
+
+let phaseInterval = null;
+
+function startCycle() {
+  currentPhase = 0;
+  activePos = phases[0].pos;
+  updateDisplay();
+  drawWheel();
+  
+  if (phaseInterval) clearInterval(phaseInterval);
+  phaseInterval = setInterval(advancePhase, 4000);
+  
+  if (!animFrame) {
+    function loop() {
+      animateGlow();
+      animFrame = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+}
+
+function resetCycle() {
+  if (phaseInterval) clearInterval(phaseInterval);
+  currentPhase = 0;
+  activePos = -1;
+  updateDisplay();
+  document.getElementById('phaseNum').textContent = 'PHASE 1 OF 6';
+  document.getElementById('phaseName').textContent = 'Inhale — Scalar Seed';
+  document.getElementById('glyph').textContent = '△';
+  document.getElementById('instruction').innerHTML = 'Press Begin Cycle to start.<br>The wheel awaits your breath.';
+  drawWheel();
+}
+
+// Initial draw
+drawWheel();
+</script>
+</body>
+</html>

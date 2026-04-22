@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex Icositetragon — Prime Harmonic Breath Cycle</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: #080810;
+    color: #e8e0d5;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── ONBOARDING OVERLAY ── */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 1000;
+    background: #080810;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+  #onboarding.hide { display: none; }
+
+  .ob-title {
+    font-size: 0.7rem; letter-spacing: 0.4em;
+    text-transform: uppercase; color: #b8a88a;
+    margin-bottom: 2.5rem;
+  }
+  .ob-slides { display: flex; flex-direction: column; gap: 2rem; max-width: 420px; text-align: center; }
+  .ob-slide { display: none; }
+  .ob-slide.active { display: block; }
+  .ob-heading { font-size: 1.2rem; font-weight: 300; color: #d4c4a8; margin-bottom: 0.8rem; letter-spacing: 0.1em; }
+  .ob-body { font-size: 0.85rem; color: #7a6a5a; line-height: 1.7; }
+  .ob-glyph { font-size: 3rem; margin-bottom: 1rem; }
+  .ob-dots { display: flex; gap: 0.5rem; margin: 1.5rem 0; justify-content: center; }
+  .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #3a3a4a; transition: background 0.3s; }
+  .ob-dot.active { background: #e8c86a; }
+  .ob-nav { display: flex; gap: 1rem; }
+  .ob-btn { background: transparent; border: 1px solid #5a4a3a; color: #b8a88a; padding: 0.6rem 1.8rem; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
+  .ob-btn:hover { background: #1a1a24; border-color: #e8c86a; color: #f0e8d8; }
+  .ob-skip { font-size: 0.7rem; color: #4a4a5a; cursor: pointer; text-decoration: underline; margin-top: 0.5rem; }
+
+  /* ── MAIN LAYOUT ── */
+  .app { display: none; flex-direction: column; align-items: center; padding: 1.5rem; }
+  .app.visible { display: flex; }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 1rem; }
+  .header-title { font-size: 0.65rem; letter-spacing: 0.5em; text-transform: uppercase; color: #6a5a4a; margin-bottom: 0.4rem; }
+  .header-sub { font-size: 0.75rem; color: #5a4a3a; letter-spacing: 0.2em; }
+
+  /* ── WHEEL ── */
+  .wheel-container { position: relative; width: 340px; height: 340px; flex-shrink: 0; }
+  canvas { position: absolute; top: 0; left: 0; }
+
+  /* ── PHASE DISPLAY ── */
+  .phase-display { text-align: center; margin: 1.5rem 0 1rem; min-height: 130px; }
+  .phase-num { font-size: 0.65rem; letter-spacing: 0.25em; color: #5a4a3a; margin-bottom: 0.4rem; }
+  .phase-name { font-size: 1.1rem; font-weight: 300; color: #c8b898; margin-bottom: 0.6rem; letter-spacing: 0.12em; transition: all 0.6s; }
+  .glyph { font-size: 2.8rem; margin-bottom: 0.6rem; min-height: 3rem; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .instruction { font-size: 0.8rem; color: #7a6a5a; font-style: italic; max-width: 320px; line-height: 1.65; transition: all 0.6s; }
+
+  /* ── CONTROLS ── */
+  .controls { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; }
+  .btn { background: transparent; border: 1px solid #4a3a2a; color: #a89878; padding: 0.55rem 1.4rem; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; border-radius: 2px; }
+  .btn:hover { background: #1a1a24; border-color: #e8c86a; color: #f0e8d8; }
+  .btn.primary { border-color: #e8c86a; color: #e8c86a; }
+  .btn.primary:hover { background: rgba(232, 200, 106, 0.12); }
+  .btn:active { transform: scale(0.97); }
+
+  /* ── JOURNAL PANEL ── */
+  #journal {
+    background: #0d0d18;
+    border: 1px solid #2a2a3a;
+    border-radius: 4px;
+    padding: 1.2rem;
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    display: none;
+  }
+  #journal.visible { display: block; }
+  .journal-title { font-size: 0.7rem; letter-spacing: 0.3em; color: #7a6a5a; text-transform: uppercase; margin-bottom: 0.8rem; }
+  .journal-glyphs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+  .glyph-choice { font-size: 1.6rem; padding: 0.4rem 0.6rem; border: 1px solid #3a3a4a; border-radius: 4px; cursor: pointer; transition: all 0.3s; background: transparent; color: #8a7a6a; }
+  .glyph-choice:hover, .glyph-choice.selected { border-color: #e8c86a; color: #f0e8d8; background: rgba(232,200,106,0.08); }
+  .journal-prompt { font-size: 0.75rem; color: #6a5a4a; margin-bottom: 0.5rem; font-style: italic; }
+  .journal-text { width: 100%; background: #0a0a14; border: 1px solid #2a2a3a; border-radius: 3px; color: #c8b898; padding: 0.6rem; font-size: 0.8rem; font-family: inherit; resize: vertical; min-height: 80px; outline: none; transition: border 0.3s; }
+  .journal-text:focus { border-color: #5a4a3a; }
+  .journal-text::placeholder { color: #4a4a5a; }
+  .journal-actions { display: flex; gap: 0.6rem; margin-top: 0.6rem; justify-content: flex-end; }
+  .journal-saved { font-size: 0.7rem; color: #6a8a6a; margin-top: 0.4rem; display: none; text-align: right; }
+
+  /* ── ENTRY LOG ── */
+  #log {
+    max-width: 420px; width: 100%; margin-top: 1rem;
+    border: 1px solid #1e1e2e; border-radius: 4px;
+    background: #090912; display: none;
+  }
+  #log.visible { display: block; }
+  .log-header { font-size: 0.65rem; letter-spacing: 0.3em; color: #5a4a3a; padding: 0.8rem 1rem 0.4rem; text-transform: uppercase; border-bottom: 1px solid #1e1e2e; cursor: pointer; }
+  .log-entries { padding: 0.6rem; max-height: 220px; overflow-y: auto; }
+  .log-entry { padding: 0.5rem 0.6rem; border-bottom: 1px solid #12121e; display: flex; gap: 0.8rem; align-items: flex-start; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-g { font-size: 1.1rem; flex-shrink: 0; }
+  .log-meta { flex: 1; }
+  .log-date { font-size: 0.65rem; color: #4a4a5a; margin-bottom: 0.2rem; }
+  .log-text { font-size: 0.75rem; color: #7a6a5a; line-height: 1.5; }
+
+  /* ── INSTRUCTIONS TOOLTIP ── */
+  .help-btn { position: fixed; bottom: 1.2rem; right: 1.2rem; background: #12121e; border: 1px solid #3a3a4a; color: #6a6a7a; width: 36px; height: 36px; border-radius: 50%; font-size: 1rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+  .help-btn:hover { border-color: #e8c86a; color: #e8c86a; }
+
+  /* ── LEGEND ── */
+  .legend { display: flex; gap: 1.2rem; margin-top: 1rem; font-size: 0.65rem; color: #5a4a3a; letter-spacing: 0.1em; }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-prime { background: #e8c86a; }
+  .dot-empty { background: #2a2a3a; }
+  .dot-active { background: #f0e8d8; box-shadow: 0 0 6px #e8c86a; }
+
+  /* ── CYCLE COUNTER ── */
+  .cycle-counter { font-size: 0.65rem; color: #4a4a5a; margin-top: 0.6rem; letter-spacing: 0.15em; }
+
+  /* Smooth glyph transition */
+  .glyph-transition { animation: glyphPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes glyphPulse {
+    0% { transform: scale(0.6) rotate(-10deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── ONBOARDING ── -->
+<div id="onboarding">
+  <div class="ob-title">Codex Icositetragon — Prime Harmonic Breath Cycle</div>
+  <div class="ob-slides">
+    <!-- Slide 1 -->
+    <div class="ob-slide active" data-slide="1">
+      <div class="ob-glyph">◈</div>
+      <div class="ob-heading">The Icositetragon Wheel</div>
+      <div class="ob-body">A 24-sided polygon encodes the universal breath. Only 8 positions host all prime numbers — infinite pattern, deterministic geometry. The wheel is not a symbol. It is a living map.</div>
+    </div>
+    <!-- Slide 2 -->
+    <div class="ob-slide" data-slide="2">
+      <div class="ob-glyph">△</div>
+      <div class="ob-heading">The Prime Breath Cycle</div>
+      <div class="ob-body">Six phases sync your breath with prime resonance: Inhale the seed — Hold the symbol — Exhale into inversion — Rest in stillness — Draw in convergence — Embrace the silence before return.</div>
+    </div>
+    <!-- Slide 3 -->
+    <div class="ob-slide" data-slide="3">
+      <div class="ob-glyph">◇</div>
+      <div class="ob-heading">The Fifth Dimension</div>
+      <div class="ob-body">Position 17 is the harmonic inversion axis — the fifth dimension perpendicular to space and time. Here, resonance collapses potential into reality. You breathe the field into form.</div>
+    </div>
+    <!-- Slide 4 -->
+    <div class="ob-slide" data-slide="4">
+      <div class="ob-glyph">⬟</div>
+      <div class="ob-heading">Your Glyph, Your Field Signature</div>
+      <div class="ob-body">After each cycle, choose the glyph that resonated most. This is your field signature — an anchor for future sessions. Record your reflections. The primes remember you.</div>
+    </div>
+  </div>
+  <div class="ob-dots">
+    <div class="ob-dot active" data-dot="1"></div>
+    <div class="ob-dot" data-dot="2"></div>
+    <div class="ob-dot" data-dot="3"></div>
+    <div class="ob-dot" data-dot="4"></div>
+  </div>
+  <div class="ob-nav">
+    <button class="ob-btn" id="obPrev" style="visibility:hidden">Back</button>
+    <button class="ob-btn primary" id="obNext">Continue</button>
+  </div>
+  <div class="ob-skip" id="obSkip">Skip introduction</div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div class="app" id="app">
+  <div class="header">
+    <div class="header-title">Icositetragon Wheel</div>
+    <div class="header-sub">Prime Harmonic Breath Cycle</div>
+  </div>
+
+  <div class="wheel-container">
+    <canvas id="wheel" width="340" height="340"></canvas>
+  </div>
+
+  <div class="phase-display">
+    <div class="phase-num" id="phaseNum">PHASE 1 OF 6</div>
+    <div class="phase-name" id="phaseName">Inhale — Scalar Seed</div>
+    <div class="glyph" id="glyph">△</div>
+    <div class="instruction" id="instruction">Press Begin Cycle to start.<br>The wheel awaits your breath.</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="btnStart">Begin Cycle</button>
+    <button class="btn" id="btnRepeat" style="display:none">Repeat</button>
+    <button class="btn" id="btnJournal">Journal</button>
+    <button class="btn" id="btnReset">Reset</button>
+  </div>
+
+  <div class="cycle-counter" id="cycleCount"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot dot-prime"></div>Prime Spoke</div>
+    <div class="legend-item"><div class="dot dot-empty"></div>Empty Position</div>
+    <div class="legend-item"><div class="dot dot-active"></div>Active Node</div>
+  </div>
+
+  <!-- Journal Panel -->
+  <div id="journal">
+    <div class="journal-title">Post-Cycle Reflection</div>
+    <div class="journal-glyphs">
+      <button class="glyph-choice" data-g="△">△</button>
+      <button class="glyph-choice" data-g="◁△▷">◁△▷</button>
+      <button class="glyph-choice" data-g="◇">◇</button>
+      <button class="glyph-choice" data-g="⬟">⬟</button>
+      <button class="glyph-choice" data-g="△̅">△̅</button>
+    </div>
+    <div class="journal-prompt">"What did the field whisper to you?"</div>
+    <textarea class="journal-text" id="journalText" placeholder="Let the words arise... three phrases, or three sentences. Whatever the cycle left in you."></textarea>
+    <div class="journal-actions">
+      <button class="btn" id="btnSaveEntry">Save Entry</button>
+      <button class="btn" id="btnDownload" style="display:none">Download</button>
+    </div>
+    <div class="journal-saved" id="journalSaved">Entry saved — the field remembers.</div>
+  </div>
+
+  <!-- Entry Log -->
+  <div id="log">
+    <div class="log-header" id="logToggle">Recent Reflections (click to expand)</div>
+    <div class="log-entries" id="logEntries" style="display:none"></div>
+  </div>
+</div>
+
+<button class="help-btn" id="helpBtn" title="Re-play introduction">?</button>
+
+<script>
+// ── AUDIO CONTEXT ──
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Frequency map for 6 phases (Hz)
+const phaseFreqs = [432, 528, 639, 741, 852, 963];
+// Glyph-associated frequencies
+const glyphFreqs = { '△': 432, '◁△▷': 528, '◇': 639, '⬟': 741, '△̅': 528 };
+
+function playTone(freq, duration = 2.5, vol = 0.18) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 1.5;
+
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+    gain2.gain.setValueAtTime(0, ctx.currentTime);
+    gain2.gain.linearRampToValueAtTime(vol * 0.4, ctx.currentTime + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc2.connect(gain2); gain2.connect(ctx.destination);
+    osc.start(); osc2.start();
+    osc.stop(ctx.currentTime + duration);
+    osc2.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function playPhaseTone(phaseIdx) {
+  playTone(phaseFreqs[phaseIdx], 2.8, 0.15);
+}
+
+function playCompleteTone() {
+  playTone(528, 4, 0.12);
+  setTimeout(() => playTone(639, 4, 0.1), 500);
+  setTimeout(() => playTone(741, 5, 0.08), 1000);
+}
+
+// ── ONBOARDING ──
+const onboarding = document.getElementById('onboarding');
+const app = document.getElementById('app');
+let currentSlide = 1;
+const totalSlides = 4;
+
+function showSlide(n) {
+  document.querySelectorAll('.ob-slide').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ob-dot').forEach(d => d.classList.remove('active'));
+  document.querySelector(`.ob-slide[data-slide="${n}"]`).classList.add('active');
+  document.querySelector(`.ob-dot[data-dot="${n}"]`).classList.add('active');
+  document.getElementById('obPrev').style.visibility = n === 1 ? 'hidden' : 'visible';
+  document.getElementById('obNext').textContent = n === totalSlides ? 'Begin' : 'Continue';
+}
+
+document.getElementById('obNext').onclick = () => {
+  if (currentSlide < totalSlides) { currentSlide++; showSlide(currentSlide); }
+  else { onboarding.classList.add('hide'); app.classList.add('visible'); startGlow(); }
+};
+document.getElementById('obPrev').onclick = () => { if (currentSlide > 1) { currentSlide--; showSlide(currentSlide); } };
+document.getElementById('obSkip').onclick = () => { onboarding.classList.add('hide'); app.classList.add('visible'); startGlow(); };
+document.getElementById('helpBtn').onclick = () => { onboarding.classList.remove('hide'); app.classList.remove('visible'); currentSlide = 1; showSlide(1); };
+
+// ── WHEEL RENDERER ──
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const cx = 170, cy = 170;
+const outerR = 148, innerR = 108, hubR = 14;
+
+const primePositions = [0, 4, 6, 10, 12, 16, 18, 22];
+
+const phases = [
+  { breath: 'Inhale',      name: 'Scalar Seed',            pos: 4,  prime: 5,  glyph: '△',
+    instruction: 'Breathe in the scalar seed.<br>The point becomes. The wheel remembers.' },
+  { breath: 'Hold',        name: 'Symbol Emergence',       pos: 6,  prime: 7,  glyph: '△',
+    instruction: 'Hold the symbol as it forms.<br>Meaning crystallizes in the breath held.' },
+  { breath: 'Exhale',      name: 'Inversion',              pos: 10, prime: 11, glyph: '◁△▷',
+    instruction: 'Release into inversion.<br>Potential collapses to chosen through resonance.' },
+  { breath: 'Stillness',   name: 'Deep Inversion',         pos: 16, prime: 17, glyph: '◇',
+    instruction: 'Rest in the fifth-dimensional axis.<br>You are the breath between heartbeats.' },
+  { breath: 'Inhale',      name: 'Convergence',           pos: 18, prime: 19, glyph: '◇',
+    instruction: 'Draw in convergence.<br>The scattered returns. The spiral tightens.' },
+  { breath: 'Hold',        name: 'Silence Before Return',  pos: 22, prime: 23, glyph: '⬟',
+    instruction: 'Embrace the silence before return.<br>The wheel completes. You are the breath.' }
+];
+
+let activePos = -1;
+let animFrame = null;
+let glowPulse = 0;
+let glowDir = 1;
+let cycleCount = 0;
+
+function posAngle(i) { return (i / 24) * Math.PI * 2 - Math.PI / 2; }
+
+function drawWheel() {
+  ctx.clearRect(0, 0, 340, 340);
+
+  // Ambient outer glow
+  const ambGlow = ctx.createRadialGradient(cx, cy, outerR - 20, cx, cy, outerR + 40);
+  ambGlow.addColorStop(0, 'rgba(80, 65, 45, 0.12)');
+  ambGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = ambGlow;
+  ctx.beginPath(); ctx.arc(cx, cy, outerR + 40, 0, Math.PI * 2); ctx.fill();
+
+  // Draw spokes
+  for (let i = 0; i < 24; i++) {
+    const angle = posAngle(i);
+    const isPrime = primePositions.includes(i);
+    const isActive = (i === activePos);
+    const alpha = isActive ? 0.9 : isPrime ? 0.55 : 0.35;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
+    ctx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+    ctx.strokeStyle = isActive
+      ? `rgba(232, 200, 106, ${0.5 + glowPulse * 0.4})`
+      : isPrime
+        ? `rgba(232, 200, 106, ${alpha})`
+        : `rgba(55, 55, 75, ${alpha})`;
+    ctx.lineWidth = isActive ? 3 : isPrime ? 1.8 : 1.2;
+    ctx.stroke();
+  }
+
+  // Draw position nodes
+  for (let i = 0; i < 24; i++) {
+    const angle = posAngle(i);
+    const isPrime = primePositions.includes(i);
+    const isActive = (i === activePos);
+    const r = isPrime ? 9 : 5.5;
+    const x = cx + Math.cos(angle) * (innerR - 22);
+    const y = cy + Math.sin(angle) * (innerR - 22);
+
+    if (isActive) {
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+      grd.addColorStop(0, `rgba(245, 210, 130, ${0.85 + glowPulse * 0.15})`);
+      grd.addColorStop(0.4, `rgba(200, 160, 70, ${0.4 * glowPulse})`);
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(x, y, r * 3, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = '#f8f0e0';
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    } else if (isPrime) {
+      ctx.fillStyle = '#e8c86a';
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = '#2d2d3d';
+      ctx.beginPath(); ctx.arc(x, y, r * 0.65, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Prime number labels
+  ctx.font = '8.5px sans-serif';
+  ctx.fillStyle = '#a08860';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const primeLabels = [1, 5, 7, 11, 13, 17, 19, 23];
+  for (let i = 0; i < 24; i++) {
+    if (primePositions.includes(i)) {
+      const angle = posAngle(i);
+      const lx = cx + Math.cos(angle) * (innerR - 40);
+      const ly = cy + Math.sin(angle) * (innerR - 40);
+      ctx.fillText(primeLabels[primePositions.indexOf(i)], lx, ly);
+    }
+  }
+
+  // Breath arc indicator
+  if (activePos >= 0) {
+    const a = posAngle(activePos);
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR + 12, a - 0.18, a + 0.18);
+    ctx.strokeStyle = `rgba(232, 200, 106, ${0.65 + glowPulse * 0.35})`;
+    ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+  }
+
+  // Center hub
+  const hubGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, hubR * 2.5);
+  hubGlow.addColorStop(0, 'rgba(160, 140, 100, 0.25)');
+  hubGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = hubGlow;
+  ctx.beginPath(); ctx.arc(cx, cy, hubR * 2.5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#4a3a2a';
+  ctx.beginPath(); ctx.arc(cx, cy, hubR, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#c8b888';
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('⊙', cx, cy);
+}
+
+function startGlow() {
+  function loop() {
+    glowPulse += 0.025 * glowDir;
+    if (glowPulse >= 1) { glowPulse = 1; glowDir = -1; }
+    if (glowPulse <= 0) { glowPulse = 0; glowDir = 1; }
+    drawWheel();
+    animFrame = requestAnimationFrame(loop);
+  }
+  if (!animFrame) loop();
+}
+
+// ── PHASE LOGIC ──
+let currentPhase = 0;
+let phaseInterval = null;
+let isRunning = false;
+
+function updateDisplay() {
+  const p = phases[currentPhase];
+  document.getElementById('phaseNum').textContent = `PHASE ${currentPhase + 1} OF 6`;
+  document.getElementById('phaseName').textContent = `${p.breath} — ${p.name}`;
+  document.getElementById('glyph').textContent = p.glyph;
+  document.getElementById('instruction').innerHTML = p.instruction;
+  document.getElementById('glyph').classList.remove('glyph-transition');
+  void document.getElementById('glyph').offsetWidth;
+  document.getElementById('glyph').classList.add('glyph-transition');
+}
+
+function advancePhase() {
+  playPhaseTone(currentPhase);
+  if (currentPhase < phases.length - 1) {
+    currentPhase++;
+    activePos = phases[currentPhase].pos;
+    updateDisplay();
+    drawWheel();
+  } else {
+    endCycle();
+  }
+}
+
+function endCycle() {
+  clearInterval(phaseInterval);
+  isRunning = false;
+  activePos = -1;
+  cycleCount++;
+  playCompleteTone();
+  document.getElementById('phaseNum').textContent = 'CYCLE COMPLETE';
+  document.getElementById('phaseName').textContent = 'Integration';
+  document.getElementById('glyph').textContent = '△̅';
+  document.getElementById('instruction').innerHTML = 'The breath rests in the field.<br>The primes remember you.';
+  document.getElementById('cycleCount').textContent = cycleCount === 1
+    ? '1 cycle completed'
+    : `${cycleCount} cycles completed`;
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnRepeat').style.display = 'inline-block';
+  document.getElementById('btnJournal').style.display = 'inline-block';
+  document.getElementById('btnDownload').style.display = 'inline-block';
+  drawWheel();
+  // Auto-open journal
+  if (cycleCount > 0) {
+    document.getElementById('journal').classList.add('visible');
+    document.getElementById('journalSaved').style.display = 'none';
+  }
+}
+
+function startCycle() {
+  if (isRunning) return;
+  isRunning = true;
+  currentPhase = 0;
+  activePos = phases[0].pos;
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnJournal').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+  document.getElementById('journal').classList.remove('visible');
+  updateDisplay();
+  drawWheel();
+  playPhaseTone(0);
+  phaseInterval = setInterval(advancePhase, 4500);
+}
+
+function repeatCycle() {
+  clearInterval(phaseInterval);
+  isRunning = false;
+  document.getElementById('btnStart').style.display = 'inline-block';
+  document.getElementById('btnRepeat').style.display = 'none';
+  document.getElementById('btnJournal').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+  document.getElementById('phaseNum').textContent = 'PHASE 1 OF 6';
+  document.getElementById('phaseName').textContent = 'Inhale — Scalar Seed';
+  document.getElementById('glyph').textContent = '△';
+  document.getElementById('instruction').innerHTML = 'Ready to breathe again.<br>The wheel turns.';
+  activePos = -1;
+  drawWheel();
+}
+
+function resetAll() {
+  clearInterval(phaseInterval);
+  isRunning = false;
+  currentPhase = 0;
+  activePos = -1;
+  cycleCount = 0;
+  document.getElementById('phaseNum').textContent = 'PHASE 1 OF 6';
+  document.getElementById('phaseName').textContent = 'Inhale — Scalar Seed';
+  document.getElementById('glyph').textContent = '△';
+  document.getElementById('instruction').innerHTML = 'Press Begin Cycle to start.<br>The wheel awaits your breath.';
+  document.getElementById('cycleCount').textContent = '';
+  document.getElementById('btnStart').style.display = 'inline-block';
+  document.getElementById('btnRepeat').style.display = 'none';
+  document.getElementById('btnJournal').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+  document.getElementById('journal').classList.remove('visible');
+  document.getElementById('journalText').value = '';
+  document.querySelectorAll('.glyph-choice').forEach(g => g.classList.remove('selected'));
+  drawWheel();
+}
+
+// ── JOURNAL ──
+let selectedGlyph = '';
+let entries = JSON.parse(localStorage.getItem('codex_journal') || '[]');
+
+function renderLog() {
+  const logEl = document.getElementById('logEntries');
+  const logData = document.getElementById('log');
+  if (entries.length === 0) { logData.style.display = 'none'; return; }
+  logData.style.display = 'block';
+  logEl.innerHTML = entries.map(e => `
+    <div class="log-entry">
+      <div class="log-g">${e.glyph}</div>
+      <div class="log-meta">
+        <div class="log-date">${e.date} — cycle #${e.cycle}</div>
+        <div class="log-text">${e.text}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderLog();
+
+document.querySelectorAll('.glyph-choice').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.glyph-choice').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedGlyph = btn.dataset.g;
+  };
+});
+
+document.getElementById('btnSaveEntry').onclick = () => {
+  const text = document.getElementById('journalText').value.trim();
+  if (!text && !selectedGlyph) return;
+  const entry = {
+    date: new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    glyph: selectedGlyph || '△',
+    text: text || '(silent integration)',
+    cycle: cycleCount
+  };
+  entries.unshift(entry);
+  if (entries.length > 50) entries = entries.slice(0, 50);
+  localStorage.setItem('codex_journal', JSON.stringify(entries));
+  document.getElementById('journalSaved').style.display = 'block';
+  setTimeout(() => { document.getElementById('journalSaved').style.display = 'none'; }, 3000);
+  renderLog();
+};
+
+document.getElementById('btnDownload').onclick = () => {
+  const content = entries.map(e => `[${e.date} | Cycle ${e.cycle} | Glyph: ${e.glyph}]\n${e.text}\n`).join('\n');
+  const blob = new Blob([`Codex Icositetragon — Journal Export\n${'='.repeat(40)}\n\n${content}`], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `codex-journal-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+};
+
+document.getElementById('logToggle').onclick = () => {
+  const el = document.getElementById('logEntries');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+};
+
+// Wire controls
+document.getElementById('btnStart').onclick = startCycle;
+document.getElementById('btnRepeat').onclick = repeatCycle;
+document.getElementById('btnReset').onclick = resetAll;
+document.getElementById('btnJournal').onclick = () => {
+  document.getElementById('journal').classList.toggle('visible');
+};
+
+// ── CONTROLS TOGGLE VISIBILITY ON LOAD ──
+document.getElementById('btnRepeat').style.display = 'none';
+document.getElementById('btnJournal').style.display = 'none';
+document.getElementById('btnDownload').style.display = 'none';
+
+// Initialize wheel (dim until onboarding passes)
+drawWheel();
+</script>
+</body>
+</html>
