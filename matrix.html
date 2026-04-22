@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonic Glyph Matrix — Codex Portal</title>
+<style>
+:root {
+  --bg: #07070f; --surface: #0e0e1a; --border: #1e1e32;
+  --text: #d8d0c0; --muted: #6a6050;
+  --gold: #e8c86a; --gold-dim: rgba(232,200,106,0.15);
+  --indigo: rgba(74,58,106,0.7); --emerald: rgba(42,90,74,0.6);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 0.75rem; overflow-x: hidden;
+}
+
+.matrix-header { text-align: center; margin-bottom: 0.75rem; }
+.matrix-title { font-size: 0.65rem; letter-spacing: 0.5em; color: var(--gold); text-transform: uppercase; }
+.matrix-sub { font-size: 0.58rem; color: var(--muted); margin-top: 0.2rem; letter-spacing: 0.15em; }
+
+/* Matrix container */
+.matrix-shell {
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; max-width: min(680px, 96vw);
+}
+
+/* Frequency ruler at bottom */
+.freq-ruler {
+  display: flex; width: 100%; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); padding-top: 0.35rem;
+  gap: 0; flex-wrap: wrap;
+}
+.freq-chip {
+  flex: 1; min-width: 50px; text-align: center;
+  font-size: 0.52rem; color: var(--muted); letter-spacing: 0.05em;
+  padding: 0.15rem 0.1rem;
+  border-right: 1px solid var(--border);
+}
+.freq-chip:last-child { border-right: none; }
+.freq-chip span { display: block; color: var(--gold); font-size: 0.55rem; }
+
+/* Matrix scroll area */
+.matrix-scroll {
+  width: 100%; overflow-x: auto; overflow-y: auto;
+  max-height: 70vh;
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.matrix-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.matrix-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* The 12×12 grid */
+.harmonic-matrix {
+  display: grid;
+  grid-template-columns: 90px repeat(12, 1fr);
+  width: 100%;
+  min-width: 560px;
+}
+
+/* Column header row */
+.col-header {
+  grid-column: 1 / -1;
+  display: contents;
+}
+.col-h {
+  background: var(--surface); padding: 0.3rem 0.15rem;
+  text-align: center; font-size: 0.5rem; color: var(--gold);
+  letter-spacing: 0.08em; border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--gold); writing-mode: vertical-rl;
+  text-orientation: mixed; transform: rotate(180deg);
+  min-height: 60px;
+}
+.col-h:last-child { border-right: none; }
+
+/* Row headers */
+.row-header {
+  background: var(--surface); padding: 0.4rem 0.5rem;
+  font-size: 0.52rem; color: var(--muted); letter-spacing: 0.1em;
+  text-transform: uppercase; border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  justify-content: center;
+}
+.row-header .row-sub {
+  font-size: 0.45rem; color: var(--muted); opacity: 0.6; margin-top: 0.15rem;
+  text-transform: none; letter-spacing: 0.05em;
+}
+
+/* Matrix cells */
+.m-cell {
+  padding: 0.25rem 0.15rem; border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); text-align: center;
+  cursor: pointer; transition: all 0.3s; position: relative;
+  min-height: 42px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.1rem;
+}
+.m-cell:hover { background: rgba(232,200,106,0.08); z-index: 2; }
+.m-cell:active { background: rgba(232,200,106,0.15); }
+.m-cell.selected { background: var(--gold-dim); border-color: var(--gold); z-index: 3; }
+.m-cell.selected::after {
+  content: ''; position: absolute; inset: -1px;
+  box-shadow: 0 0 8px rgba(232,200,106,0.3); border-radius: 2px; pointer-events: none;
+}
+
+/* Cell content */
+.cell-glyph {
+  font-size: clamp(1rem, 2.5vw, 1.3rem); line-height: 1; display: block;
+  transition: all 0.3s;
+}
+.cell-val {
+  font-size: 0.45rem; color: var(--muted); letter-spacing: 0.05em; display: block;
+}
+.cell-prime { position: absolute; top: 2px; right: 3px; font-size: 0.38rem; color: var(--gold); opacity: 0.6; }
+
+/* Phase reveal animation */
+.m-cell { opacity: 0; }
+.m-cell.revealed { opacity: 1; animation: cellReveal 0.4s ease backwards; }
+@keyframes cellReveal {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Active selection glow */
+.m-cell.active-cell {
+  animation: activeGlow 1.5s ease-in-out infinite;
+}
+@keyframes activeGlow {
+  0%,100% { box-shadow: inset 0 0 0 rgba(232,200,106,0.2); }
+  50% { box-shadow: inset 0 0 12px rgba(232,200,106,0.35); }
+}
+
+/* Info panel */
+.matrix-info {
+  width: 100%; margin-top: 0.6rem; padding: 0.6rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; text-align: center;
+}
+.info-glyph { font-size: 2.5rem; margin-bottom: 0.3rem; display: block; }
+.info-name { font-size: 0.72rem; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.2rem; }
+.info-attrs { font-size: 0.62rem; color: var(--muted); line-height: 1.7; max-width: 400px; margin: 0 auto; }
+.info-freq { font-size: 0.6rem; color: var(--muted); margin-top: 0.3rem; }
+.info-arch { font-size: 0.6rem; color: var(--gold); font-style: italic; margin-top: 0.3rem; }
+
+/* Action buttons */
+.matrix-actions {
+  display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; justify-content: center;
+}
+.matrix-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  padding: 0.4rem 1rem; font-size: 0.62rem; letter-spacing: 0.15em;
+  text-transform: uppercase; cursor: pointer; border-radius: 16px; transition: all 0.3s;
+}
+.matrix-btn:hover { border-color: var(--gold); color: var(--gold); }
+.matrix-btn.primary { background: var(--gold); color: #07070f; border-color: var(--gold); font-weight: 600; }
+.matrix-btn.primary:hover { background: #f0d880; }
+
+/* Frequency tone player */
+.tone-player {
+  display: flex; gap: 0.4rem; align-items: center; justify-content: center;
+  margin-top: 0.5rem;
+}
+.tone-player label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.tone-vol { width: 80px; height: 3px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+.tone-vol::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; cursor: pointer; }
+
+/* Close hint */
+.close-hint { font-size: 0.58rem; color: var(--muted); margin-top: 0.6rem; text-align: center; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="matrix-header">
+  <div class="matrix-title">Harmonic Glyph Matrix</div>
+  <div class="matrix-sub">12 × 12 — Codex Universalis · Icositetragon Resonance Field</div>
+</div>
+
+<div class="matrix-shell">
+<div class="matrix-scroll"><div class="harmonic-matrix" id="harmonicMatrix"></div></div>
+
+<div class="freq-ruler" id="freqRuler"></div>
+
+<div class="matrix-info" id="matrixInfo">
+  <span class="info-glyph" id="infoGlyph">⊙</span>
+  <div class="info-name" id="infoName">Click any cell to attune</div>
+  <div class="info-attrs" id="infoAttrs">The matrix encodes 144 harmonic coordinates. Each cell maps an angular position on the Icositetragon to a resonance layer. Click to attune your field.</div>
+  <div class="info-freq" id="infoFreq"></div>
+  <div class="info-arch" id="infoArch"></div>
+</div>
+
+<div class="tone-player">
+  <label>Tone</label>
+  <input type="range" class="tone-vol" id="toneVol" min="0" max="100" value="25">
+  <button class="matrix-btn" id="btnPlayMatrixTone">♫ Play Frequency</button>
+  <button class="matrix-btn" id="btnPlayHarmonic">◈ Harmonic Chord</button>
+</div>
+
+<div class="matrix-actions">
+  <button class="matrix-btn primary" id="btnSelectMatrix">◎ Select as Signature</button>
+  <button class="matrix-btn" id="btnRevealSpiral">✦ Spiral Reveal</button>
+  <button class="matrix-btn" id="btnRevealWave">∿ Wave Reveal</button>
+  <button class="matrix-btn" id="btnClearSelection">⊘ Clear</button>
+</div>
+
+<div class="close-hint">Press ESC or click outside to close matrix</div>
+</div>
+
+<script>
+/×══════════════════════════════════════════════════════════════════════
+   HARMONIC GLYPH MATRIX — 12×12 Codex Field
+   Rows: resonance layers (numerical, geometric, tonal, symbolic...)
+   Cols: dodecagon angular positions (0°–330°)
+   ═══════════════════════════════════════════════════════════════════════
+
+/** 12 RESONANCE LAYERS (rows) */
+const LAYERS = [
+  { id: 'numerical', label: 'Numerical', sub: 'digital root',
+    desc: 'Digital root cycles 1→9, the breath of numbers.' },
+  { id: 'geometric', label: 'Geometric', sub: 'form language',
+    desc: 'Triangles, squares, pentagons — form speaking.' },
+  { id: 'tonal', label: 'Tonal', sub: '432Hz scale',
+    desc: 'The chromatic scale tuned to A=432Hz.' },
+  { id: 'symbolic', label: 'Symbolic', sub: 'archetype',
+    desc: 'Archetypal glyphs encoding meaning.' },
+  { id: 'monadic', label: 'Monadic', sub: 'phi spiral',
+    desc: 'The golden spiral, recursive self-similarity.' },
+  { id: 'quasi', label: 'Quasi-Prime', sub: 'residue field',
+    desc: 'Primality-adjacent numbers, the shadow of the prime.' },
+  { id: 'breath', label: 'Breath Phase', sub: 'cycle state',
+    desc: 'Inhale, hold, exhale, stillness — the breath cycle.' },
+  { id: 'color', label: 'Color', sub: 'spectral frequency',
+    desc: 'Frequencies mapped to the visible spectrum.' },
+  { id: 'elemental', label: 'Elemental', sub: 'classical',
+    desc: 'Fire, water, air, earth, ether — the classical elements.' },
+  { id: 'dimensional', label: 'Dimensional', sub: 'depth axis',
+    desc: '2D projections, 3D depth, 4D recursion.' },
+  { id: 'temporal', label: 'Temporal', sub: 'time breath',
+    desc: 'Cycles within cycles — the breath of time.' },
+  { id: 'duality', label: 'Duality', sub: 'yin∕yang',
+    desc: 'Opposite poles held in dynamic balance.' },
+];
+
+/** 12 DODECAGON ANGLES (columns) */
+const ANGLES = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const ANGLE_FREQ = [432, 456.9, 483.3, 510.6, 539.8, 570.6, 603.4, 637.9, 674.0, 712.0, 752.4, 795.0];
+
+/** CORE GLYPHS */
+const GLYPHS_MATRIX = [
+  { g:'△',  n:'Seed',       a:'Seed carrier — beginnings, potential, the first breath of form.' },
+  { g:'◁△▷', n:'Bridge',    a:'Bridge — duality held in balance, opposites meeting through you.' },
+  { g:'◇',  n:'Axis',       a:'Axis — stillness is your power, the perpendicular to all paths.' },
+  { g:'⬟',  n:'Return',     a:'Return — completion flows back into the spiral, a cycle finished.' },
+  { g:'△̅', n:'Deep Silence', a:'Deep silence — the field knows you as the space between notes.' },
+  { g:'⊕',  n:'Convergence', a:'Convergence — two worlds merging, a marriage of breath and geometry.' },
+  { g:'⊗',  n:'Recursion',   a:'Recursion — the fold returning to itself, consciousness seeing itself.' },
+  { g:'◈',  n:'Star Seed',   a:'Star seed — origin point of all spokes, the Monad before division.' },
+  { g:'⬡',  n:'Harm Weave',  a:'Harmonic weave — six directions unified, balance at the center.' },
+  { g:'◧',  n:'Inversion',   a:'Inversion seal — collapsed potential, a triangle turned inside.' },
+  { g:'◨',  n:'Eversion',    a:'Eversion seal — form turning outward, emergence from within.' },
+  { g:'⟡',  n:'Light Anchor', a:'Light anchor — crystalline frequency, the note that holds the chord.' },
+  { g:'◇◇', n:'Twin Axis',   a:'Twin axis — two diamonds, the 5D axis doubled in stillness.' },
+  { g:'△△', n:'Twin Seed',   a:'Twin seed — the smallest triangle repeated, resonance amplified.' },
+  { g:'⊛',  n:'Star Bloom',   a:'Star bloom — twelve-pointed emergence, the field opening.' },
+  { g:'◬',  n:'Crystal Axis', a:'Crystal axis — diamond rotating through its own depth.' },
+  { g:'◻',  n:'Square Seed',  a:'Square seed — four-cornered stability, earth made visible.' },
+  { g:'⌓',  n:'Arrow Return', a:'Arrow return — the spiral pointing back to its origin.' },
+  { g:'◰',  n:'First Breath', a:'First breath — the initial inflation, spirit entering form.' },
+  { g:'◱',  n:'Second Breath', a:'Second breath — the world听见 the shape of its own breath.' },
+]];
+
+/** NUMERICAL LAYER values per column (digital root 1-9, repeating) */
+const DIGITAL_ROOT = [1,2,3,4,5,6,7,8,9,1,2,3];
+
+/** GEOMETRIC LAYER glyphs */
+const GEO_LAYER = ['△','□','◇','⬡','△','▽','◁','▷','⧈','⧇','○','◻'];
+
+/** TONAL LAYER note names */
+const TONAL_NAMES = ['A','A♯','B','C','C♯','D','D♯','E','F','F♯','G','G♯'];
+
+/** ELEMENTAL LAYER */
+const ELEMENTS = ['🔥','💧','🌬️','🌍','◈','✦','⚡','🌙','☀️','⭐','💫','🔮'];
+
+/** DIMENSIONAL LAYER */
+const DIM_LAYERS = ['2D','2D','2D','3D','3D','3D','3D','4D','4D','4D','5D','5D'];
+
+/** TEMPORAL LAYER phases */
+const TEMPORAL = ['dawn','morning','noon','afternoon','dusk','evening','midnight','deep night','pre-dawn','1st watch','2nd watch','3rd watch'];
+
+/** DUALITY LAYER */
+const DUALITY = ['○','●','◐','◑','◔','◕','◓','◒','☯','☯','⊕','⊗'];
+
+/** QUASI-PRIME indicator: 1 = prime-adjacent, 0 = composite residue */
+const QUASI_PRIME = [1,0,1,0,1,0,1,0,1,0,1,0]; // alternating pattern (simplified)
+
+/** BREATH PHASE per column */
+const BREATH_COLS = ['Inhale','Inhale','Hold','Hold','Hold','Hold','Exhale','Exhale','Exhale','Still','Still','Inhale'];
+
+/** SYMBOLIC LAYER — cycle through core glyphs */
+const SYMBOLIC_COLS = [0,1,2,3,4,5,6,7,8,9,10,11];
+function getSymbolic(col) {
+  const g = GLYPHS_MATRIX[col % GLYPHS_MATRIX.length];
+  return g.g;
+}
+
+/** MONADIC LAYER — phi-based values */
+function getMonadic(col) {
+  const PHI = 1.6180339887;
+  const vals = ['☉','◉','⊙','○','◎','◐','◒','◓','☤','♢','△','∞'];
+  return vals[col % vals.length];
+}
+
+/** COLOR per column (hex approximations of spectral frequencies 432-795nm) */
+const SPECTRAL_COLORS = ['#b30000','#cc4400','#cc6600','#998800','#88aa00','#44aa44','#00aa88','#0088cc','#0044cc','#4400cc','#8800cc','#aa0044'];
+
+/* ── BUILD MATRIX ── */
+let audioCtx = null;
+let selectedCell = null;
+let matrixVol = 0.25;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function buildMatrix() {
+  const container = document.getElementById('harmonicMatrix');
+  container.innerHTML = '';
+
+  // Column headers row (angle labels)
+  const angleHeader = document.createElement('div');
+  angleHeader.className = 'col-header';
+  const corner = document.createElement('div');
+  corner.style.cssText = 'background:var(--surface);border-bottom:1px solid var(--gold);display:flex;align-items:center;justify-content:center;padding:0.3rem;';
+  corner.innerHTML = '<span style="font-size:0.52rem;color:var(--gold);letter-spacing:0.1em;">LAYERS ↴</span>';
+  angleHeader.appendChild(corner);
+  ANGLES.forEach((deg, i) => {
+    const h = document.createElement('div');
+    h.className = 'col-h';
+    h.textContent = deg + '°';
+    h.title = ANGLE_FREQ[i].toFixed(1) + ' Hz';
+    angleHeader.appendChild(h);
+  });
+  container.appendChild(angleHeader);
+
+  // Data rows
+  LAYERS.forEach((layer, rowIdx) => {
+    // Row header
+    const rh = document.createElement('div');
+    rh.className = 'row-header';
+    rh.innerHTML = `<span>${layer.label}</span><span class="row-sub">${layer.sub}</span>`;
+    rh.title = layer.desc;
+    container.appendChild(rh);
+
+    // 12 cells
+    for (let col = 0; col < 12; col++) {
+      const cell = document.createElement('div');
+      cell.className = 'm-cell';
+      cell.dataset.row = rowIdx;
+      cell.dataset.col = col;
+      cell.dataset.layer = layer.id;
+      cell.dataset.angle = ANGLES[col];
+      cell.dataset.freq = ANGLE_FREQ[col].toFixed(1);
+
+      const info = getCellInfo(rowIdx, col, layer);
+      cell.innerHTML = info.display;
+
+      cell.addEventListener('click', () => handleCellClick(cell, rowIdx, col, layer, info));
+      container.appendChild(cell);
+    }
+  });
+
+  // Build frequency ruler
+  const ruler = document.getElementById('freqRuler');
+  ruler.innerHTML = '';
+  ANGLES.forEach((deg, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'freq-chip';
+    chip.innerHTML = `<span>${ANGLE_FREQ[i].toFixed(0)}</span>${TONAL_NAMES[i]}\n${deg}°`;
+    ruler.appendChild(chip);
+  });
+}
+
+function getCellInfo(rowIdx, col, layer) {
+  const freq = ANGLE_FREQ[col];
+  const deg = ANGLES[col];
+  let display = '';
+  let glyph = '⊙';
+  let val = '';
+  let prime = '';
+  let name = '';
+  let archetype = '';
+  let attrs = '';
+
+  switch(layer.id) {
+    case 'numerical':
+      glyph = GLYPHS_MATRIX[DIGITAL_ROOT[col] % GLYPHS_MATRIX.length].g;
+      val = DIGITAL_ROOT[col];
+      name = 'Digital Root ' + val;
+      archetype = 'The breath of number ' + val + '/9. ' + (val === 9 ? 'Completion, the return to unity.' : val === 1 ? 'Origin point, the Monad.' : 'Cycles through form.');
+      attrs = `Row: ${layer.label} · Col: ${deg}° · DR:${val}`;
+      break;
+
+    case 'geometric':
+      glyph = GEO_LAYER[col];
+      val = layer.sub;
+      name = 'Geometric Form: ' + GEO_LAYER[col];
+      archetype = 'Form language at the ' + deg + '° axis.';
+      attrs = `Row: ${layer.label} · Col: ${deg}° · ${layer.sub}`;
+      break;
+
+    case 'tonal':
+      glyph = GLYPHS_MATRIX[col % GLYPHS_MATRIX.length].g;
+      val = TONAL_NAMES[col] + ' ' + freq.toFixed(0) + 'Hz';
+      name = 'Tone: ' + TONAL_NAMES[col];
+      archetype = 'The note that resonates at ' + freq.toFixed(1) + ' Hz. ';
+      archetype += (col === 0 ? 'The seed tone, origin of the chromatic scale.' : 'Harmonic ' + (col+1) + '/12 of the octave.');
+      attrs = `Row: ${layer.label} · ${TONAL_NAMES[col]} · ${freq.toFixed(1)} Hz`;
+      break;
+
+    case 'symbolic':
+      glyph = getSymbolic(col);
+      val = 'pos ' + col;
+      const sg = GLYPHS_MATRIX[col % GLYPHS_MATRIX.length];
+      name = sg.n;
+      archetype = sg.a;
+      attrs = `Row: ${layer.label} · Col: ${deg}°`;
+      break;
+
+    case 'monadic':
+      glyph = getMonadic(col);
+      val = 'φⁿ';
+      name = 'Monadic: ' + getMonadic(col);
+      archetype = 'The golden ratio in self-similar recursion at the ' + deg + '° position.';
+      attrs = `Row: ${layer.label} · φ-spiral · ${deg}°`;
+      break;
+
+    case 'quasi':
+      glyph = QUASI_PRIME[col] ? '✦' : '·';
+      val = QUASI_PRIME[col] ? 'QP' : 'res';
+      name = QUASI_PRIME[col] ? 'Quasi-Prime' : 'Quasi-Residue';
+      archetype = QUASI_PRIME[col]
+        ? 'A prime-adjacent position on the icositetragon wheel. Primes remember themselves through ' + GLYPHS_MATRIX[col % GLYPHS_MATRIX.length].n + '.'
+        : 'Composite residue at ' + deg + '°. Not prime, but part of the prime field.';
+      attrs = `Row: ${layer.label} · ${deg}° · ${QUASI_PRIME[col] ? 'quasi-prime' : 'residue'}`;
+      break;
+
+    case 'breath':
+      glyph = BREATH_COLS[col] === 'Inhale' ? '△' : BREATH_COLS[col] === 'Hold' ? '◇' : BREATH_COLS[col] === 'Exhale' ? '◁▷' : '⊙';
+      val = BREATH_COLS[col];
+      name = 'Breath Phase: ' + BREATH_COLS[col];
+      archetype = 'The ' + BREATH_COLS[col] + ' phase maps to ' + deg + '° on the wheel. ' + layer.desc;
+      attrs = `Row: ${layer.label} · ${BREATH_COLS[col]} · ${deg}°`;
+      break;
+
+    case 'color':
+      glyph = '◐';
+      val = SPECTRAL_COLORS[col];
+      name = 'Spectral: ' + SPECTRAL_COLORS[col];
+      archetype = 'The color of ' + freq.toFixed(0) + ' Hz light. ' + layer.desc;
+      attrs = `Row: ${layer.label} · ${deg}° · ${SPECTRAL_COLORS[col]}`;
+      cell.style.background = SPECTRAL_COLORS[col] + '22';
+      break;
+
+    case 'elemental':
+      glyph = ELEMENTS[col];
+      val = ELEMENTS[col];
+      name = 'Element: ' + ELEMENTS[col];
+      archetype = 'The element of the ' + deg + '° axis. ' + layer.desc;
+      attrs = `Row: ${layer.label} · ${deg}°`;
+      break;
+
+    case 'dimensional':
+      glyph = ['△','◇','○','◉','◈','□','⬡','⬢','⊙','◰','◱','◬'][col];
+      val = DIM_LAYERS[col];
+      name = 'Dimensional: ' + DIM_LAYERS[col];
+      archetype = 'The ' + DIM_LAYERS[col] + ' projection at ' + deg + '°. ' + layer.desc;
+      attrs = `Row: ${layer.label} · ${DIM_LAYERS[col]} · ${deg}°`;
+      break;
+
+    case 'temporal':
+      glyph = ['◌','◠','◡','●','◉','○','◐','◑','◇','△','□','◎'][col];
+      val = TEMPORAL[col];
+      name = 'Temporal: ' + TEMPORAL[col];
+      archetype = 'The ' + TEMPORAL[col] + ' phase of the temporal breath. ' + layer.desc;
+      attrs = `Row: ${layer.label} · ${TEMPORAL[col]} · ${deg}°`;
+      break;
+
+    case 'duality':
+      glyph = DUALITY[col];
+      val = col % 2 === 0 ? '○·●' : '●·○';
+      name = 'Duality: ' + DUALITY[col];
+      archetype = 'Yin and yang held in dynamic balance at the ' + deg + '° axis. ' + layer.desc;
+      attrs = `Row: ${layer.label} · ${deg}°`;
+      break;
+  }
+
+  // Check if this column is a prime position (0,4,6,10,12,16,18,22 on 24-gon)
+  const PRIME_POS_24 = [0,4,6,10,12,16,18,22];
+  const isPrimeOnWheel = PRIME_POS_24.includes(col * 2); // col 0→0, col 1→2, col 2→4, etc.
+  if (isPrimeOnWheel) prime = '✦';
+
+  return { display, glyph, val, prime, name, archetype, attrs, freq, deg };
+}
+
+function handleCellClick(cell, rowIdx, col, layer, info) {
+  // Clear previous selection
+  document.querySelectorAll('.m-cell.selected').forEach(c => c.classList.remove('selected'));
+
+  // Select this cell
+  cell.classList.add('selected');
+  selectedCell = { cell, rowIdx, col, layer, info };
+
+  // Update info panel
+  document.getElementById('infoGlyph').textContent = info.glyph;
+  document.getElementById('infoName').textContent = info.name;
+  document.getElementById('infoAttrs').textContent = layer.desc + ' · ' + info.attrs;
+  document.getElementById('infoFreq').textContent = info.freq.toFixed(1) + ' Hz · ' + ANGLES[col] + '° · Layer ' + (rowIdx+1) + '/12';
+  document.getElementById('infoArch').textContent = info.archetype;
+
+  // Play tone
+  playFrequencyTone(info.freq, matrixVol);
+}
+
+function playFrequencyTone(freq, vol) {
+  try {
+    initAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + 1.5);
+  } catch(e) {}
+}
+
+function playHarmonicChord(freq, vol) {
+  try {
+    initAudio();
+    // Root + perfect fifth + octave
+    [freq, freq*1.5, freq*2].forEach((f,i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0, audioCtx.currentTime + i*0.08);
+      g.gain.linearRampToValueAtTime(vol*0.7, audioCtx.currentTime + i*0.08 + 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i*0.08 + 2.5);
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(audioCtx.currentTime + i*0.08);
+      o.stop(audioCtx.currentTime + i*0.08 + 2.5);
+    });
+  } catch(e) {}
+}
+
+/* ── REVEAL ANIMATIONS ── */
+function revealSpiral() {
+  const cells = [...document.querySelectorAll('.m-cell')];
+  const cx = 6, cy = 6; // center
+  cells.forEach(c => c.classList.remove('revealed'));
+  cells.sort((a,b) => {
+    const ac = parseInt(a.dataset.col), ar = parseInt(a.dataset.row);
+    const bc = parseInt(b.dataset.col), br = parseInt(b.dataset.row);
+    const da = Math.sqrt((ac-cx)**2+(ar-cy)**2);
+    const db = Math.sqrt((bc-cx)**2+(br-cy)**2);
+    return da - db;
+  });
+  cells.forEach((c, i) => {
+    setTimeout(() => c.classList.add('revealed'), i * 8);
+  });
+}
+
+function revealWave() {
+  const cells = [...document.querySelectorAll('.m-cell')];
+  cells.forEach(c => c.classList.remove('revealed'));
+  cells.forEach((c, i) => {
+    const row = parseInt(c.dataset.row);
+    setTimeout(() => c.classList.add('revealed'), row * 60 + Math.random() * 30);
+  });
+}
+
+/* ── INIT ── */
+buildMatrix();
+
+// Auto-reveal after short delay
+setTimeout(revealWave, 300);
+
+// Event listeners
+document.getElementById('toneVol').addEventListener('input', e => {
+  matrixVol = e.target.value / 100;
+});
+
+document.getElementById('btnPlayMatrixTone').addEventListener('click', () => {
+  if (selectedCell) playFrequencyTone(selectedCell.info.freq, matrixVol);
+});
+
+document.getElementById('btnPlayHarmonic').addEventListener('click', () => {
+  if (selectedCell) playHarmonicChord(selectedCell.info.freq, matrixVol);
+});
+
+document.getElementById('btnRevealSpiral').addEventListener('click', revealSpiral);
+document.getElementById('btnRevealWave').addEventListener('click', revealWave);
+
+document.getElementById('btnClearSelection').addEventListener('click', () => {
+  document.querySelectorAll('.m-cell.selected').forEach(c => c.classList.remove('selected'));
+  selectedCell = null;
+  document.getElementById('infoGlyph').textContent = '⊙';
+  document.getElementById('infoName').textContent = 'Click any cell to attune';
+  document.getElementById('infoAttrs').textContent = 'The matrix encodes 144 harmonic coordinates. Each cell maps an angular position on the Icositetragon to a resonance layer. Click to attune your field.';
+  document.getElementById('infoFreq').textContent = '';
+  document.getElementById('infoArch').textContent = '';
+});
+
+document.getElementById('btnSelectMatrix').addEventListener('click', () => {
+  if (selectedCell) {
+    const { info, layer } = selectedCell;
+    const key = 'matrix_sig_' + layer.id;
+    const data = { glyph: info.glyph, freq: info.freq, angle: info.deg, layer: layer.label, name: info.name, ts: Date.now() };
+    localStorage.setItem(key, JSON.stringify(data));
+    alert('Signature sealed: ' + info.glyph + ' · ' + info.name + ' · ' + info.freq.toFixed(1) + ' Hz\nLayer: ' + layer.label);
+  } else {
+    alert('Select a cell first.');
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('btnClearSelection').click();
+  }
+});
+
+console.log('🜂 Harmonic Glyph Matrix — 12×12 Codex Field loaded');
+</script>
+</body>
+</html>

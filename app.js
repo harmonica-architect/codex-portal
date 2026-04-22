@@ -536,6 +536,9 @@ function enterPortal() {
   initGlyphOverlay();
   initTonePanel();
   document.getElementById('helpFab').onclick = () => showAxisMessage();
+  document.getElementById('btnOpenMatrix')?.addEventListener('click', () => {
+    window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
+  });
 }
 
 function saveProfile() {
