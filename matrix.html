@@ -217,10 +217,12 @@ body {
 .tutorial-overlay {
   position: fixed; inset: 0; background: rgba(7,7,15,0.92); z-index: 10000;
   display: flex; align-items: center; justify-content: center; padding: 1rem;
+  cursor: pointer;
 }
 .tutorial-box {
   background: var(--surface); border: 1px solid var(--gold); border-radius: 10px;
   padding: 1.5rem; max-width: 400px; width: 100%; text-align: center;
+  cursor: default;
 }
 .tutorial-title { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.8rem; }
 .tutorial-step { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.7rem; text-align: left; }
@@ -967,6 +969,13 @@ document.getElementById('tutorialSkip').onclick = () => {
   localStorage.setItem('matrix_tutorial_done', '1');
   document.getElementById('tutorialOverlay').style.display = 'none';
 };
+
+// Click outside tutorial box = skip
+document.getElementById('tutorialOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('tutorialOverlay')) {
+    document.getElementById('tutorialSkip').click();
+  }
+});
 
 /* ── INIT ── */
 buildMatrix();
