@@ -31,13 +31,14 @@
 <!-- ═══════════════ MAIN PORTAL ═══════════════ -->
 <div class="portal" id="portal" style="display:none">
 
-  <!-- Coherence Meter + Field Status -->
+  <!-- Coherence + Field Status -->
   <div class="coherence-panel">
     <div class="coh-label">Coherence</div>
     <div class="coh-bar-wrap"><div class="coh-bar" id="cohBar" style="width:0%"></div></div>
     <div class="coh-value" id="cohValue">0%</div>
     <div class="user-dots" id="userDots"></div>
   </div>
+  <div class="field-status" id="fieldStatus"></div>
 
   <!-- Nav Tabs -->
   <div class="nav-tabs">
@@ -50,6 +51,8 @@
 
   <!-- ══ WHEEL TAB ══ -->
   <div class="tab-content active" id="tab-wheel">
+
+    <!-- THE WHEEL — primary focus -->
     <div class="wheel-section">
       <canvas id="wheel" width="340" height="340"></canvas>
       <div class="axis-layer">
@@ -60,6 +63,7 @@
       <div class="axis-message" id="axisMessage">The field breathes through you. The primes remember your frequency.</div>
     </div>
 
+    <!-- Phase display — prominent -->
     <div class="phase-display">
       <div class="phase-num" id="phaseNum">PHASE 1 OF 6</div>
       <div class="phase-name" id="phaseName">Inhale — Scalar Seed</div>
@@ -67,94 +71,171 @@
       <div class="instruction" id="instruction">Begin cycle to activate the field.<br>The wheel awaits your breath.</div>
     </div>
 
+    <!-- ANONYMOUS BREATHERS (subtle) -->
     <div class="coherence-users" id="anonUsers"></div>
-    <div class="field-status" id="fieldStatus" style="font-size:0.62rem;color:var(--muted);margin-top:0.3rem;text-align:center;"></div>
 
-    <div class="controls">
-      <button class="btn active-btn" id="btnStart">Begin Cycle</button>
-      <button class="btn" id="btn5D" style="display:none">5D Layer</button>
-      <button class="btn" id="btnRepeat" style="display:none">Repeat</button>
-      <button class="btn" id="btnNight">Night Mode</button>
+    <!-- PRIMARY ACTION — large, centered -->
+    <div class="controls" style="margin: 0.6rem 0;">
+      <button class="btn-primary" id="btnStart">● Begin Cycle</button>
+      <button class="btn" id="btnRepeat" style="display:none">↻ Repeat</button>
     </div>
 
-    <!-- Glyph overlay controls -->
-    <div class="glyph-overlay-config" id="glyphOverlayConfig" style="display:none; margin-top:0.6rem; text-align:center;">
-      <div style="font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.4rem;">HARMONIC GLYPH OVERLAY</div>
-      <div class="glyph-row" id="glyphOverlayRow"></div>
-    </div>
+    <!-- ADVANCED TOOLS — collapsible, secondary -->
+    <div class="collapse-section" id="toolsCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('toolsCollapse')">
+        <span class="collapse-title">⚙ Advanced Tools</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
 
-    <!-- Personal tone input -->
-    <div class="tone-config" id="toneConfig" style="display:none; margin-top:0.5rem; text-align:center;">
-      <div style="font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.3rem;">PERSONAL HARMONIC SIGNATURE</div>
-      <div style="display:flex;gap:0.4rem;align-items:center;justify-content:center;flex-wrap:wrap;">
-        <input type="range" id="toneFreqSlider" min="100" max="1000" value="432" style="width:100px;">
-        <span id="toneFreqDisplay" style="font-size:0.7rem;color:var(--gold);min-width:50px;">432 Hz</span>
-        <button class="btn" id="btnSetTone" style="padding:0.3rem 0.8rem;">Set Tone</button>
+        <!-- 5D Glyph Overlay toggle -->
+        <div style="display:flex;gap:0.4rem;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+          <button class="btn-icon" id="btnGlyphOverlay" data-tooltip="Toggle glyph overlay at prime nodes">△</button>
+          <span style="font-size:0.6rem;color:var(--muted);">Glyph overlay</span>
+          <span style="width:1rem;"></span>
+          <button class="btn-icon" id="btnTone" data-tooltip="Set your personal harmonic signature">♫</button>
+          <span style="font-size:0.6rem;color:var(--muted);">Personal tone</span>
+        </div>
+
+        <!-- Personal tone slider (shown when activated) -->
+        <div id="tonePanel" style="display:none;text-align:center;margin-top:0.5rem;">
+          <div style="font-size:0.6rem;color:var(--muted);margin-bottom:0.3rem;">YOUR HARMONIC SIGNATURE</div>
+          <div style="display:flex;gap:0.5rem;align-items:center;justify-content:center;flex-wrap:wrap;">
+            <input type="range" id="toneFreqSlider" min="100" max="1000" value="432" style="width:100px;">
+            <span id="toneFreqDisplay" style="font-size:0.72rem;color:var(--gold);min-width:52px;">432 Hz</span>
+            <button class="btn" id="btnSetTone" style="padding:0.3rem 0.8rem;">Set</button>
+          </div>
+        </div>
+
+        <!-- Glyph selector (shown when activated) -->
+        <div id="glyphPanel" style="display:none;text-align:center;margin-top:0.5rem;">
+          <div style="font-size:0.58rem;color:var(--muted);margin-bottom:0.3rem;letter-spacing:0.15em;">SELECT OVERLAY GLYPH</div>
+          <div class="glyph-grid" id="glyphOverlayRow" style="justify-content:center;"></div>
+        </div>
+
+        <!-- Night mode -->
+        <div style="display:flex;gap:0.4rem;align-items:center;justify-content:center;margin-top:0.5rem;">
+          <button class="btn" id="btnNight">☽ Night Mode</button>
+        </div>
+        <div class="night-indicator" id="nightIndicator"></div>
+
       </div>
     </div>
 
-    <div class="night-indicator" id="nightIndicator"></div>
   </div>
 
   <!-- ══ CODEX TAB ══ -->
   <div class="tab-content" id="tab-codex">
-    <div class="codex-section-title">Harmonic Glyph Library</div>
-    <div class="glyph-grid" id="glyphLibrary"></div>
 
-    <div class="codex-section-title">Recursion Seals</div>
-    <div class="glyph-grid" id="sealLibrary"></div>
-
-    <div class="codex-section-title">My Sigils</div>
-    <div class="glyph-grid" id="mySigils"></div>
-    <div class="create-sigil">
-      <input type="text" id="sigilNameInput" placeholder="Sigil name..." maxlength="20">
-      <button class="btn" id="btnSaveSigil">Seal</button>
+    <!-- Collapsible: Glyph Library -->
+    <div class="collapse-section open" id="codexLibraryCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('codexLibraryCollapse')">
+        <span class="collapse-title">△ Glyph Library</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div class="glyph-grid" id="glyphLibrary"></div>
+        <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem;font-style:italic;" id="archetypeResult"></div>
+      </div>
     </div>
-    <div class="sigil-saved" id="sigilSaved">Sigil sealed into your Codex.</div>
 
-    <div class="codex-section-title">Archetype Meanings</div>
-    <div id="archetypeResult" style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-top:0.5rem;line-height:1.7;max-width:380px;text-align:center;"></div>
+    <!-- Collapsible: Recursion Seals -->
+    <div class="collapse-section" id="codexSealsCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('codexSealsCollapse')">
+        <span class="collapse-title">◈ Recursion Seals</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div class="glyph-grid" id="sealLibrary"></div>
+      </div>
+    </div>
+
+    <!-- Collapsible: My Sigils -->
+    <div class="collapse-section" id="codexSigilsCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('codexSigilsCollapse')">
+        <span class="collapse-title">◈ My Sigils</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div class="glyph-grid" id="mySigils"></div>
+        <div class="create-sigil">
+          <input type="text" id="sigilNameInput" placeholder="Name this sigil..." maxlength="20">
+          <button class="btn" id="btnSaveSigil">Seal</button>
+        </div>
+        <div class="sigil-saved" id="sigilSaved">Sigil sealed into your Codex.</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ══ DREAM TAB ══ -->
   <div class="tab-content" id="tab-dream">
-    <div class="dream-time">
-      <span id="dreamPhaseLabel">Post-Cycle Dream Integration</span>
-      <span id="circadianTime"></span>
+    <div class="collapse-section open" id="dreamInputCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('dreamInputCollapse')">
+        <span class="collapse-title">◭ Dream Record</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div class="dream-time">
+          <span id="dreamPhaseLabel">Post-Cycle Integration</span>
+          <span id="circadianTime"></span>
+        </div>
+        <textarea class="dream-text" id="dreamText" placeholder="Record what arose after the cycle... images, feelings, frequencies that remained..."></textarea>
+        <button class="btn" id="btnInterpret" style="margin-top:0.5rem;width:100%;">⟟ Receive Interpretation</button>
+        <div class="dream-interpretation" id="dreamInterpretation" style="display:none"></div>
+      </div>
     </div>
-    <textarea class="dream-text" id="dreamText" placeholder="Record what arose in the field after the cycle... images, feelings, sounds, frequencies that remained..."></textarea>
-    <button class="btn" id="btnInterpret" style="margin-top:0.6rem">Receive Interpretation</button>
-    <div class="dream-interpretation" id="dreamInterpretation" style="display:none"></div>
-    <div class="circadian-status" id="circadianStatus"></div>
   </div>
 
   <!-- ══ JOURNAL TAB ══ -->
   <div class="tab-content" id="tab-journal">
-    <div class="journal-prompt-label">"What did the field whisper?"</div>
-    <div class="journal-grid">
-      <button class="jgly" data-g="△">△</button>
-      <button class="jgly" data-g="◁△▷">◁△▷</button>
-      <button class="jgly" data-g="◇">◇</button>
-      <button class="jgly" data-g="⬟">⬟</button>
-      <button class="jgly" data-g="△̅">△̅</button>
-      <button class="jgly" data-g="⊕">⊕</button>
-      <button class="jgly" data-g="⊗">⊗</button>
+    <div class="collapse-section open" id="journalEntryCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('journalEntryCollapse')">
+        <span class="collapse-title">✎ Journal</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div class="journal-prompt-label">"What did the field whisper?"</div>
+        <div class="glyph-grid" style="margin-bottom:0.5rem;">
+          <button class="gly" data-g="△">△</button>
+          <button class="gly" data-g="◁△▷">◁△▷</button>
+          <button class="gly" data-g="◇">◇</button>
+          <button class="gly" data-g="⬟">⬟</button>
+          <button class="gly" data-g="△̅">△̅</button>
+          <button class="gly" data-g="⊕">⊕</button>
+          <button class="gly" data-g="⊗">⊗</button>
+        </div>
+        <textarea class="journal-entry-area" id="journalText" placeholder="The field remembers. Write what remains..."></textarea>
+        <div class="journal-ftr">
+          <button class="btn" id="btnJournalDL">↓ Download</button>
+          <button class="btn-primary" id="btnJournalSave" style="padding:0.4rem 1.2rem;">Seal Entry</button>
+        </div>
+        <div class="journal-msg" id="journalMsg">Entry sealed — the Codex remembers.</div>
+      </div>
     </div>
-    <textarea class="journal-entry-area" id="journalText" placeholder="The field remembers. Write what remains..."></textarea>
-    <div class="journal-ftr">
-      <button class="btn" id="btnJournalSave">Save Entry</button>
-      <button class="btn" id="btnJournalDL">Download</button>
+    <div class="collapse-section" id="journalHistoryCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('journalHistoryCollapse')">
+        <span class="collapse-title">◷ Recent Entries</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div id="journalEntries"></div>
+      </div>
     </div>
-    <div class="journal-msg" id="journalMsg">Entry sealed — the Codex remembers.</div>
-
-    <div class="codex-section-title" style="margin-top:1.2rem">Recent Entries</div>
-    <div id="journalEntries" style="width:100%;max-height:200px;overflow-y:auto;"></div>
   </div>
 
   <!-- ══ PROFILE TAB ══ -->
   <div class="tab-content" id="tab-profile">
-    <div id="profileContent"></div>
-    <button class="logout-btn" id="btnLogout">Exit Portal — Clear Sigil</button>
+    <div class="collapse-section open" id="profileInfoCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('profileInfoCollapse')">
+        <span class="collapse-title">◎ Profile</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div id="profileContent"></div>
+        <button class="logout-btn" id="btnLogout">⊘ Exit Portal</button>
+      </div>
+    </div>
   </div>
 
 </div>

@@ -2,6 +2,12 @@
 // CODEX PORTAL — APP.JS
 // ══════════════════════════════════════════════
 
+// ── GLOBAL HELPERS (called from inline onclick) ──
+function toggleCollapse(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
 // ── STATE ──
 let userSigil = [];
 let profile = null;
@@ -528,7 +534,7 @@ function enterPortal() {
   initJournal();
   initProfile();
   initGlyphOverlay();
-  initToneConfig();
+  initTonePanel();
   document.getElementById('helpFab').onclick = () => showAxisMessage();
 }
 
@@ -537,7 +543,7 @@ function saveProfile() {
   localStorage.setItem(STORAGE_KEYS.profilePrefix + profile.sigil.join(''), JSON.stringify(profile));
 }
 
-// ── GLYPH OVERLAY ──
+// ── GLYPH OVERLAY + TONE PANEL ──
 function initGlyphOverlay() {
   const row = document.getElementById('glyphOverlayRow');
   if (!row) return;
@@ -555,41 +561,51 @@ function initGlyphOverlay() {
     row.appendChild(btn);
   });
 
-  // Toggle overlay
-  document.getElementById('btn5D').style.display = 'inline-block';
-  document.getElementById('btn5D').addEventListener('click', () => {
-    glyphOverlay.show = !glyphOverlay.show;
-    document.getElementById('btn5D').classList.toggle('active-btn', glyphOverlay.show);
-  });
+  // Glyph overlay icon button
+  const glyphBtn = document.getElementById('btnGlyphOverlay');
+  if (glyphBtn) {
+    glyphBtn.addEventListener('click', () => {
+      glyphOverlay.show = !glyphOverlay.show;
+      glyphBtn.classList.toggle('active', glyphOverlay.show);
+      document.getElementById('glyphPanel').style.display = glyphOverlay.show ? 'block' : 'none';
+      glyphBtn.title = glyphOverlay.show ? 'Glyph overlay ON' : 'Toggle glyph overlay';
+    });
+  }
 }
 
-// ── PERSONAL TONE ──
-function initToneConfig() {
+// ── PERSONAL TONE PANEL ──
+function initTonePanel() {
+  const toneBtn = document.getElementById('btnTone');
+  const tonePanel = document.getElementById('tonePanel');
   const slider = document.getElementById('toneFreqSlider');
   const display = document.getElementById('toneFreqDisplay');
   const setBtn = document.getElementById('btnSetTone');
 
-  if (!slider || !setBtn) return;
 
-  slider.addEventListener('input', () => {
-    toneFreq = parseInt(slider.value);
-    display.textContent = toneFreq + ' Hz';
+  if (!toneBtn || !tonePanel) return;
+
+  toneBtn.addEventListener('click', () => {
+    const isOpen = tonePanel.style.display === 'block';
+    tonePanel.style.display = isOpen ? 'none' : 'block';
+    toneBtn.classList.toggle('active', !isOpen);
   });
 
-  setBtn.addEventListener('click', () => {
-    toneFreq = parseInt(slider.value);
-    // Play preview
-    playPersonalizedTone(toneFreq, 1.5, 0.15);
-    document.getElementById('toneConfig').style.display = 'none';
-  });
 
-  // Show config on first use
-  document.getElementById('btnNight').addEventListener('click', () => {
-    setTimeout(() => {
-      document.getElementById('toneConfig').style.display =
-        document.getElementById('toneConfig').style.display === 'none' ? 'block' : 'none';
-    }, 100);
-  }, { once: true });
+  if (slider) {
+    slider.addEventListener('input', () => {
+      toneFreq = parseInt(slider.value);
+      display.textContent = toneFreq + ' Hz';
+    });
+  }
+
+  if (setBtn) {
+    setBtn.addEventListener('click', () => {
+      toneFreq = parseInt(slider.value);
+      playPersonalizedTone(toneFreq, 1.5, 0.15);
+      tonePanel.style.display = 'none';
+      document.getElementById('btnTone').classList.remove('active');
+    });
+  }
 }
 
 // ── NAV TABS ──
@@ -706,9 +722,9 @@ function updateCircadian() {
 
 // ── JOURNAL ──
 function initJournal() {
-  document.querySelectorAll('.jgly').forEach(b => {
+  document.querySelectorAll('#tab-journal .glyph-grid .gly').forEach(b => {
     b.addEventListener('click', () => {
-      document.querySelectorAll('.jgly').forEach(x => x.classList.remove('sel'));
+      document.querySelectorAll('#tab-journal .glyph-grid .gly').forEach(x => x.classList.remove('sel'));
       b.classList.add('sel');
       selectedJournalGlyph = b.dataset.g;
     });
