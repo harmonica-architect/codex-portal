@@ -13,7 +13,3 @@ services:
         value: production
       - key: PORT
         value: 10000
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
