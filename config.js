@@ -163,10 +163,17 @@ const NIGHT_MODE = {
   nightAxis: '#9080c0',
 };
 
-// ── LOCAL STORAGE KEYS ──
+// ── LOCAL STORAGE KEYS (standardized prefix: codex_) ──
 const STORAGE_KEYS = {
-  lastSigil: 'codex_last_sigil',
-  profilePrefix: 'codex_',
+  state: 'codex_state',          // unified shared state (all tools)
+  profile: 'codex_profile',      // user profile data
+  lastSigil: 'codex_last_sigil', // last active sigil for auto-login
+  resonatorProfiles: 'codex_resonator_profiles', // saved resonator profiles
+  resonatorDifficulty: 'codex_resonator_difficulty', // persisted difficulty level
+  matrixCombos: 'codex_matrix_combos', // saved MatrixGlyph combos
+  wsMeta: 'codex_ws_meta',        // WebSocket metadata
+  coherenceUpdate: 'codex_coherence_update', // cross-tool coherence signal
+  phaseUpdate: 'codex_phase_update',     // cross-tool phase signal
 };
 
 // ── RESONATOR CONFIG ──

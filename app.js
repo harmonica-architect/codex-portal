@@ -23,7 +23,7 @@ let selectedJournalGlyph = '';
 let selectedCodexGlyph = '';
 let cohInterval = null;
 
-// WebSocket state
+// ── WebSocket state
 let ws = null;
 let wsConnected = false;
 let serverPhase = -1;
@@ -35,6 +35,9 @@ let coherenceUpdateTimer = null;
 let glyphOverlay = { glyph: '△', show: true };
 let personalTone = 432;
 let toneFreq = 432;
+
+// Register WebSocket sender with CodexState for cross-tool sync
+registerWSSender(sendWS);
 
 // ── WHEEL CANVAS ──
 const canvas = document.getElementById('wheel');
@@ -504,7 +507,7 @@ function initLogin() {
       return;
     }
     document.getElementById('loginError').style.display = 'none';
-    profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.profilePrefix + userSigil.join('')) || 'null') || {
+    profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.profile + ':' + userSigil.join('')) || 'null') || {
       sigil: [...userSigil],
       cycles: 0,
       sigils: [],
@@ -525,6 +528,8 @@ function enterPortal() {
   document.getElementById('loginScreen').classList.add('hide');
   document.getElementById('portal').style.display = 'flex';
   localStorage.setItem(STORAGE_KEYS.lastSigil, userSigil.join(''));
+  // Sync sigil to shared state
+  updateState({ sigil: [...userSigil] });
   animateWheel();
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
@@ -535,6 +540,12 @@ function enterPortal() {
   initProfile();
   initGlyphOverlay();
   initTonePanel();
+  // Restore active tab from shared state
+  const savedTab = getState().activeTab;
+  if (savedTab) {
+    const tab = document.querySelector('.nav-tab[data-tab="' + savedTab + '"]');
+    if (tab) tab.click();
+  }
   document.getElementById('helpFab').onclick = () => showAxisMessage();
   document.getElementById('btnOpenMatrix')?.addEventListener('click', () => {
     window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
@@ -543,7 +554,7 @@ function enterPortal() {
 
 function saveProfile() {
   if (!profile) return;
-  localStorage.setItem(STORAGE_KEYS.profilePrefix + profile.sigil.join(''), JSON.stringify(profile));
+  localStorage.setItem(STORAGE_KEYS.profile + ':' + profile.sigil.join(''), JSON.stringify(profile));
 }
 
 // ── GLYPH OVERLAY + TONE PANEL ──
@@ -619,6 +630,8 @@ function initNavTabs() {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      // Persist active tab to shared state
+      updateState({ activeTab: tab.dataset.tab });
     });
   });
 }
@@ -808,7 +821,7 @@ document.getElementById('axisMessage').onclick = () => document.getElementById('
 // ── AUTO-LOGIN ──
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);
 if (autoLogin) {
-  const stored = localStorage.getItem(STORAGE_KEYS.profilePrefix + autoLogin);
+  const stored = localStorage.getItem(STORAGE_KEYS.profile + ':' + autoLogin);
   if (stored) {
     profile = JSON.parse(stored);
     userSigil = [...profile.sigil];
