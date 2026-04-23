@@ -1,5 +1,4 @@
-﻿<script>
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FIELD RESONATOR v5
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
@@ -784,12 +783,13 @@ document.getElementById('btnLoadProfile')?.addEventListener('click', () => {
 });
 document.getElementById('btnResetDefault')?.addEventListener('click', resetToDefaults);
 
-/* â”€â”€ INIT â”€â”€ */
-syncCycleUI();
-syncDifficultyUI();
-loadProfiles();
-updateStepUI();
-autoStartSound(); // â† auto-activates sound on load
-animate();
-console.log('ðŸœ‚ Field Resonator v5+ â€” Guided breath Â· Adaptive difficulty Â· Auto-sound');
-</script>
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  syncCycleUI();
+  syncDifficultyUI();
+  loadProfiles();
+  updateStepUI();
+  autoStartSound();
+  animate();
+  console.log('◇ Field Resonator v5 — Guided breath · Adaptive difficulty · Auto-sound');
+});

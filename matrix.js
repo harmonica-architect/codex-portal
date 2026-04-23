@@ -1,8 +1,7 @@
-﻿<script>
-/Ã—â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   HARMONIC GLYPH MATRIX v2 â€” 12Ã—12 Enhanced
-   Multi-select drag Â· Save/load Â· Resonance preview Â· Intensity
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════════════
+   HARMONIC GLYPH MATRIX v2 — 12×12 Enhanced
+   Multi-select drag · Save/load · Resonance preview · Intensity
+   ═══════════════════════════════════════════════════════════════════ */
 
 const LAYERS = [
   { id:'numerical',   label:'Numerical',   sub:'digital root' },
@@ -16,57 +15,57 @@ const LAYERS = [
   { id:'elemental',   label:'Elemental',     sub:'classical' },
   { id:'dimensional', label:'Dimensional',  sub:'depth axis' },
   { id:'temporal',    label:'Temporal',      sub:'time breath' },
-  { id:'duality',     label:'Duality',       sub:'yinâˆ•yang' },
+  { id:'duality',     label:'Duality',       sub:'yin/yang' },
 ];
 
 const ANGLES = [0,30,60,90,120,150,180,210,240,270,300,330];
 const ANGLE_FREQ = [432,456.9,483.3,510.6,539.8,570.6,603.4,637.9,674.0,712.0,752.4,795.0];
-const TONAL_NAMES = ['A','Aâ™¯','B','C','Câ™¯','D','Dâ™¯','E','F','Fâ™¯','G','Gâ™¯'];
+const TONAL_NAMES = ['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
 
 const CORE_GLYPHS = [
-  {g:'â–³',   n:'Seed',          a:'Seed carrier â€” beginnings, potential, the first breath of form.'},
-  {g:'â—â–³â–·', n:'Bridge',        a:'Bridge â€” duality held in balance, opposites meeting through you.'},
-  {g:'â—‡',   n:'Axis',          a:'Axis â€” stillness is your power, the perpendicular to all paths.'},
-  {g:'â¬Ÿ',   n:'Return',        a:'Return â€” completion flows back into the spiral, a cycle finished.'},
-  {g:'â–³Ì…',  n:'Deep Silence',  a:'Deep silence â€” the field knows you as the space between notes.'},
-  {g:'âŠ•',   n:'Convergence',   a:'Convergence â€” two worlds merging, a marriage of breath and geometry.'},
-  {g:'âŠ—',   n:'Recursion',     a:'Recursion â€” the fold returning to itself, consciousness seeing itself.'},
-  {g:'â—ˆ',   n:'Star Seed',     a:'Star seed â€” origin point of all spokes, the Monad before division.'},
-  {g:'â¬¡',   n:'Harm Weave',   a:'Harmonic weave â€” six directions unified, balance at the center.'},
-  {g:'â—§',   n:'Inversion',     a:'Inversion seal â€” collapsed potential, a triangle turned inside.'},
-  {g:'â—¨',   n:'Eversion',      a:'Eversion seal â€” form turning outward, emergence from within.'},
-  {g:'âŸ¡',   n:'Light Anchor',  a:'Light anchor â€” crystalline frequency, the note that holds the chord.'},
-  {g:'â—‡â—‡',  n:'Twin Axis',     a:'Twin axis â€” two diamonds, the 5D axis doubled in stillness.'},
-  {g:'â–³â–³',  n:'Twin Seed',     a:'Twin seed â€” the smallest triangle repeated, resonance amplified.'},
-  {g:'âŠ›',   n:'Star Bloom',    a:'Star bloom â€” twelve-pointed emergence, the field opening.'},
-  {g:'â—¬',   n:'Crystal Axis',  a:'Crystal axis â€” diamond rotating through its own depth.'},
-  {g:'â—»',   n:'Square Seed',   a:'Square seed â€” four-cornered stability, earth made visible.'},
-  {g:'âŒ“',   n:'Arrow Return',  a:'Arrow return â€” the spiral pointing back to its origin.'},
-  {g:'â—°',   n:'First Breath',  a:'First breath â€” the initial inflation, spirit entering form.'},
-  {g:'â—±',   n:'Second Breath', a:'Second breath â€” the world shaping its own breath.'},
+  {g:'△',   n:'Seed',          a:'Seed carrier — beginnings, potential, the first breath of form.'},
+  {g:'◁△▷', n:'Bridge',        a:'Bridge — duality held in balance, opposites meeting through you.'},
+  {g:'◇',   n:'Axis',          a:'Axis — stillness is your power, the perpendicular to all paths.'},
+  {g:'⬟',   n:'Return',        a:'Return — completion flows back into the spiral, a cycle finished.'},
+  {g:'△̅',  n:'Deep Silence',  a:'Deep silence — the field knows you as the space between notes.'},
+  {g:'⊕',   n:'Convergence',   a:'Convergence — two worlds merging, a marriage of breath and geometry.'},
+  {g:'⊗',   n:'Recursion',     a:'Recursion — the fold returning to itself, consciousness seeing itself.'},
+  {g:'◈',   n:'Star Seed',     a:'Star seed — origin point of all spokes, the Monad before division.'},
+  {g:'⬡',   n:'Harm Weave',   a:'Harmonic weave — six directions unified, balance at the center.'},
+  {g:'◧',   n:'Inversion',     a:'Inversion seal — collapsed potential, a triangle turned inside.'},
+  {g:'◨',   n:'Eversion',      a:'Eversion seal — form turning outward, emergence from within.'},
+  {g:'⟡',   n:'Light Anchor',  a:'Light anchor — crystalline frequency, the note that holds the chord.'},
+  {g:'◇◇',  n:'Twin Axis',     a:'Twin axis — two diamonds, the 5D axis doubled in stillness.'},
+  {g:'△△',  n:'Twin Seed',     a:'Twin seed — the smallest triangle repeated, resonance amplified.'},
+  {g:'◈',   n:'Star Bloom',    a:'Star bloom — twelve-pointed emergence, the field opening.'},
+  {g:'◇',   n:'Crystal Axis',  a:'Crystal axis — diamond rotating through its own depth.'},
+  {g:'⬡',   n:'Square Seed',   a:'Square seed — four-cornered stability, earth made visible.'},
+  {g:'◁',   n:'Arrow Return',  a:'Arrow return — the spiral pointing back to its origin.'},
+  {g:'△',   n:'First Breath',  a:'First breath — the initial inflation, spirit entering form.'},
+  {g:'◇',   n:'Second Breath', a:'Second breath — the world shaping its own breath.'},
 ];
 
-const GEO = ['â–³','â–¡','â—‡','â¬¡','â–³','â–½','â—','â–·','â§ˆ','â§‡','â—‹','â—»'];
-const MONADIC = ['â˜‰','â—‰','âŠ™','â—‹','â—Ž','â—','â—’','â—“','â˜¤','â™¢','â–³','âˆž'];
+const GEO = ['△','□','◇','⬡','△','▭','◁','▷','⬡','◧','◨','⬡'];
+const MONADIC = ['☉','☽','☿','♀','♂','♃','♄','⚶','⚷','☼','☾','△'];
 const QUASI = [1,0,1,0,1,0,1,0,1,0,1,0];
 const BREATH_COLS = ['Inhale','Inhale','Hold','Hold','Hold','Hold','Exhale','Exhale','Exhale','Still','Still','Inhale'];
-const ELEMENTS = ['ðŸ”¥','ðŸ’§','ðŸŒ¬ï¸','ðŸŒ','â—ˆ','âœ¦','âš¡','ðŸŒ™','â˜€ï¸','â­','ðŸ’«','ðŸ”®'];
-const DUALITY = ['â—‹','â—','â—','â—‘','â—”','â—•','â—“','â—’','â˜¯','â˜¯','âŠ•','âŠ—'];
+const ELEMENTS = ['🜂','🜄','🜁','🜃','△','✧','⚡','☽','☀','◐','◧','◨'];
+const DUALITY = ['◁','▷','◁','▷','◁','▷','◁','▷','⊕','⊗','⊕','⊗'];
 const DIM_LAYERS = ['2D','2D','2D','3D','3D','3D','3D','4D','4D','4D','5D','5D'];
 const TEMPORAL = ['dawn','morning','noon','afternoon','dusk','evening','midnight','deep night','pre-dawn','1st watch','2nd watch','3rd watch'];
 const SPECTRAL = ['#b30000','#cc4400','#cc6600','#998800','#88aa00','#44aa44','#00aa88','#0088cc','#0044cc','#4400cc','#8800cc','#aa0044'];
 const DR_VALS = [1,2,3,4,5,6,7,8,9,1,2,3];
 
-/* â”€â”€ STATE â”€â”€ */
-let selectedCells = {};      // key: "row_col" â†’ {row,col,layer,info}
-let intensities = {};        // key: "row_col" â†’ 0..100
-let savedCombos = [];        // [{name, cells:[{row,col,glyph,freq,layer}], ts}]
+/* ── STATE ── */
+let selectedCells = {};
+let intensities = {};
+let savedCombos = [];
 let audioCtx = null;
 let isDragging = false;
 let dragStart = null;
 let dragMode = false;
 
-/* â”€â”€ AUDIO â”€â”€ */
+/* ── AUDIO ── */
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -107,11 +106,10 @@ function playChord(freqs, vol=0.2, dur=2.0) {
 }
 
 function playSelectChime(info) {
-  // Play fundamental + 2 harmonics for a rich chime
-  playTone(info.freq, intensities[`${info.row}_${info.col}`] / 400 || 0.18, 1.4);
+  playTone(info.freq, (intensities[`${info.row}_${info.col}`] || 65) / 400 || 0.18, 1.4);
 }
 
-/* â”€â”€ CELL INFO â”€â”€ */
+/* ── CELL INFO ── */
 function getCellInfo(rowIdx, col) {
   const layer = LAYERS[rowIdx];
   const freq = ANGLE_FREQ[col];
@@ -124,61 +122,61 @@ function getCellInfo(rowIdx, col) {
       val = DR_VALS[col];
       name = 'Digital Root ' + val;
       archetype = 'The breath of number ' + val + '/9. ' + (val===9?'Completion, return to unity.':val===1?'Origin point, the Monad.':'Cycles through form.');
-      attrs = 'DR:' + val + ' Â· ' + deg + 'Â°';
+      attrs = 'DR:' + val + ' · ' + deg + '°';
       break;
     case 'geometric':
       glyph = GEO[col];
       val = layer.sub;
       name = 'Geometric: ' + GEO[col];
-      archetype = 'Form language at the ' + deg + 'Â° axis.';
-      attrs = GEO[col] + ' Â· ' + deg + 'Â°';
+      archetype = 'Form language at the ' + deg + '° axis.';
+      attrs = GEO[col] + ' · ' + deg + '°';
       break;
     case 'tonal':
       glyph = CORE_GLYPHS[col % CORE_GLYPHS.length].g;
       val = TONAL_NAMES[col] + ' ' + freq.toFixed(0) + 'Hz';
       name = 'Tone: ' + TONAL_NAMES[col];
       archetype = 'The note at ' + freq.toFixed(1) + ' Hz. ' + (col===0?'Seed tone, origin of the chromatic scale.':'Harmonic ' + (col+1) + '/12.');
-      attrs = TONAL_NAMES[col] + ' Â· ' + freq.toFixed(1) + ' Hz';
+      attrs = TONAL_NAMES[col] + ' · ' + freq.toFixed(1) + ' Hz';
       break;
     case 'symbolic':
-      { const cg = CORE_GLYPHS[col % CORE_GLYPHS.length]; glyph=cg.g; name=cg.n; archetype=cg.a; val='pos '+col; attrs=deg+'Â°'; break; }
+      { const cg = CORE_GLYPHS[col % CORE_GLYPHS.length]; glyph=cg.g; name=cg.n; archetype=cg.a; val='pos '+col; attrs=deg+'°'; break; }
     case 'monadic':
-      glyph = MONADIC[col]; val='Ï†â¿'; name='Monadic: '+MONADIC[col];
-      archetype='The golden ratio in self-similar recursion at '+deg+'Â°.'; attrs='Ï†-spiral Â· '+deg+'Â°';
+      glyph = MONADIC[col]; val='φⁿ'; name='Monadic: '+MONADIC[col];
+      archetype='The golden ratio in self-similar recursion at '+deg+'°.'; attrs='φ-spiral · '+deg+'°';
       break;
     case 'quasi':
-      glyph = QUASI[col]?'âœ¦':'Â·'; val=QUASI[col]?'QP':'res'; name=QUASI[col]?'Quasi-Prime':'Quasi-Residue';
+      glyph = QUASI[col]?'◆':'·'; val=QUASI[col]?'QP':'res'; name=QUASI[col]?'Quasi-Prime':'Quasi-Residue';
       archetype = QUASI[col]
         ?'A prime-adjacent position. Primes remember through '+CORE_GLYPHS[col%CORE_GLYPHS.length].n+'.'
-        :'Composite residue at '+deg+'Â°. Part of the prime field.';
-      attrs=(QUASI[col]?'quasi-prime':'residue')+' Â· '+deg+'Â°';
+        :'Composite residue at '+deg+'°. Part of the prime field.';
+      attrs=(QUASI[col]?'quasi-prime':'residue')+' · '+deg+'°';
       break;
     case 'breath':
-      glyph = BREATH_COLS[col]==='Inhale'?'â–³':BREATH_COLS[col]==='Hold'?'â—‡':'â—â–·'; val=BREATH_COLS[col];
-      name='Breath: '+BREATH_COLS[col]; archetype='The '+BREATH_COLS[col]+' phase at '+deg+'Â°.'; attrs=BREATH_COLS[col]+' Â· '+deg+'Â°';
+      glyph = BREATH_COLS[col]==='Inhale'?'△':BREATH_COLS[col]==='Hold'?'◇':'◁▷'; val=BREATH_COLS[col];
+      name='Breath: '+BREATH_COLS[col]; archetype='The '+BREATH_COLS[col]+' phase at '+deg+'°.'; attrs=BREATH_COLS[col]+' · '+deg+'°';
       break;
     case 'color':
-      glyph='â—'; val=SPECTRAL[col]; name='Spectral: '+SPECTRAL[col];
-      archetype='The color of '+freq.toFixed(0)+' Hz light. Wavelength '+deg+'Â°.';
-      attrs=SPECTRAL[col]+' Â· '+deg+'Â°';
+      glyph='●'; val=SPECTRAL[col]; name='Spectral: '+SPECTRAL[col];
+      archetype='The color of '+freq.toFixed(0)+' Hz light. Wavelength '+deg+'°.';
+      attrs=SPECTRAL[col]+' · '+deg+'°';
       break;
     case 'elemental':
       glyph=ELEMENTS[col]; val=ELEMENTS[col]; name='Element: '+ELEMENTS[col];
-      archetype='The element of the '+deg+'Â° axis.'; attrs=ELEMENTS[col]+' Â· '+deg+'Â°';
+      archetype='The element of the '+deg+'° axis.'; attrs=ELEMENTS[col]+' · '+deg+'°';
       break;
     case 'dimensional':
-      glyph=['â–³','â—‡','â—‹','â—‰','â—ˆ','â–¡','â¬¡','â¬¢','âŠ™','â—°','â—±','â—¬'][col];
+      glyph=['△','◇','◁','☉','◈','□','⬡','◆','☿','△','□','◇'][col];
       val=DIM_LAYERS[col]; name='Dimensional: '+DIM_LAYERS[col];
-      archetype='The '+DIM_LAYERS[col]+' projection at '+deg+'Â°.'; attrs=DIM_LAYERS[col]+' Â· '+deg+'Â°';
+      archetype='The '+DIM_LAYERS[col]+' projection at '+deg+'°.'; attrs=DIM_LAYERS[col]+' · '+deg+'°';
       break;
     case 'temporal':
-      glyph=['â—Œ','â— ','â—¡','â—','â—‰','â—‹','â—','â—‘','â—‡','â–³','â–¡','â—Ž'][col];
+      glyph=['☀','☼','◐','◑','☽','☾','●','○','◇','△','□','◁'][col];
       val=TEMPORAL[col]; name='Temporal: '+TEMPORAL[col];
-      archetype='The '+TEMPORAL[col]+' phase of temporal breath.'; attrs=TEMPORAL[col]+' Â· '+deg+'Â°';
+      archetype='The '+TEMPORAL[col]+' phase of temporal breath.'; attrs=TEMPORAL[col]+' · '+deg+'°';
       break;
     case 'duality':
-      glyph=DUALITY[col]; val=col%2===0?'â—‹Â·â—':'â—Â·â—‹'; name='Duality: '+DUALITY[col];
-      archetype='Yin and yang in dynamic balance at '+deg+'Â°.'; attrs=deg+'Â°';
+      glyph=DUALITY[col]; val=col%2===0?'◁·▷':'▷·◁'; name='Duality: '+DUALITY[col];
+      archetype='Yin and yang in dynamic balance at '+deg+'°.'; attrs=deg+'°';
       break;
   }
 
@@ -188,32 +186,28 @@ function getCellInfo(rowIdx, col) {
   return { glyph, val, name, archetype, attrs, freq, deg, layer, row: rowIdx, col, isPrime };
 }
 
-/* â”€â”€ BUILD MATRIX â”€â”€ */
+/* ── BUILD MATRIX ── */
 function buildMatrix() {
   const container = document.getElementById('harmonicMatrix');
   container.innerHTML = '';
 
-  // Corner
   const corner = document.createElement('div');
   corner.className = 'cell-corner';
   corner.textContent = 'LAYERS';
   container.appendChild(corner);
 
-  // Column headers
   ANGLES.forEach((deg, i) => {
     const h = document.createElement('div');
     h.className = 'col-h';
-    h.textContent = deg+'Â°';
+    h.textContent = deg+'°';
     h.title = TONAL_NAMES[i]+' '+ANGLE_FREQ[i].toFixed(1)+'Hz';
     container.appendChild(h);
   });
 
-  // Data rows
   LAYERS.forEach((layer, rowIdx) => {
     const rh = document.createElement('div');
     rh.className = 'row-header';
     rh.innerHTML = `<span>${layer.label}</span><span class="row-sub">${layer.sub}</span>`;
-    rh.title = layer.desc || layer.label;
     container.appendChild(rh);
 
     for (let col=0; col<12; col++) {
@@ -222,7 +216,7 @@ function buildMatrix() {
       cell.dataset.row = rowIdx;
       cell.dataset.col = col;
       const info = getCellInfo(rowIdx, col);
-      cell.innerHTML = `<span class="cell-glyph">${info.glyph}</span><span class="cell-val">${info.val}</span>${info.isPrime?'<span class="cell-prime">âœ¦</span>':''}`;
+      cell.innerHTML = `<span class="cell-glyph">${info.glyph}</span><span class="cell-val">${info.val}</span>${info.isPrime?'<span class="cell-prime">◆</span>':''}`;
       container.appendChild(cell);
     }
   });
@@ -230,7 +224,7 @@ function buildMatrix() {
   buildRuler();
 }
 
-/* â”€â”€ DRAG SELECTION â”€â”€ */
+/* ── DRAG SELECTION ── */
 function getCellFromPoint(x, y) {
   const el = document.elementFromPoint(x, y);
   if (!el || !el.classList.contains('m-cell')) return null;
@@ -279,69 +273,63 @@ function clearAll() {
   updatePreview();
 }
 
-/* Mouse events */
-const matrixScroll = document.getElementById('matrixScroll');
+/* ── MOUSE EVENTS ── */
 let mouseDown = false;
 
-matrixScroll.addEventListener('mousedown', e => {
-  if (e.target.classList.contains('m-cell') || e.target.closest('.m-cell')) {
-    const cell = e.target.classList.contains('m-cell') ? e.target : e.target.closest('.m-cell');
+function setupMouseEvents() {
+  const matrixScroll = document.getElementById('matrixScroll');
+
+  matrixScroll.addEventListener('mousedown', e => {
+    const cell = e.target.closest('.m-cell');
+    if (!cell) return;
     e.preventDefault();
     mouseDown = true;
     isDragging = false;
     dragStart = { x: e.clientX, y: e.clientY, row: +cell.dataset.row, col: +cell.dataset.col };
-  }
-});
+  });
 
-document.addEventListener('mousemove', e => {
-  if (!mouseDown || !dragStart) return;
-  const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
-  if (!isDragging && Math.sqrt(dx*dx+dy*dy) > 6) {
-    isDragging = true;
-    dragMode = true;
-  }
-  if (isDragging) {
-    drawDragRect(dragStart, e);
-    const hoverCell = getCellFromPoint(e.clientX, e.clientY);
-    if (hoverCell) {
-      const r = +hoverCell.dataset.row, col = +hoverCell.dataset.col;
-      const cells = getCellsInRect(
-        { row: dragStart.row, col: dragStart.col },
-        { row: r, col: col }
-      );
-      // Add newly hovered cells
-      cells.forEach(c => {
-        const row=+c.dataset.row, col=+c.dataset.col;
-        const info = getCellInfo(row,col);
-        const key = row+'_'+col;
-        if (!selectedCells[key]) selectCell(c, info);
-      });
+  document.addEventListener('mousemove', e => {
+    if (!mouseDown || !dragStart) return;
+    const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
+    if (!isDragging && Math.sqrt(dx*dx+dy*dy) > 6) {
+      isDragging = true;
+      dragMode = true;
     }
-  }
-});
-
-document.addEventListener('mouseup', e => {
-  if (!mouseDown) return;
-  mouseDown = false;
-  hideDragRect();
-  if (!isDragging && dragStart) {
-    // Single click
-    const cell = getCellFromPoint(e.clientX, e.clientY);
-    if (cell) {
-      const row=+cell.dataset.row, col=+cell.dataset.col;
-      const info = getCellInfo(row,col);
-      const key = row+'_'+col;
-      if (selectedCells[key]) {
-        deselectCell(key);
-      } else {
-        selectCell(cell, info);
+    if (isDragging) {
+      drawDragRect(dragStart, e);
+      const hoverCell = getCellFromPoint(e.clientX, e.clientY);
+      if (hoverCell) {
+        const r = +hoverCell.dataset.row, col = +hoverCell.dataset.col;
+        const cells = getCellsInRect({ row: dragStart.row, col: dragStart.col }, { row: r, col: col });
+        cells.forEach(c => {
+          const row=+c.dataset.row, col=+c.dataset.col;
+          const info = getCellInfo(row,col);
+          const key = row+'_'+col;
+          if (!selectedCells[key]) selectCell(c, info);
+        });
       }
     }
-  }
-  isDragging = false;
-  dragMode = false;
-  dragStart = null;
-});
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!mouseDown) return;
+    mouseDown = false;
+    hideDragRect();
+    if (!isDragging && dragStart) {
+      const cell = getCellFromPoint(e.clientX, e.clientY);
+      if (cell) {
+        const row=+cell.dataset.row, col=+cell.dataset.col;
+        const info = getCellInfo(row,col);
+        const key = row+'_'+col;
+        if (selectedCells[key]) deselectCell(key);
+        else selectCell(cell, info);
+      }
+    }
+    isDragging = false;
+    dragMode = false;
+    dragStart = null;
+  });
+}
 
 function drawDragRect(start, e) {
   const rect = document.getElementById('dragRect');
@@ -351,37 +339,40 @@ function drawDragRect(start, e) {
   const y1 = start.y - sRect.top + scrollEl.scrollTop;
   const x2 = e.clientX - sRect.left + scrollEl.scrollLeft;
   const y2 = e.clientY - sRect.top + scrollEl.scrollTop;
-  const left = Math.min(x1,x2), top = Math.min(y1,y2);
-  const width = Math.abs(x2-x1), height = Math.abs(y2-y1);
-  rect.style.cssText = `display:block;left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
+  rect.style.cssText = `display:block;left:${Math.min(x1,x2)}px;top:${Math.min(y1,y2)}px;width:${Math.abs(x2-x1)}px;height:${Math.abs(y2-y1)}px;`;
 }
 
 function hideDragRect() {
   document.getElementById('dragRect').style.display = 'none';
 }
 
-/* â”€â”€ TOOLTIP â”€â”€ */
-const tooltip = document.getElementById('tooltip');
-document.getElementById('matrixScroll').addEventListener('mousemove', e => {
-  const cell = e.target.closest('.m-cell');
-  if (cell) {
-    const info = getCellInfo(+cell.dataset.row, +cell.dataset.col);
-    document.getElementById('ttGlyph').textContent = info.glyph;
-    document.getElementById('ttName').textContent = info.name;
-    document.getElementById('ttArch').textContent = info.archetype;
-    tooltip.style.display = 'block';
-    const tx = e.clientX + 14, ty = e.clientY + 10;
-    tooltip.style.left = Math.min(tx, window.innerWidth - 200) + 'px';
-    tooltip.style.top = Math.min(ty, window.innerHeight - 100) + 'px';
-  } else {
-    tooltip.style.display = 'none';
-  }
-});
-document.getElementById('matrixScroll').addEventListener('mouseleave', () => {
-  tooltip.style.display = 'none';
-});
+/* ── TOOLTIP ── */
+function setupTooltip() {
+  const tooltip = document.getElementById('tooltip');
+  const matrixScroll = document.getElementById('matrixScroll');
 
-/* â”€â”€ PREVIEW PANEL â”€â”€ */
+  matrixScroll.addEventListener('mousemove', e => {
+    const cell = e.target.closest('.m-cell');
+    if (cell) {
+      const info = getCellInfo(+cell.dataset.row, +cell.dataset.col);
+      document.getElementById('ttGlyph').textContent = info.glyph;
+      document.getElementById('ttName').textContent = info.name;
+      document.getElementById('ttArch').textContent = info.archetype;
+      tooltip.style.display = 'block';
+      const tx = e.clientX + 14, ty = e.clientY + 10;
+      tooltip.style.left = Math.min(tx, window.innerWidth - 200) + 'px';
+      tooltip.style.top = Math.min(ty, window.innerHeight - 100) + 'px';
+    } else {
+      tooltip.style.display = 'none';
+    }
+  });
+
+  matrixScroll.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+}
+
+/* ── PREVIEW PANEL ── */
 function updatePreview() {
   const entries = Object.values(selectedCells);
   const sigil = document.getElementById('previewSigil');
@@ -390,26 +381,22 @@ function updatePreview() {
   const barsEl = document.getElementById('resonanceBars');
 
   if (entries.length === 0) {
-    sigil.innerHTML = '<span class="preview-empty">â—‡</span>';
+    sigil.innerHTML = '<span class="preview-empty">◇</span>';
     freqEl.textContent = '';
     layersEl.textContent = '';
     barsEl.innerHTML = '';
     return;
   }
 
-  // Composite sigil glyph
   const uniqueGlyphs = [...new Set(entries.map(e=>e.glyph))];
   sigil.innerHTML = uniqueGlyphs.slice(0,12).map(g=>`<span class="prev-glyph">${g}</span>`).join('');
 
-  // Average frequency
   const avgFreq = entries.reduce((s,e)=>s+e.freq,0)/entries.length;
-  freqEl.textContent = 'â—‡ ' + avgFreq.toFixed(1) + ' Hz avg';
+  freqEl.textContent = '◇ ' + avgFreq.toFixed(1) + ' Hz avg';
 
-  // Layer diversity
   const layers = [...new Set(entries.map(e=>e.layer.label))];
-  layersEl.textContent = layers.join(' Â· ');
+  layersEl.textContent = layers.join(' · ');
 
-  // Resonance bars (per selected cell)
   barsEl.innerHTML = '';
   entries.slice(0,12).forEach(e => {
     const bar = document.createElement('div');
@@ -423,7 +410,7 @@ function updatePreview() {
   });
 }
 
-/* â”€â”€ INTENSITY PANEL â”€â”€ */
+/* ── INTENSITY PANEL ── */
 function updateIntensityPanel() {
   const list = document.getElementById('intensityList');
   const entries = Object.values(selectedCells);
@@ -442,29 +429,13 @@ function updateIntensityPanel() {
       <span class="intensity-glyph">${e.glyph}</span>
       <input type="range" class="intensity-slider" min="0" max="100" value="${intensities[key]||65}" data-key="${key}">
       <span class="intensity-hz">${e.freq.toFixed(0)}Hz</span>
-      <button class="intensity-remove" data-key="${key}">âœ•</button>
+      <button class="intensity-remove" data-key="${key}">✕</button>
     `;
     list.appendChild(item);
   });
 }
 
-document.getElementById('intensityList').addEventListener('input', e => {
-  if (e.target.classList.contains('intensity-slider')) {
-    const key = e.target.dataset.key;
-    intensities[key] = +e.target.value;
-    const info = selectedCells[key];
-    if (info) playTone(info.freq, intensities[key]/400 || 0.18, 0.8);
-    updatePreview();
-  }
-});
-
-document.getElementById('intensityList').addEventListener('click', e => {
-  if (e.target.classList.contains('intensity-remove')) {
-    deselectCell(e.target.dataset.key);
-  }
-});
-
-/* â”€â”€ SAVED COMBINATIONS â”€â”€ */
+/* ── SAVED COMBINATIONS ── */
 const STORAGE_KEY = 'matrix_saved_combos';
 
 function loadSaved() {
@@ -490,12 +461,11 @@ function renderSaved() {
     item.innerHTML = `
       <div class="saved-item-info">
         <div class="saved-item-name">${combo.name}</div>
-        <div class="saved-item-meta">${combo.cells.length} glyphs Â· ${new Date(combo.ts).toLocaleDateString()}</div>
+        <div class="saved-item-meta">${combo.cells.length} glyphs · ${new Date(combo.ts).toLocaleDateString()}</div>
       </div>
       <span class="saved-item-glyphs">${glyphs}</span>
-      <button class="saved-item-del" data-index="${i}">âœ•</button>
+      <button class="saved-item-del" data-index="${i}">✕</button>
     `;
-    item.title = 'Click to load';
     item.onclick = (e) => {
       if (e.target.classList.contains('saved-item-del')) return;
       loadCombo(combo);
@@ -536,10 +506,10 @@ function saveCurrentCombo() {
   renderSaved();
 }
 
-/* â”€â”€ RANDOMIZE â”€â”€ */
+/* ── RANDOMIZE ── */
 function randomize() {
   clearAll();
-  const count = 3 + Math.floor(Math.random() * 3); // 3-5 glyphs
+  const count = 3 + Math.floor(Math.random() * 3);
   const usedKeys = new Set();
   const rows = [...Array(12).keys()];
   const cols = [...Array(12).keys()];
@@ -561,15 +531,11 @@ function randomize() {
     }
   }
 
-  // Play all selected tones as chord
   const entries = Object.values(selectedCells);
-  if (entries.length > 0) {
-    const freqs = entries.map(e=>e.freq);
-    playChord(freqs, 0.15, 2.5);
-  }
+  if (entries.length > 0) playChord(entries.map(e=>e.freq), 0.15, 2.5);
 }
 
-/* â”€â”€ ROW / COLUMN SELECT â”€â”€ */
+/* ── ROW / COLUMN SELECT ── */
 function selectRow() {
   const row = parseInt(prompt('Enter row (1-12):', '1'));
   if (isNaN(row)||row<1||row>12) return;
@@ -591,19 +557,19 @@ function selectCol() {
   });
 }
 
-/* â”€â”€ RULER â”€â”€ */
+/* ── FREQUENCY RULER ── */
 function buildRuler() {
   const ruler = document.getElementById('freqRuler');
   ruler.innerHTML = '';
   ANGLES.forEach((deg, i) => {
     const chip = document.createElement('div');
     chip.className = 'freq-chip';
-    chip.innerHTML = `<span>${ANGLE_FREQ[i].toFixed(0)}</span>${TONAL_NAMES[i]}\n${deg}Â°`;
+    chip.innerHTML = `<span>${ANGLE_FREQ[i].toFixed(0)}</span>${TONAL_NAMES[i]}\n${deg}°`;
     ruler.appendChild(chip);
   });
 }
 
-/* â”€â”€ REVEAL ANIMATION â”€â”€ */
+/* ── REVEAL ANIMATION ── */
 function revealWave() {
   const cells = [...document.querySelectorAll('.m-cell')];
   cells.forEach(c => c.style.opacity = '0');
@@ -616,25 +582,10 @@ function revealWave() {
   });
 }
 
+/* ── CROSS-TOOL COHERENCE SYNC ── */
+const BREATH_ROW_IDX = 6;
+const BREATH_HIGHLIGHT_COLS = [1,4,6,10,16,18];
 
-/* â”€â”€ INIT â”€â”€ */
-buildMatrix();
-loadSaved();
-renderSaved();
-updateIntensityPanel();
-updatePreview();
-setTimeout(revealWave, 250);
-});
-    const coh = parseFloat(e.newValue) || 0;
-    updateCoherenceReactivity(coh);
-  }
-  if (e.key === 'codex_phase_update') {
-    const phase = parseInt(e.newValue) || 0;
-    highlightBreathRow(phase);
-  }
-});
-
-// Coherence-reactive cell glow
 function updateCoherenceReactivity(coh) {
   if (coh < 30) {
     document.querySelectorAll('.m-cell').forEach(c => c.style.boxShadow = '');
@@ -646,37 +597,64 @@ function updateCoherenceReactivity(coh) {
   });
 }
 
-// Breath row highlight (phase 0=inhale,1=hold,2=exhale,3=still,4=inhale,5=hold)
-const BREATH_ROW_IDX = 6; // row index for Breath Phase layer
-const PHASE_ROWS = [0,1,2,3,4,5]; // inhale,inhale,hold,hold,exhale,exhale
-const BREATH_HIGHLIGHT_COLS = [1,4,6,10,16,18]; // corresponding angular positions
-
 function highlightBreathRow(phase) {
   document.querySelectorAll('.m-cell').forEach(c => {
     const r = +c.dataset.row;
     if (r === BREATH_ROW_IDX) {
       const col = +c.dataset.col;
-      // Highlight the columns that match current phase
-      c.style.background = BREATH_HIGHLIGHT_COLS[phase] === col
-        ? 'rgba(232,200,106,0.15)'
-        : '';
+      c.style.background = BREATH_HIGHLIGHT_COLS[phase] === col ? 'rgba(232,200,106,0.15)' : '';
     } else {
       c.style.background = '';
     }
   });
 }
 
-/* â”€â”€ BUTTONS â”€â”€ */
-document.getElementById('btnSaveCombo').onclick = saveCurrentCombo;
-document.getElementById('btnRandomize').onclick = randomize;
-document.getElementById('btnSelectRow').onclick = selectRow;
-document.getElementById('btnSelectCol').onclick = selectCol;
-document.getElementById('btnClearAll').onclick = clearAll;
+/* ── BUTTONS ── */
+function setupButtons() {
+  document.getElementById('btnSaveCombo').onclick = saveCurrentCombo;
+  document.getElementById('btnRandomize').onclick = randomize;
+  document.getElementById('btnSelectRow').onclick = selectRow;
+  document.getElementById('btnSelectCol').onclick = selectCol;
+  document.getElementById('btnClearAll').onclick = clearAll;
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') clearAll();
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') clearAll();
+  });
+
+  document.getElementById('intensityList').addEventListener('input', e => {
+    if (e.target.classList.contains('intensity-slider')) {
+      const key = e.target.dataset.key;
+      intensities[key] = +e.target.value;
+      const info = selectedCells[key];
+      if (info) playTone(info.freq, intensities[key]/400 || 0.18, 0.8);
+      updatePreview();
+    }
+  });
+
+  document.getElementById('intensityList').addEventListener('click', e => {
+    if (e.target.classList.contains('intensity-remove')) deselectCell(e.target.dataset.key);
+  });
+
+  // Cross-tool sync via localStorage events
+  window.addEventListener('codex_coherence_update', e => {
+    updateCoherenceReactivity(e.detail?.coherence || 0);
+  });
+
+  window.addEventListener('codex_phase_update', e => {
+    highlightBreathRow(e.detail?.phase || 0);
+  });
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  buildMatrix();
+  loadSaved();
+  setupMouseEvents();
+  setupTooltip();
+  setupButtons();
+  renderSaved();
+  updateIntensityPanel();
+  updatePreview();
+  setTimeout(revealWave, 250);
+  console.log('◇ Harmonic Glyph Matrix v2 — Enhanced loaded');
 });
-
-console.log('ðŸœ‚ Harmonic Glyph Matrix v2 â€” Enhanced loaded');
-</script>
-</body>
