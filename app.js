@@ -36,10 +36,73 @@ let glyphOverlay = { glyph: '△', show: true };
 let personalTone = 432;
 let toneFreq = 432;
 
-// Register WebSocket sender with CodexState for cross-tool sync
-registerWSSender(sendWS);
+// ── WEBSOCKET — MULTI-USER COHERENCE ──
+function connectWebSocket() {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
 
-// ── WHEEL CANVAS ──
+  try {
+    ws = new WebSocket(WS_CONFIG.serverUrl);
+
+    ws.onopen = () => {
+      wsConnected = true;
+      updateFieldStatus('Field connected — ' + totalUsers + ' breather' + (totalUsers !== 1 ? 's' : '') + ' in field');
+      // Send registration
+      sendWS({ type: 'join', sigil: userSigil.join(''), coherence: 0, phase: currentPhase });
+      // Register with CodexState for cross-tool sync
+      registerWSSender(sendWS);
+    };
+
+    ws.onmessage = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        handleWSMessage(msg);
+      } catch (e) { /* ignore parse errors */ }
+    };
+
+    ws.onclose = () => {
+      wsConnected = false;
+      registerWSSender(null); // Unregister on close so CodexState doesn't try to send
+      updateFieldStatus('Field disconnected — reconnecting...');
+      setTimeout(connectWebSocket, WS_CONFIG.reconnectInterval);
+    };
+
+    ws.onerror = () => {
+      wsConnected = false;
+    };
+  } catch (e) {
+    setTimeout(connectWebSocket, WS_CONFIG.reconnectInterval);
+  }
+}
+
+function handleWSMessage(msg) {
+  switch (msg.type) {
+    case 'field_state':
+      serverPhase = msg.phase;
+      globalCoherence = msg.globalCoherence || 0;
+      totalUsers = msg.userCount || 0;
+      inSyncCount = msg.inSyncCount || 0;
+      updateFieldStatus(
+        totalUsers > 0
+          ? `${totalUsers} breather${totalUsers !== 1 ? 's' : ''} in field | ${inSyncCount} in phase | field coherence ${Math.round(globalCoherence)}%`
+          : 'Waiting for field connection...'
+      );
+      // Apply server phase sync bonus to local display
+      if (serverPhase === currentPhase && isRunning) {
+        coherenceLevel = Math.min(95, coherenceLevel + COHERENCE.syncBonus / 10);
+      }
+      break;
+
+    case 'users_count':
+      totalUsers = msg.count || 0;
+      break;
+  }
+}
+
+function sendWS(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+}
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const cx = WHEEL_CONFIG.centerX;
