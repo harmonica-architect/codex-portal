@@ -46,7 +46,7 @@ let canvasSize = 320;
 function resizeCanvases() {
   const wrap = document.getElementById('wheelWrap');
   const rect = wrap ? wrap.getBoundingClientRect() : null; const s = rect ? Math.min(rect.width, rect.height) : 320;
-  canvasSize = s;
+  canvasSize = canvas.width / dpr;
   canvas.width = s * dpr;
   canvas.height = s * dpr;
   canvas.style.width = s + 'px';
@@ -58,8 +58,10 @@ resizeCanvases();
 window.addEventListener('resize', resizeCanvases);
 
 function dims() {
-  const s = canvasSize;
-  return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 };
+  // canvas.width is buffer px; divide by dpr to get display px for correct drawing coords
+  const s = canvas.width / dpr;
+  return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 }
+;
 }
 
 // Broadcast coherence + phase to shared localStorage for cross-tool sync
