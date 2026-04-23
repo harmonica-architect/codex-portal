@@ -243,3 +243,43 @@ body {
 .guide-steps { display: flex; gap: 1rem; flex-wrap: wrap; }
 .guide-step { font-size: 0.58rem; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; }
 .guide-n { color: var(--gold); font-size: 0.5rem; }
+
+/* Breath phase indicator strip */
+.breath-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  background: rgba(6,6,14,0.7);
+  border-bottom: 1px solid rgba(232,200,106,0.1);
+  margin-bottom: 0.15rem;
+  flex-wrap: wrap;
+}
+.breath-strip-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-right: 0.3rem;
+}
+.breath-chip {
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 0.18rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all 0.4s ease;
+}
+.breath-chip.active {
+  border-color: rgba(232,200,106,0.3);
+  background: rgba(232,200,106,0.08);
+}
+.breath-phase-label {
+  margin-left: auto;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  transition: color 0.4s ease;
+}
