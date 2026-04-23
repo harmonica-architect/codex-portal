@@ -55,14 +55,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 3.6rem 1rem 2rem;
   transition: margin-right 0.5s cubic-bezier(0.4,0,0.2,1);
   position: relative;
   z-index: 60;
 }
 .main-stage.sidebar-open { margin-right: 260px; }
 
-.stage-header { text-align: center; margin-bottom: 1.2rem; }
+.stage-header { text-align: center; margin-bottom: 0.4rem; }
 .stage-title { font-size: 0.6rem; letter-spacing: 0.5em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.2rem; }
 .stage-subtitle { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.15em; opacity: 0.6; }
 
@@ -71,7 +71,7 @@ body {
   position: relative;
   width: min(320px, 80vw);
   height: min(320px, 80vw);
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.4rem;
   cursor: pointer;
   z-index: 61;
 }
@@ -120,7 +120,7 @@ body {
 .center-hint { font-size: 0.55rem; color: var(--muted); opacity: 0.5; margin-top: 0.25rem; }
 
 /* â”€â”€ STEP GUIDE â”€â”€ */
-.step-guide { display: flex; gap: 0.6rem; margin-bottom: 1rem; align-items: center; }
+.step-guide { display: flex; gap: 0.6rem; margin-bottom: 0.4rem; align-items: center; }
 .step-pip { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; opacity: 0.3; transition: all 0.5s; }
 .step-pip.active { opacity: 1; }
 .step-pip.done { opacity: 0.5; }
@@ -129,7 +129,7 @@ body {
 .step-pip.done .pip-dot { background: var(--muted); }
 .pip-label { font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .step-pip.active .pip-label { color: var(--gold); }
-.step-connector { width: 20px; height: 1px; background: var(--border); margin-bottom: 1rem; }
+.step-connector { width: 20px; height: 1px; background: var(--border); margin-bottom: 0.4rem; }
 
 /* â”€â”€ COHERENCE ARC â”€â”€ */
 .coh-arc-wrap { width: min(260px, 70vw); margin-bottom: 0.8rem; text-align: center; }

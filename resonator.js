@@ -45,7 +45,7 @@ let canvasSize = 320;
 
 function resizeCanvases() {
   const wrap = document.getElementById('wheelWrap');
-  const s = wrap ? wrap.offsetWidth : 320;
+  const rect = wrap ? wrap.getBoundingClientRect() : null; const s = rect ? Math.min(rect.width, rect.height) : 320;
   canvasSize = s;
   canvas.width = s * dpr;
   canvas.height = s * dpr;
