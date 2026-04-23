@@ -281,6 +281,7 @@ function connectWebSocket() {
     ws.onopen = () => {
       wsConnected = true;
       updateFieldStatus('Field connected — ' + totalUsers + ' breather' + (totalUsers !== 1 ? 's' : '') + ' in field');
+      updateConnBox();
       // Send registration
       sendWS({ type: 'join', sigil: userSigil.join(''), coherence: 0, phase: currentPhase });
     };
@@ -336,9 +337,31 @@ function sendWS(data) {
   }
 }
 
+function updateConnBox() {
+  const dot = document.getElementById('connDot');
+  const count = document.getElementById('connCount');
+  const sync = document.getElementById('connSync');
+  if (!dot || !count) return;
+
+  if (wsConnected && totalUsers > 0) {
+    dot.className = 'conn-dot connected';
+    count.textContent = totalUsers;
+    sync.textContent = inSyncCount > 0 ? `· ${inSyncCount} sync` : '';
+  } else if (wsConnected) {
+    dot.className = 'conn-dot connected';
+    count.textContent = '1';
+    sync.textContent = '';
+  } else {
+    dot.className = 'conn-dot disconnected';
+    count.textContent = '—';
+    sync.textContent = '';
+  }
+}
+
 function updateFieldStatus(text) {
   const el = document.getElementById('fieldStatus');
   if (el) el.textContent = text;
+  updateConnBox();
 }
 
 function startCoherenceUpdates() {
