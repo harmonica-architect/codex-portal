@@ -120,11 +120,11 @@ function navTo(tab) {
 }
 
 function navToMatrix() {
-  window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
+  window.location.href = 'matrix.html';
 }
 
 function navToResonator() {
-  window.open('resonator.html', '_blank', 'width=700,height=800,scrollbars=yes');
+  window.location.href = 'resonator.html';
 }
 
 // Register WebSocket sender with CodexState for cross-tool sync

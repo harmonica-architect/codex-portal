@@ -1,4 +1,21 @@
-﻿:root {
+/* Back button */
+.back-btn {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(14,14,26,0.9);
+  border: 1px solid #1e1e32;
+  color: #6a6050;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  border-radius: 20px;
+  z-index: 100;
+  transition: all 0.3s;
+}
+.back-btn:hover { border-color: #e8c86a; color: #e8c86a; }
+:root {
   --bg: #07070f; --surface: #0e0e1a; --border: #1e1e32;
   --text: #d8d0c0; --muted: #6a6050; --dim: #3a3848;
   --gold: #e8c86a; --gold-dim: rgba(232,200,106,0.15);
@@ -37,7 +54,7 @@ body {
 .matrix-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
 .matrix-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* The 12Ãƒâ€”12 grid */
+/* The 12Ã—12 grid */
 .harmonic-matrix {
   display: grid;
   grid-template-columns: 88px repeat(12, 1fr);
@@ -96,7 +113,7 @@ body {
   font-size: 0.48rem; color: var(--gold); letter-spacing: 0.08em; padding: 0.3rem;
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ SIDEBAR Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* â”€â”€ SIDEBAR â”€â”€ */
 .sidebar { display: flex; flex-direction: column; gap: 0.5rem; }
 
 /* Preview panel */
@@ -207,7 +224,7 @@ body {
 .tooltip-arch { color: var(--muted); font-style: italic; }
 
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ DRAG SELECTION RECTANGLE Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* â”€â”€ DRAG SELECTION RECTANGLE â”€â”€ */
 .drag-rect {
   position: absolute; border: 1px solid rgba(232,200,106,0.6);
   background: rgba(232,200,106,0.08); pointer-events: none; z-index: 100;
