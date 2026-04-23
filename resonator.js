@@ -286,7 +286,7 @@ function stopSoundscapeLayer(freq) {
 
 function updateSoundscapeVolumes() {
   if (!isAudioOn) return;
-  [432, 528, 639, 741, 852].forEach(f => {
+  [432, 456.9, 483.3, 510.6, 539.8, 570.6, 603.4, 637.9, 674.0, 712.0, 752.4, 795.0].forEach(f => {
     if (oscillators[f]) {
       const volSlider = document.getElementById('sndVol' + f);
       const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.12;
