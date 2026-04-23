@@ -42,15 +42,90 @@
 
   <!-- Nav Tabs -->
   <div class="nav-tabs">
-    <div class="nav-tab active" data-tab="wheel">Wheel</div>
+    <div class="nav-tab active" data-tab="home">Home</div>
+    <div class="nav-tab" data-tab="wheel">Wheel</div>
     <div class="nav-tab" data-tab="codex">Codex</div>
     <div class="nav-tab" data-tab="dream">Dream</div>
     <div class="nav-tab" data-tab="journal">Journal</div>
     <div class="nav-tab" data-tab="profile">Profile</div>
   </div>
 
+  <!-- ══ HOME / DASHBOARD TAB ══ -->
+  <div class="tab-content active" id="tab-home">
+    <div class="dashboard">
+
+      <!-- Mini Wheel + Coherence row -->
+      <div class="dash-top">
+        <!-- Mini wheel -->
+        <div class="dash-wheel">
+          <div class="mini-wheel" id="miniWheel">
+            <div class="mw-ring mw-ring-outer"><div class="mw-dot" id="mwOuter"></div></div>
+            <div class="mw-ring mw-ring-mid"><div class="mw-dot" id="mwMid"></div></div>
+            <div class="mw-ring mw-ring-inner"><div class="mw-dot" id="mwInner"></div></div>
+            <div class="mw-hub">⊙</div>
+          </div>
+          <div class="dash-wheel-label">Icositetragon</div>
+        </div>
+
+        <!-- Coherence readout -->
+        <div class="dash-coherence">
+          <div class="dash-coh-main">
+            <div class="dash-coh-glyph" id="dashGlyph">△</div>
+            <div class="dash-coh-value"><span id="dashCohValue">0</span><span class="dash-coh-pct">%</span></div>
+          </div>
+          <div class="dash-coh-label">field coherence</div>
+          <div class="dash-coh-bar-wrap"><div class="dash-coh-bar" id="dashCohBar" style="width:0%"></div></div>
+          <div class="dash-field-status" id="dashFieldStatus">Waiting for field…</div>
+        </div>
+      </div>
+
+      <!-- Breath phase indicator -->
+      <div class="dash-breath-row">
+        <div class="dash-phase-badge" id="dashPhaseBadge">
+          <span class="dpb-glyph" id="dashPhaseGlyph">◇</span>
+          <span class="dpb-info">
+            <span class="dpb-breath" id="dashBreath">—</span>
+            <span class="dpb-name" id="dashPhaseName">Not breathing</span>
+          </span>
+        </div>
+        <div class="dash-cycle-count">
+          <span class="dcc-num" id="dashCycles">0</span>
+          <span class="dcc-label">cycles</span>
+        </div>
+      </div>
+
+      <!-- Quick-nav cards -->
+      <div class="dash-nav">
+        <a class="dash-card" href="#" onclick="navTo('wheel');return false;">
+          <div class="dc-icon">◎</div>
+          <div class="dc-title">Wheel</div>
+          <div class="dc-desc">Breath cycle · 6-phase spiral</div>
+        </a>
+        <a class="dash-card" href="#" onclick="navToMatrix();return false;">
+          <div class="dc-icon">◈</div>
+          <div class="dc-title">Matrix</div>
+          <div class="dc-desc">12×12 harmonic grid · sigils</div>
+        </a>
+        <a class="dash-card" href="#" onclick="navToResonator();return false;">
+          <div class="dc-icon">♫</div>
+          <div class="dc-title">Resonator</div>
+          <div class="dc-desc">Soundscapes · waveform collapse</div>
+        </a>
+      </div>
+
+      <!-- Quick links row -->
+      <div class="dash-links">
+        <button class="btn" onclick="navTo('codex')">Codex</button>
+        <button class="btn" onclick="navTo('dream')">Dream</button>
+        <button class="btn" onclick="navTo('journal')">Journal</button>
+        <button class="btn" onclick="navTo('profile')">Profile</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ══ WHEEL TAB ══ -->
-  <div class="tab-content active" id="tab-wheel">
+  <div class="tab-content" id="tab-wheel">
 
     <!-- THE WHEEL — primary focus -->
     <div class="wheel-section">

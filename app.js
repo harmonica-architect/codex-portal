@@ -36,6 +36,97 @@ let glyphOverlay = { glyph: '△', show: true };
 let personalTone = 432;
 let toneFreq = 432;
 
+// ── DASHBOARD ──
+let miniAnimId = null;
+
+function initDashboard() {
+  // Mini wheel animation — outer ring rotates continuously
+  const mwOuter = document.getElementById('mwOuter');
+  const mwMid = document.getElementById('mwMid');
+  const mwInner = document.getElementById('mwInner');
+  let mwAngle = 0;
+
+  function animateMiniWheel() {
+    mwAngle += 0.004;
+    if (mwOuter) mwOuter.style.transform = `rotate(${mwAngle}rad)`;
+    if (mwMid) mwMid.style.transform = `rotate(${-mwAngle * 1.5}rad)`;
+    if (mwInner) mwInner.style.transform = `rotate(${mwAngle * 2}rad)`;
+    miniAnimId = requestAnimationFrame(animateMiniWheel);
+  }
+  animateMiniWheel();
+
+  // Live sync from main coherence state
+  syncDashboard();
+  setInterval(syncDashboard, 500);
+}
+
+function syncDashboard() {
+  const cohEl = document.getElementById('dashCohValue');
+  const cohBar = document.getElementById('dashCohBar');
+  const fieldEl = document.getElementById('dashFieldStatus');
+  const glyphEl = document.getElementById('dashGlyph');
+  const breathEl = document.getElementById('dashBreath');
+  const phaseNameEl = document.getElementById('dashPhaseName');
+  const phaseGlyphEl = document.getElementById('dashPhaseGlyph');
+  const cyclesEl = document.getElementById('dashCycles');
+
+  if (!cohEl) return;
+
+  const c = Math.round(coherenceLevel);
+  cohEl.textContent = c;
+  cohBar.style.width = c + '%';
+
+  // Color shift: green (<40) → gold (40-70) → bright gold (>70)
+  if (c < 40) {
+    cohBar.style.background = 'linear-gradient(90deg,#5a7a5a,#7aaa7a)';
+  } else if (c < 70) {
+    cohBar.style.background = 'linear-gradient(90deg,#8a7a3a,#e8c86a)';
+  } else {
+    cohBar.style.background = 'linear-gradient(90deg,#c8a050,#f0d880)';
+  }
+
+  // Phase sync
+  if (isRunning && PHASES[currentPhase]) {
+    const p = PHASES[currentPhase];
+    glyphEl.textContent = p.glyph;
+    glyphEl.style.opacity = '1';
+    breathEl.textContent = p.breath;
+    phaseNameEl.textContent = p.name;
+    phaseGlyphEl.textContent = p.glyph;
+  } else {
+    glyphEl.textContent = '◇';
+    glyphEl.style.opacity = '0.4';
+    breathEl.textContent = '—';
+    phaseNameEl.textContent = 'Still';
+    phaseGlyphEl.textContent = '◇';
+  }
+
+  // Cycle count
+  cyclesEl.textContent = cycleCount;
+
+  // Field status
+  if (wsConnected && totalUsers > 0) {
+    fieldEl.textContent = `${totalUsers} breather${totalUsers !== 1 ? 's' : ''} in field`;
+    fieldEl.style.color = 'var(--axis)';
+  } else {
+    fieldEl.textContent = 'Local coherence';
+    fieldEl.style.color = 'var(--muted)';
+  }
+}
+
+function navTo(tab) {
+  const t = document.querySelector(`.nav-tab[data-tab="${tab}"]`);
+  if (t) t.click();
+}
+
+function navToMatrix() {
+  window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
+}
+
+function navToResonator() {
+  window.open('resonator.html', '_blank', 'width=700,height=800,scrollbars=yes');
+}
+
 // Register WebSocket sender with CodexState for cross-tool sync
 registerWSSender(sendWS);
 
@@ -547,6 +638,7 @@ function enterPortal() {
     if (tab) tab.click();
   }
   document.getElementById('helpFab').onclick = () => showAxisMessage();
+  initDashboard();
   document.getElementById('btnOpenMatrix')?.addEventListener('click', () => {
     window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
   });
