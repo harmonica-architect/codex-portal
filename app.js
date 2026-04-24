@@ -709,11 +709,14 @@ function enterPortal() {
   initProfile();
   initGlyphOverlay();
   initTonePanel();
-  // Restore active tab from shared state
-  const savedTab = getState().activeTab;
-  if (savedTab) {
-    const tab = document.querySelector('.nav-tab[data-tab="' + savedTab + '"]');
-    if (tab) tab.click();
+  // Restore active tab from sigil nav navigation (profile, codex, dream, journal)
+  const pendingTab = localStorage.getItem('pendingTab');
+  if (pendingTab) {
+    localStorage.removeItem('pendingTab');
+    const tab = document.querySelector('.nav-tab[data-tab="' + pendingTab + '"]');
+    if (tab) {
+      setTimeout(() => tab.click(), 80);
+    }
   }
   document.getElementById('helpFab').onclick = () => showAxisMessage();
   // Init sigil navigator

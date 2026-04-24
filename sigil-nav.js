@@ -92,8 +92,9 @@ function performSigilTransition(idx) {
   // Switch tab content with breath transition
   const tabEl = document.getElementById('tab-' + target.tab);
   if (!tabEl) {
-    // External page — navigate in same tab
-    window.location.href = target.tab + '.html';
+    // Internal tab rendered in index.html — save active tab to localStorage, navigate to index
+    localStorage.setItem('pendingTab', target.tab);
+    window.location.href = 'index.html';
     sigilNav.isTransitioning = false;
     sigilNav.activeIndex = idx;
     return;
