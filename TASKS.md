@@ -3,7 +3,7 @@
   "portal_url": "https://harmonica-architect.github.io/codex-portal/",
   "workspace": "C:\\Users\\c\\.openclaw\\workspace\\codex-portal",
   "commits": {
-    "latest": "e49ced3",
+    "latest": "d14266b",
     "feat_24cell": "658c3fb",
     "feat_coherence": "abab659",
     "feat_breath_ring": "d498e56"
@@ -98,6 +98,13 @@
       "status": "DONE",
       "commit": "e49ced3",
       "note": "24-cell projection in Mirror tab with coherence-scaled vertex glow. RAF loop starts on dream tab entry."
+    },
+    {
+      "id": "P15-community-attractor",
+      "label": "Community Attractor Form",
+      "status": "DONE",
+      "commit": "d14266b",
+      "note": "120-cell appears in community panel when 3+ nodes >70% coherence. 4D precession rotation via breath phase."
     }
   ],
   "PENDING": [
