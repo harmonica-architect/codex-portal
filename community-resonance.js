@@ -37,7 +37,9 @@ const COMMUNITY_FIELD = {
     nodes: [],          // Other active nodes
     fieldIntention: null,
     globalCoherence: 0,
-    communityBreaths: 0 // Total breaths across all nodes
+    communityBreaths: 0, // Total breaths across all nodes
+    lastWrite: 0,         // Last coherence write (for rate limiting)
+    writeCooldown: 300000 // 5 minutes in ms
   },
 
   // ── Initialize community field (read-only by default) ──
@@ -49,6 +51,9 @@ const COMMUNITY_FIELD = {
     await this._readField();
     // Poll for community updates every 30s
     setInterval(() => this._readField(), 30000);
+
+    // Auto-write coherence when coherence is high (>70) — rate-limited
+    this._setupAutoWrite();
   },
 
   // ── Join the field — register this portal node ──
@@ -382,6 +387,92 @@ const COMMUNITY_FIELD = {
 
   _onReconnect() {
     this._readField();
+  },
+
+  // ── Setup auto-write on high coherence ──
+  _setupAutoWrite() {
+    // Poll COHERENCE_BUS every 5s; write when >70 coherence
+    setInterval(() => {
+      if (typeof COHERENCE_BUS !== 'undefined') {
+        const coh = COHERENCE_BUS.currentCoh ?? 0;
+        if (coh > 70) this.writeCoherence(coh, this.state.globalCoherence);
+      }
+    }, 5000);
+  },
+
+  // ── Write coherence to field (rate-limited auto-write) ──
+  async writeCoherence(localCoherence, globalCoherence) {
+    // Rate limit: once per 5 minutes
+    const now = Date.now();
+    if (now - this.state.lastWrite < this.state.writeCooldown) return;
+    if (!this.TOKEN) return;
+
+    try {
+      const res = await fetch(`https://api.github.com/gists/${this.GIST_ID}`, {
+        headers: { Authorization: `Bearer ${this.TOKEN}` }
+      });
+      if (!res.ok) return;
+      const gist = await res.json();
+      const f = gist.files[this.GIST_FILENAME];
+      let data = f ? JSON.parse(f.content) : { nodes: [], fieldIntention: null };
+      if (!data.nodes) data.nodes = [];
+
+      const nodeId = this.state.nodeId || this._genNodeId();
+      const nodeIdx = data.nodes.findIndex(n => n.id === nodeId);
+      const node = {
+        id: nodeId,
+        sigil: this._getLocalSigil(),
+        archetype: typeof COHERENCE_BUS !== 'undefined' ? (COHERENCE_BUS.activeArchetype || 'Seed') : 'Seed',
+        coh: localCoherence,
+        breathCount: typeof COHERENCE_BUS !== 'undefined' ? COHERENCE_BUS.breathCount : 0,
+        lastSeen: now,
+        intention: this.state.intention || '',
+        online: true,
+        lastWriteTs: now
+      };
+
+      if (nodeIdx >= 0) data.nodes[nodeIdx] = node;
+      else data.nodes.push(node);
+
+      data.lastUpdated = now;
+      data.globalCoherence = globalCoherence || this.state.globalCoherence;
+
+      const updateRes = await fetch(`https://api.github.com/gists/${this.GIST_ID}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${this.TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          files: { [this.GIST_FILENAME]: { content: JSON.stringify(data, null, 2) } }
+        })
+      });
+
+      if (updateRes.ok) {
+        this.state.lastWrite = now;
+        this._emitFieldUpdateIndicator();
+      }
+    } catch (e) { }
+  },
+
+  // ── Show subtle field update indicator ──
+  _emitFieldUpdateIndicator() {
+    const el = document.getElementById('csFieldUpdateIndicator');
+    if (!el) return;
+    el.textContent = '✦ Field update';
+    el.style.opacity = '1';
+    el.style.display = 'inline';
+    clearTimeout(this._fieldUpdateFadeTimeout);
+    this._fieldUpdateFadeTimeout = setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => { if (el) el.style.display = 'none'; }, 600);
+    }, 2500);
+  },
+
+  // ── Public write() — trigger a manual field write ──
+  async write() {
+    const coh = typeof COHERENCE_BUS !== 'undefined' ? COHERENCE_BUS.currentCoh : 0;
+    await this.writeCoherence(coh, this.state.globalCoherence);
   },
 
   getState() { return this.state; }

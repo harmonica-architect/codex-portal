@@ -340,6 +340,13 @@ body {
 .user-dots { display: flex; gap: 0.25rem; margin-left: 0.3rem; }
 .user-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 
+/* ── Coherence Sparkline ── */
+#cohSparkline {
+  border-radius: 3px;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
 /* ── CONNECTION BOX ── */
 .conn-box {
   position: absolute;

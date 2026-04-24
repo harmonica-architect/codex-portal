@@ -40,6 +40,56 @@ let toneFreq = 432;
 // ── DASHBOARD ──
 let miniAnimId = null;
 
+// ── COHERENCE SPARKLINE ──
+function drawCohSparkline(samples) {
+  const canvas = document.getElementById('cohSparkline');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!samples || samples.length < 2) return;
+
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  const rising = last >= first;
+  const strokeColor = rising ? 'rgba(232,200,106,0.75)' : 'rgba(120,110,80,0.55)';
+  const fillColor = rising ? 'rgba(232,200,106,0.10)' : 'rgba(100,90,70,0.07)';
+
+  const len = samples.length;
+  const stepX = W / (len - 1);
+
+  // Smooth line via quadratic bezier midpoints
+  ctx.beginPath();
+  let px = 0, py = H - (samples[0] / 100) * H;
+  ctx.moveTo(px, py);
+  for (let i = 1; i < len; i++) {
+    const nx = i * stepX;
+    const ny = H - (samples[i] / 100) * H;
+    ctx.quadraticCurveTo(px, py, (px + nx) / 2, (py + ny) / 2);
+    px = nx; py = ny;
+  }
+  ctx.lineTo(px, py);
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Subtle fill under the curve
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  // Tiny trend arrow
+  if (rising) {
+    ctx.fillStyle = 'rgba(232,200,106,0.45)';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('\u2191', W - 10, 8);
+  }
+}
+
 function initDashboard() {
   // Mini wheel animation — outer ring rotates continuously
   const mwOuter = document.getElementById('mwOuter');
@@ -872,6 +922,40 @@ function enterPortal() {
   initGlyphRing();
   initDashboard();
 
+  // ── COMMUNITY FIELD TOKEN INIT + AUTO-WRITE SETUP ──
+  // Load stored GitHub token if present
+  const storedToken = (() => {
+    try { return localStorage.getItem('codex_gh_token'); } catch { return null; }
+  })();
+  if (storedToken && typeof COMMUNITY_FIELD !== 'undefined') {
+    COMMUNITY_FIELD.TOKEN = storedToken;
+  }
+
+  // Setup token input UI
+  const tokenInput = document.getElementById('csTokenInput');
+  const tokenBtn = document.getElementById('csTokenBtn');
+  if (tokenInput && tokenBtn && typeof COMMUNITY_FIELD !== 'undefined') {
+    // Pre-fill if token already stored
+    if (storedToken) tokenInput.value = '••••••••';
+
+    tokenBtn.addEventListener('click', () => {
+      const raw = tokenInput.value.trim();
+      if (!raw || raw === '••••••••') return;
+      COMMUNITY_FIELD.TOKEN = raw;
+      try { localStorage.setItem('codex_gh_token', raw); } catch {}
+      tokenInput.value = '••••••••';
+      tokenInput.title = 'Token saved in localStorage (your own token — not shared)'
+      // Trigger a fresh field read with the token
+      COMMUNITY_FIELD._readField();
+    });
+
+    tokenInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') tokenBtn.click();
+    });
+  }
+
+  // Periodically sync community status
+  setInterval(updateCommunityStatus, 5000);
   // ── BREATH GLYPH LINKER ──
   function initGlyphLinker() {
     const glyphBtns = document.querySelectorAll('.gls-btn');
