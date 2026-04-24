@@ -88,6 +88,8 @@ class BreathController {
     this.audioCtx = null;
     this.element = null; // bound DOM element
     this.breathCount = 0; // increments each _tick — full cycle every 24
+    this.audioMuted = localStorage.getItem('breathAudioMuted') === 'true';
+    this._initAudio();
 
     // Custom event for cascade animation (full cycle = 24 breaths = 3 ring rotations)
     this.cascadeListeners = [];
@@ -97,27 +99,54 @@ class BreathController {
   }
 
   // ── Audio ──
-  ac() {
-    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return this.audioCtx;
+  _initAudio() {
+    try {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {
+      /* audio not available (e.g. Safari private browsing) */
+    }
   }
 
+  // Play a soft sine tone for the breath phase — volume scales with coherence
+  playPhaseTone(freq, coherenceLevel = 0) {
+    if (!this.audioCtx || this.audioMuted) return;
+    const vol = 0.03 + (coherenceLevel / 100) * 0.05; // 0.03–0.08
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(vol, this.audioCtx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.8);
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    osc.start();
+    osc.stop(this.audioCtx.currentTime + 0.8);
+  }
+
+  // Legacy tone method — used by glyph ring, nav tones, etc.
   playTone(freq, vol = 0.06, dur = 1.8) {
     try {
-      const ctx = this.ac();
-      if (ctx.state === 'suspended') ctx.resume();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+      if (!this.audioCtx) this._initAudio();
+      if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+      const o = this.audioCtx.createOscillator();
+      const g = this.audioCtx.createGain();
       o.type = 'sine';
       o.frequency.value = freq;
-      g.gain.setValueAtTime(0, ctx.currentTime);
-      g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.08);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      g.gain.setValueAtTime(0, this.audioCtx.currentTime);
+      g.gain.linearRampToValueAtTime(vol, this.audioCtx.currentTime + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + dur);
       o.connect(g);
-      g.connect(ctx.destination);
+      g.connect(this.audioCtx.destination);
       o.start();
-      o.stop(ctx.currentTime + dur + 0.1);
+      o.stop(this.audioCtx.currentTime + dur + 0.1);
     } catch (e) { }
+  }
+
+  toggleAudioMute() {
+    this.audioMuted = !this.audioMuted;
+    localStorage.setItem('breathAudioMuted', this.audioMuted ? 'true' : 'false');
+    return this.audioMuted;
   }
 
   // ── Phase tick ──
@@ -138,6 +167,9 @@ class BreathController {
     // Advance
     this.currentPhase = (this.currentPhase + 1) % this.phases.length;
     const next = this.phases[this.currentPhase];
+
+    // Play breath phase tone for the NEW phase (scaled by current coherence)
+    this.playPhaseTone(next.toneFreq, typeof coherenceLevel !== 'undefined' ? coherenceLevel : 50);
 
     // Schedule next
     clearTimeout(this.timer);
