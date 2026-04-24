@@ -716,8 +716,23 @@ function enterPortal() {
     if (tab) tab.click();
   }
   document.getElementById('helpFab').onclick = () => showAxisMessage();
-  initDashboard();
+  // Init sigil navigator
+  initSigilNav();
+
+  // Sync sigil nav with dashboard coherence
+  setInterval(() => {
+    setSigilNavCoherence(coherenceLevel, globalCoherence);
+    // Drive hub pulse class
+    const hub = document.getElementById('snHub');
+    if (hub) {
+      const coh = (coherenceLevel + globalCoherence) / 2;
+      hub.classList.toggle('coh-pulse', coh > 70);
+      hub.classList.toggle('breath-active', isRunning);
+    }
+  }, 400);
+
   initGlyphRing();
+  initDashboard();
   document.getElementById('btnOpenMatrix')?.addEventListener('click', () => {
     window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
   });
