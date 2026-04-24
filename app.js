@@ -127,8 +127,63 @@ function navToResonator() {
   window.location.href = 'resonator.html';
 }
 
-// Register WebSocket sender with CodexState for cross-tool sync
-registerWSSender(sendWS);
+// ── GLYPH TONE RING ──
+// Frequency map for the 12 wheel positions
+const GLYPH_RING_FREQS = [
+  { glyph: '△',   freq: 432.0 },
+  { glyph: '◁△▷', freq: 456.9 },
+  { glyph: '◇',   freq: 483.3 },
+  { glyph: '⬟',   freq: 510.6 },
+  { glyph: '△̅',  freq: 539.8 },
+  { glyph: '⊕',   freq: 570.6 },
+  { glyph: '⊗',   freq: 603.4 },
+  { glyph: '◈',   freq: 637.9 },
+  { glyph: '⬡',   freq: 674.0 },
+  { glyph: '◧',   freq: 712.0 },
+  { glyph: '◨',   freq: 752.4 },
+  { glyph: '⟡',   freq: 795.0 },
+];
+
+function playGlyphTone(freq, vol) {
+  vol = vol !== undefined ? vol : 0.12;
+  try {
+    var ctx = ac();
+    if (ctx.state === 'suspended') ctx.resume();
+    // Sine wave with soft ADSR: attack 50ms, decay to 0.001 over 1.5s
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 1.6);
+  } catch (e) { }
+}
+
+function initGlyphRing() {
+  var container = document.getElementById('grButtons');
+  if (!container) return;
+  container.innerHTML = '';
+  GLYPH_RING_FREQS.forEach(function(item, idx) {
+    var btn = document.createElement('button');
+    btn.className = 'gr-btn';
+    btn.dataset.freq = item.freq;
+    btn.innerHTML = '<span>' + item.glyph + '</span><span class="gr-hz">' + item.freq.toFixed(1) + '</span>';
+    btn.title = 'Play ' + item.freq.toFixed(1) + ' Hz';
+    btn.addEventListener('click', function() {
+      var f = parseFloat(btn.dataset.freq);
+      playGlyphTone(f);
+      // Visual feedback
+      btn.classList.add('active');
+      setTimeout(function() { btn.classList.remove('active'); }, 400);
+    });
+    container.appendChild(btn);
+  });
+}
 
 // ── WHEEL CANVAS ──
 const canvas = document.getElementById('wheel');
@@ -662,6 +717,7 @@ function enterPortal() {
   }
   document.getElementById('helpFab').onclick = () => showAxisMessage();
   initDashboard();
+  initGlyphRing();
   document.getElementById('btnOpenMatrix')?.addEventListener('click', () => {
     window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
   });
