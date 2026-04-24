@@ -681,6 +681,9 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   left: 50%;
   transform: translate(-50%,-50%) rotate(0deg);
   animation: none; /* driven by JS */
+  /* Coherence-driven glow: scales with --coh (0-100) */
+  box-shadow: 0 0 calc(var(--coh-glow-spread) * 0.3) rgba(232,200,106,var(--coh-glow-opacity));
+  transition: box-shadow 1s ease;
 }
 
 /* 8 dots — clock positions via plain X/Y offset, no rotation.
@@ -762,11 +765,11 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 
 /* Coherence pulse on hub when coherence is high */
 @keyframes cohPulseHub {
-  0%, 100% { box-shadow: 0 0 10px rgba(232,200,106,0.3); }
-  50% { box-shadow: 0 0 24px rgba(232,200,106,0.6), 0 0 40px rgba(232,200,106,0.2); }
+  0%, 100% { box-shadow: 0 0 calc(var(--coh-glow-spread) * 0.4) rgba(232,200,106,var(--coh-glow-opacity)); }
+  50% { box-shadow: 0 0 calc(var(--coh-glow-spread)) rgba(232,200,106,var(--coh-glow-opacity)), 0 0 calc(var(--coh-glow-spread) * 1.8) rgba(232,200,106,calc(var(--coh-glow-opacity) * 0.4)); }
 }
 .sn-hub.coh-pulse {
-  animation: cohPulseHub 2s ease-in-out infinite;
+  animation: cohPulseHub var(--coh-pulse-speed, 2s) ease-in-out infinite;
   border-color: var(--gold);
 }
 
@@ -1420,6 +1423,12 @@ body.mirror-active {
   --breath-glyph-pulse: 1;
   --breath-color-shift: rgba(232,200,106,0.05);
   --breath-glyph: '?';
+  /* Coherence-driven variables — updated by COHERENCE_BUS.updateCoherence() */
+  --coh: 0;
+  --coh-glow-spread: 4;
+  --coh-glow-opacity: 0.15;
+  --coh-pulse-speed: 2;
+  --coh-ring-bonus: 0;
 }
 :root.breath-inhaling .mini-wheel {
   animation: breathInhale 5s ease-in-out infinite;

@@ -117,6 +117,26 @@ const COHERENCE_BUS = {
     this.currentCoh = val;
     this.coherenceHistory.push(val);
     if (this.coherenceHistory.length > 30) this.coherenceHistory.shift();
+    // Push coherence into CSS vars — drives sigil nav, ring, visual feedback
+    this._updateCoherenceCSS(val);
+  },
+
+  _updateCoherenceCSS(val) {
+    if (typeof document === 'undefined') return;
+    const r = document.documentElement;
+    r.style.setProperty('--coh', val.toFixed(1));
+    // Glow intensity: 0-100 → 4-40px spread
+    const glowSpread = 4 + (val / 100) * 36;
+    r.style.setProperty('--coh-glow-spread', glowSpread.toFixed(1));
+    // Glow opacity: 0.15-0.7
+    const glowOpacity = 0.15 + (val / 100) * 0.55;
+    r.style.setProperty('--coh-glow-opacity', glowOpacity.toFixed(2));
+    // Pulse speed: 3s at 0% coherence → 1s at 100% (faster when more coherent)
+    const pulseSpeed = Math.max(1, 3 - (val / 100) * 2).toFixed(2);
+    r.style.setProperty('--coh-pulse-speed', pulseSpeed);
+    // Ring glow bonus: adds to phase transition ring scale when coherence is high
+    const ringBonus = (val / 100) * 0.08; // up to +8% scale at 100%
+    r.style.setProperty('--coh-ring-bonus', ringBonus.toFixed(3));
   },
 
   // ── Mirror integration — log mirror responses ──
