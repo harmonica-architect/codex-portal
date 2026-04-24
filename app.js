@@ -718,7 +718,36 @@ function enterPortal() {
       setTimeout(() => tab.click(), 80);
     }
   }
-  document.getElementById('helpFab').onclick = () => showAxisMessage();
+  // ── Mobile Nav Drawer ──
+  function initMobileNavDrawer() {
+    const drawer = document.getElementById('mobileNavDrawer');
+    if (!drawer) return;
+    drawer.querySelectorAll('.mnd-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const tab = item.dataset.tab;
+        const navTab = document.querySelector('.nav-tab[data-tab="' + tab + '"]');
+        if (navTab) {
+          navTab.click();
+          // On mobile: scroll to top of content after tab switch
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        drawer.classList.remove('visible');
+      });
+    });
+    drawer.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+  }
+
+  function updateMobileNavState() {
+    const drawer = document.getElementById('mobileNavDrawer');
+    if (!drawer) return;
+    const activeTab = document.querySelector('.nav-tab.active')?.dataset.tab || 'home';
+    drawer.querySelectorAll('.mnd-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.tab === activeTab);
+    });
+  }
+
+  initMobileNavDrawer();
+  updateMobileNavState();
   // Init sigil navigator
   initSigilNav();
 
@@ -1066,8 +1095,7 @@ function initNavTabs() {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-      // Persist active tab to shared state
-      updateState({ activeTab: tab.dataset.tab });
+      updateMobileNavState();
     });
   });
 }
