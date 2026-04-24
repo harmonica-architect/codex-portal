@@ -3,7 +3,7 @@
   "portal_url": "https://harmonica-architect.github.io/codex-portal/",
   "workspace": "C:\\Users\\c\\.openclaw\\workspace\\codex-portal",
   "commits": {
-    "latest": "d14266b",
+    "latest": "b841be5",
     "feat_24cell": "658c3fb",
     "feat_coherence": "abab659",
     "feat_breath_ring": "d498e56"
@@ -105,6 +105,20 @@
       "status": "DONE",
       "commit": "d14266b",
       "note": "120-cell appears in community panel when 3+ nodes >70% coherence. 4D precession rotation via breath phase."
+    },
+    {
+      "id": "P14-breath-audio",
+      "label": "Breath Audio Synthesis",
+      "status": "DONE",
+      "commit": "b841be5",
+      "note": "Sine tones on phase transitions (432-880Hz), volume scales with coherence, mute toggle in localStorage."
+    },
+    {
+      "id": "P16-prime-axis",
+      "label": "Prime Axis Tracker",
+      "status": "DONE",
+      "commit": "8c5138d",
+      "note": "80x96 canvas shows 24-node ring with 8 prime vertices in gold, spiral path line, current breath position glow."
     }
   ],
   "PENDING": [
