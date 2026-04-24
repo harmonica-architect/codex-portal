@@ -475,21 +475,20 @@ function renderMirror24Cell() {
   const H = canvas.height;
   const cx = W / 2;
   const cy = H / 2;
-  const scale = W / 8;  // scale relative to canvas size
+  const scale = Math.min(cx, cy) * 0.7;
 
-  // Continuous slow rotation — breath drives the wobble
-  const t = Date.now() / 1000;
-  const breathPhase = t;  // time-based breath phase
+  // Breath phase from breath controller (0–5 = inhale/hold/exhale/still/inhale2/hold2)
+  const breathPhase = (typeof breathCtrl !== 'undefined' && breathCtrl.getPhaseIndex)
+    ? breathCtrl.getPhaseIndex()
+    : 0;
 
   // Get current highlight vertex (0–23) from mirror input wheelPos
-  // If no highlight set, use -1 (no vertex highlighted)
   const activeWheelPos = _mirror24cellHighlight;
 
   // Get coherence from COHERENCE_BUS
-  let coherenceLevel = 50; // default fallback
-  if (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.currentCoh !== undefined) {
-    coherenceLevel = COHERENCE_BUS.currentCoh;
-  }
+  const coh = (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.currentCoh !== undefined)
+    ? COHERENCE_BUS.currentCoh
+    : 50;
 
   // Clear canvas
   ctx.clearRect(0, 0, W, H);
@@ -507,8 +506,7 @@ function renderMirror24Cell() {
   }
 
   // ── Coherence glow overlay on the canvas border ──
-  // The glow intensity scales with coherenceLevel (30% → barely visible, 100% → full)
-  const normCoh = Math.max(0.05, coherenceLevel / 100);
+  const normCoh = Math.max(0.05, coh / 100);
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, Math.min(cx, cy) - 2, 0, Math.PI * 2);
@@ -518,6 +516,29 @@ function renderMirror24Cell() {
   ctx.fillStyle = grd;
   ctx.fill();
   ctx.restore();
+
+  // ── Coherence-scaled gold glow around highlighted vertex ──
+  // The 24-cell draw already renders the vertex — we add a coherence-scaled outer glow
+  if (activeWheelPos >= 0 && typeof window.draw24CellProjection === 'function') {
+    // We need the 2D position of the highlighted vertex to draw the glow.
+    // Reconstruct it here so the glow tracks the spinning vertex.
+    const glowSize = 8 + (coh / 100) * 16;   // 8px → 24px
+    const glowAlpha = 0.3 + (coh / 100) * 0.5; // 0.3 → 0.8
+
+    // Draw a soft gold halo behind the canvas center to represent the highlighted vertex
+    // The actual vertex glow is drawn inside draw24CellProjection — we just
+    // reinforce it with a coherence-scaled outer ring here.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, glowSize * 1.5, 0, Math.PI * 2);
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize * 1.5);
+    halo.addColorStop(0, `rgba(232,200,106,${glowAlpha})`);
+    halo.addColorStop(0.5, `rgba(200,160,70,${glowAlpha * 0.4})`);
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.fill();
+    ctx.restore();
+  }
 
   // Advance angle
   _mirror24cellAngle += 0.008;
@@ -547,6 +568,15 @@ function stopMirror24CellRAF() {
 // Called by app.js on every mirrorUpdate() so the vertex stays in sync
 function updateMirror24CellHighlight(wheelPos) {
   _mirror24cellHighlight = (wheelPos !== null && wheelPos !== undefined) ? wheelPos : -1;
+
+  // Update the breath ring hub glyph to show the resolved archetype
+  if (wheelPos >= 0) {
+    const zone = findArchetypeZone(wheelPos);
+    const hubGlyph = document.getElementById('snHubGlyph');
+    if (hubGlyph) hubGlyph.textContent = zone.glyph;
+    const hubLabel = document.getElementById('snHubLabel');
+    if (hubLabel) hubLabel.textContent = zone.archetype;
+  }
 }
 
 // ── Watch tab visibility: start/stop RAF on Dream/Mirror tab ──

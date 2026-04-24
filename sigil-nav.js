@@ -154,6 +154,11 @@ function performSigilTransition(idx, sn) {
     const portal = document.getElementById('portal');
     if (portal) portal.classList.toggle('non-home', target.tab !== 'home');
 
+    // Start mirror 24-cell RAF when entering Dream/Mirror tab
+    if (target.tab === 'dream' && typeof startMirror24CellRAF === 'function') {
+      startMirror24CellRAF();
+    }
+
     // Clear breath lock
     sn.breathLocked = false;
     sn.pendingTab = null;
