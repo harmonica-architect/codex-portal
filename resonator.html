@@ -66,6 +66,17 @@
       </div>
     </div>
 
+    <!-- Breath phase strip -->
+    <div class="phase-strip" id="phaseStrip">
+      <div class="phase-chip" data-phase="inhale" id="phaseInhale">Inhale</div>
+      <div class="phase-sep">·</div>
+      <div class="phase-chip" data-phase="hold" id="phaseHold">Hold</div>
+      <div class="phase-sep">·</div>
+      <div class="phase-chip" data-phase="exhale" id="phaseExhale">Exhale</div>
+      <div class="phase-sep">·</div>
+      <div class="phase-chip" data-phase="still" id="phaseStill">Still</div>
+    </div>
+
     <!-- Breath label -->
     <div class="breath-label" id="breathLabel"></div>
 
@@ -202,12 +213,13 @@
     <div class="sidebar-section">
       <div class="sidebar-title"><span class="icon">◐</span> Breath Cycle</div>
       <div class="cycle-presets-mini" id="cyclePresetsMini">
-        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="5">5·5·5</button>
-        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6">6·0·6</button>
-        <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="8">4·4·8</button>
-        <button class="cycle-preset-mini" data-in="4" data-h="7" data-out="8">4·7·8</button>
-        <button class="cycle-preset-mini" data-in="5" data-h="5" data-out="10">5·5·10</button>
-        <button class="cycle-preset-mini" data-in="3" data-h="3" data-out="6">3·3·6</button>
+        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="5" data-geo="Tetrahedron" title="Tetrahedron">5·5·5</button>
+        <button class="cycle-preset-mini" data-in="5" data-h="8" data-out="3" data-geo="Golden Spiral" title="Golden Spiral">5·8·3</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="4" data-geo="Cube" title="Cube">4·4·4</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="8" data-geo="Triangle" title="Triangle">4·4·8</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="7" data-out="8" data-geo="Isosceles Triangle" title="Isosceles Triangle">4·7·8</button>
+        <button class="cycle-preset-mini" data-in="3" data-h="6" data-out="9" data-geo="Nonagon" title="Nonagon">3·6·9</button>
+        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6" data-geo="Sine Wave" title="Sine Wave">6·0·6</button>
       </div>
       <div class="cycle-inputs-mini">
         <div class="cycle-input-mini"><label>In</label><input type="number" id="inhaleMini" value="5" min="1" max="30"></div>

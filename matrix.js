@@ -63,7 +63,21 @@ var CORE_GLYPHS = [
 ];
 
 // Geometric forms at each 30 degree position
-var GEO = ['△','□','◇','⬡','△','▭','◁','▷','⬡','◧','◨','⬡'];
+// Generated from Platonic/Archimedean projections and sacred geometry
+var GEO = [
+  '△',   // 0°   (0°)   Triangle — equilateral, first form
+  '□',   // 1°   (30°)  Square — earth, stability
+  '◇',   // 2°   (60°)  Diamond — axis, double-triangle
+  '⬡',   // 3°   (90°)  Hexagon — cellular, honeycomb
+  '△',   // 4°   (120°) Triangle — resonance
+  '✦',   // 5°   (150°) Four-pointed star — cardinal directions
+  '⬡',   // 6°   (180°) Hexagon — inverted
+  '◁',   // 7°   (210°) Left arrow — returning
+  '▷',   // 8°   (240°) Right arrow — progressing
+  '✧',   // 9°   (270°) Six-pointed star — David
+  '◇',   // 10°  (300°) Diamond — inverted
+  '⬡',   // 11°  (330°) Hexagon — closing
+];
 
 // Phi-spiral monadic symbols
 var MONADIC = ['☉','☽','☿','♀','♂','♃','♄','⚷','☼','☾','△','∞'];
@@ -86,8 +100,21 @@ var DIM_LAYERS = ['2D','2D','2D','3D','3D','3D','3D','4D','4D','4D','5D','5D'];
 // Temporal phases
 var TEMPORAL = ['dawn','morning','noon','afternoon','dusk','evening','midnight','deep night','pre-dawn','1st watch','2nd watch','3rd watch'];
 
-// Spectral colors
-var SPECTRAL = ['#b30000','#cc4400','#cc6600','#998800','#88aa00','#44aa44','#00aa88','#0088cc','#0044cc','#4400cc','#8800cc','#aa0044'];
+// Spectral color sequence — full visible spectrum + margins (ROYGBIV + UV/IR extensions)
+var SPECTRAL = [
+  '#ff2200',  // 0°  (0°)  red
+  '#ff5500',  // 1°  (30°) orange-red
+  '#ff8800',  // 2°  (60°) orange
+  '#ffaa00',  // 3°  (90°) amber
+  '#ffcc00',  // 4°  (120°) yellow
+  '#88cc00',  // 5°  (150°) yellow-green
+  '#00cc44',  // 6°  (180°) green
+  '#0088cc',  // 7°  (210°) cyan-blue
+  '#0044cc',  // 8°  (240°) blue
+  '#6600cc',  // 9°  (270°) indigo
+  '#cc00aa',  // 10° (300°) violet
+  '#cc0044',  // 11° (330°) magenta-red
+];
 
 // Digital root at each column
 var DR_VALS = [1,2,3,4,5,6,7,8,9,1,2,3];
