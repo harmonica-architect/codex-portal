@@ -3,7 +3,7 @@
   "portal_url": "https://harmonica-architect.github.io/codex-portal/",
   "workspace": "C:\\Users\\c\\.openclaw\\workspace\\codex-portal",
   "commits": {
-    "latest": "08cbada",
+    "latest": "e49ced3",
     "feat_24cell": "658c3fb",
     "feat_coherence": "abab659",
     "feat_breath_ring": "d498e56"
@@ -91,6 +91,13 @@
       "status": "DONE",
       "commit": "08cbada",
       "note": "Each community node renders an avatar circle showing first char of sigil glyph."
+    },
+    {
+      "id": "P13-breath-geometric-mirror",
+      "label": "Breath-Geometric Mirror",
+      "status": "DONE",
+      "commit": "e49ced3",
+      "note": "24-cell projection in Mirror tab with coherence-scaled vertex glow. RAF loop starts on dream tab entry."
     }
   ],
   "PENDING": [
