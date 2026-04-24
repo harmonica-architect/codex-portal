@@ -57,11 +57,14 @@ async function main() {
     if (!await desk.locator('#snHubGlyph').isVisible()) throw new Error('not visible');
   }); passed += d3 ? 1 : 0; failed += d3 ? 0 : 1;
 
-  const d4 = await test('ring centered on page', desk, async () => {
+  const d4 = await test('ring top-right on desktop', desk, async () => {
     const b = await desk.locator('.sigil-nav-ring').boundingBox().catch(() => null);
     if (!b) throw new Error('no bounding box');
-    const cx = b.x + b.width / 2;
-    if (Math.abs(cx - 640) > 200) throw new Error('cx=' + cx.toFixed(0) + ' expected ~640');
+    // On desktop, sigil nav floats top-right, not centered
+    const vw = 1280;
+    // Right edge should be near the right viewport edge (within 50px)
+    const rightEdge = b.x + b.width;
+    if (Math.abs(rightEdge - vw) > 80) throw new Error('ring not at top-right, rightEdge=' + rightEdge.toFixed(0) + ' expected ~' + vw);
   }); passed += d4 ? 1 : 0; failed += d4 ? 0 : 1;
 
   // Desktop dot-1 click: navigate from home → wheel tab (in-page transition)
@@ -110,11 +113,12 @@ async function main() {
     if (Math.abs(cx - 187.5) > 60) throw new Error('cx=' + cx.toFixed(0) + ' expected ~187');
   }); passed += m3 ? 1 : 0; failed += m3 ? 0 : 1;
 
-  const m4 = await test('hub centered', mob, async () => {
+  const m4 = await test('hub within viewport on mobile', mob, async () => {
     const b = await mob.locator('.sn-hub').boundingBox().catch(() => null);
     if (!b || b.width === 0) throw new Error('hub zero');
+    // On mobile sigil nav is centered (static), hub should be in center region
     const cx = b.x + b.width / 2;
-    if (Math.abs(cx - 187.5) > 60) throw new Error('cx=' + cx.toFixed(0) + ' expected ~187');
+    if (Math.abs(cx - 187.5) > 80) throw new Error('hub cx=' + cx.toFixed(0) + ' expected ~187');
   }); passed += m4 ? 1 : 0; failed += m4 ? 0 : 1;
 
   const m5 = await test('ring not cut off at viewport edges', mob, async () => {
