@@ -27,8 +27,12 @@ let sigilNav = {
   globalCoherence: 0,
 };
 
+// Expose globally for tests and debugging
+window.sigilNav = sigilNav;
+
 // ── Init sigil navigator ──
 function initSigilNav() {
+  console.log('[initSigilNav] called, pendingTab=', localStorage.getItem('pendingTab'));
   // Click on orbit dots
   document.querySelectorAll('.sn-dot').forEach(dot => {
     dot.addEventListener('click', () => {
@@ -47,36 +51,51 @@ function initSigilNav() {
   // Coherence-aware orbit animation
   startOrbitAnimation();
 
-  // Show first tab glyph
-  updateSigilHub(0, false);
+  // Restore active tab from sigil nav cross-page navigation
+  const pendingTab = localStorage.getItem('pendingTab');
+  if (pendingTab) {
+    localStorage.removeItem('pendingTab');
+    const idx = SIGIL_TABS.findIndex(t => t.tab === pendingTab);
+    if (idx !== -1) {
+      // Activate the dot and tab silently (skip breath gate after page reload)
+      // NOTE: we update window.sigilNav which is already initialized above
+      activateDot(idx);
+      window.sigilNav.activeIndex = idx;
+      window.sigilNav.isTransitioning = false;
+      const tabEl = document.getElementById('tab-' + pendingTab);
+      if (tabEl) {
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        tabEl.classList.add('active');
+      }
+      updateSigilHub(idx, false);
+    }
+  }
 }
 
 // ── Navigate to a sigil tab ──
 function navigateToSigil(idx, skipBreathGate = false) {
-  if (idx === sigilNav.activeIndex) return;
-  if (sigilNav.isTransitioning) return;
+  const sn = window.sigilNav;
+  if (idx === sn.activeIndex) return;
+  if (sn.isTransitioning) return;
 
   const target = SIGIL_TABS[idx];
   if (!target) return;
 
   if (!skipBreathGate && breathCtrl.isActive) {
-    // Breath-gated navigation — only switch during Still or Rest phases
     if (!breathCtrl.isStill() && !breathCtrl.isHold()) {
-      // Queue it for next still phase
-      sigilNav.pendingTab = idx;
-      sigilNav.breathLocked = true;
-      // Flash the dot to show it's queued
+      sn.pendingTab = idx;
+      sn.breathLocked = true;
       flashDot(idx, 'queued');
       return;
     }
   }
 
-  performSigilTransition(idx);
+  performSigilTransition(idx, sn);
 }
 
-function performSigilTransition(idx) {
+function performSigilTransition(idx, sn) {
   const target = SIGIL_TABS[idx];
-  sigilNav.isTransitioning = true;
+  sn.isTransitioning = true;
 
   // Play sigil tone
   if (typeof breathCtrl !== 'undefined') {
@@ -95,8 +114,8 @@ function performSigilTransition(idx) {
     // Internal tab rendered in index.html — save active tab to localStorage, navigate to index
     localStorage.setItem('pendingTab', target.tab);
     window.location.href = 'index.html';
-    sigilNav.isTransitioning = false;
-    sigilNav.activeIndex = idx;
+    sn.isTransitioning = false;
+    sn.activeIndex = idx;
     return;
   }
 
@@ -106,12 +125,12 @@ function performSigilTransition(idx) {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     // Show target
     tabEl.classList.add('active');
-    sigilNav.activeIndex = idx;
-    sigilNav.isTransitioning = false;
+    sn.activeIndex = idx;
+    sn.isTransitioning = false;
 
     // Clear breath lock
-    sigilNav.breathLocked = false;
-    sigilNav.pendingTab = null;
+    sn.breathLocked = false;
+    sn.pendingTab = null;
   });
 }
 
