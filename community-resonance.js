@@ -39,7 +39,8 @@ const COMMUNITY_FIELD = {
     globalCoherence: 0,
     communityBreaths: 0, // Total breaths across all nodes
     lastWrite: 0,         // Last coherence write (for rate limiting)
-    writeCooldown: 300000 // 5 minutes in ms
+    writeCooldown: 300000, // 5 minutes in ms
+    _fieldMapAnimId: null  // RAF animation tracker for renderFieldMap
   },
 
   // ── Initialize community field (read-only by default) ──
@@ -54,6 +55,9 @@ const COMMUNITY_FIELD = {
 
     // Auto-write coherence when coherence is high (>70) — rate-limited
     this._setupAutoWrite();
+
+    // Cleanup RAF loops on page unload
+    window.addEventListener('beforeunload', () => this.stopFieldMap());
   },
 
   // ── Join the field — register this portal node ──
@@ -355,7 +359,15 @@ const COMMUNITY_FIELD = {
     ctx.textBaseline = 'middle';
     ctx.fillText(gcoh + '%', cx, cy);
 
-    requestAnimationFrame(() => this.renderFieldMap(canvasId));
+    cancelAnimationFrame(this.state._fieldMapAnimId);
+    this.state._fieldMapAnimId = requestAnimationFrame(() => this.renderFieldMap(canvasId));
+  },
+
+  stopFieldMap() {
+    if (this.state._fieldMapAnimId) {
+      cancelAnimationFrame(this.state._fieldMapAnimId);
+      this.state._fieldMapAnimId = null;
+    }
   },
 
   _archetypeColor(arch) {

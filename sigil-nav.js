@@ -88,6 +88,10 @@ function navigateToSigil(idx, skipBreathGate = false) {
   const target = SIGIL_TABS[idx];
   if (!target) return;
 
+  // Stop wheel animations when navigating away from wheel tab
+  if (typeof stopWheelAnimation === 'function') stopWheelAnimation();
+  if (typeof stopMiniWheelAnimation === 'function') stopMiniWheelAnimation();
+
   performSigilTransition(idx, sn);
 }
 
@@ -241,6 +245,14 @@ function updateSigilNavBreath(phase, phaseIdx, ctrl) {
   const hubGlyph = document.getElementById('snHubGlyph');
   if (hubGlyph && !sigilNav.isTransitioning) {
     hubGlyph.textContent = phase.glyph;
+  }
+}
+
+// ── Stop orbit animation ──
+function stopOrbitAnimation() {
+  if (sigilNav && sigilNav.orbitAnimId) {
+    cancelAnimationFrame(sigilNav.orbitAnimId);
+    sigilNav.orbitAnimId = null;
   }
 }
 
