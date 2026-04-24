@@ -403,6 +403,14 @@ class MirrorMode {
     }
   }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
   _updateHistory(result) {
     if (!this.historyEl) return;
     let html = '<div class="mirror-history-label">Recent reflections</div>';
@@ -411,9 +419,9 @@ class MirrorMode {
         ? `<span class="mhi-mataddr">#${r.matAddr} ${r.matAddrFrequency}Hz</span>`
         : '';
       html += `<div class="mirror-history-item">
-        <span class="mhi-glyph">${r.reflectionGlyph}</span>
-        <span class="mhi-archetype">${r.archetype}</span>
-        <span class="mhi-input">${r.inputLabel}</span>
+        <span class="mhi-glyph">${escapeHtml(r.reflectionGlyph)}</span>
+        <span class="mhi-archetype">${escapeHtml(r.archetype)}</span>
+        <span class="mhi-input">${escapeHtml(r.inputLabel)}</span>
         ${matAddrInfo}
       </div>`;
     }

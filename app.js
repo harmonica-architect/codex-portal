@@ -8,6 +8,14 @@ function toggleCollapse(id) {
   if (el) el.classList.toggle('open');
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // ── STATE ──
 let userSigil = [];
 let profile = null;
@@ -1139,7 +1147,7 @@ function updateCommunityStatus() {
   if (fieldIntentionEl && state.fieldIntention) {
     const fi = state.fieldIntention;
     const age = Math.round((Date.now() - fi.ts) / 60000);
-    fieldIntentionEl.innerHTML = `<span style="font-size:0.52rem;color:var(--muted);">Field intention:</span> "${fi.text}" <span style="font-size:0.48rem;color:var(--muted);opacity:0.6;">— ${fi.author} · ${age}m ago</span>`;
+    fieldIntentionEl.innerHTML = `<span style="font-size:0.52rem;color:var(--muted);">Field intention:</span> "${escapeHtml(fi.text)}" <span style="font-size:0.48rem;color:var(--muted);opacity:0.6;">— ${escapeHtml(fi.author)} · ${age}m ago</span>`;
   }
 }
 
@@ -1320,7 +1328,7 @@ function initDream() {
     const lastGlyph = profile?.journal?.length ? profile.journal[profile.journal.length - 1].glyph : '△';
     const interp = DREAM_INTERPRETATIONS.find(d => d.glyph === lastGlyph) || DREAM_INTERPRETATIONS[0];
     const el = document.getElementById('dreamInterpretation');
-    el.innerHTML = `<strong>${lastGlyph} — ${interp.interpretation}</strong><br><br>${interpretDreamText(text)}`;
+    el.innerHTML = `<strong>${escapeHtml(lastGlyph)} — ${escapeHtml(interp.interpretation)}</strong><br><br>${escapeHtml(interpretDreamText(text))}`;
     el.style.display = 'block';
   };
   updateCircadian();
