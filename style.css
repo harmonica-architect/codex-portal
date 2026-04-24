@@ -349,6 +349,23 @@ body {
 .user-dots { display: flex; gap: 0.25rem; margin-left: 0.3rem; }
 .user-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 
+/* ── Audio Mute Button ── */
+.audio-mute-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 3px 7px;
+  margin-left: 0.3rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.audio-mute-btn:hover { border-color: var(--gold); color: var(--gold); }
+.audio-mute-btn.muted { color: var(--gold); border-color: var(--gold); }
+
 /* ── Coherence Sparkline ── */
 #cohSparkline {
   border-radius: 3px;
