@@ -761,6 +761,14 @@ function enterPortal() {
   // ── Sigil Navigator (desktop orbit nav) ──
   initSigilNav();
 
+  // Breath ring dots on home tab — click to navigate
+  document.querySelectorAll('.br-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const idx = parseInt(dot.dataset.idx);
+      navigateToSigil(idx);
+    });
+  });
+
   // Sync sigil nav + coherence bus with dashboard state
   setInterval(() => {
     setSigilNavCoherence(coherenceLevel, globalCoherence);
@@ -799,6 +807,15 @@ function enterPortal() {
     arNodes.forEach((n, i) => {
       n.classList.toggle('ar-active', i === phaseIdx);
     });
+
+    // Breath ring (home tab) — highlight active dot by phase index
+    const brDots = document.querySelectorAll('.br-dot');
+    brDots.forEach((d, i) => {
+      d.classList.toggle('active', i === phaseIdx);
+    });
+    // Update breath ring hub with phase glyph
+    const brHub = document.getElementById('brHub');
+    if (brHub) brHub.textContent = phase.glyph;
 
     // Sigil nav dots — update breath-glow class
     const dots = document.querySelectorAll('.sn-dot');

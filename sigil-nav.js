@@ -67,7 +67,17 @@ function initSigilNav() {
         document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
         tabEl.classList.add('active');
       }
+      // Show sigil nav header unless on home tab (home uses breath ring)
+      const snWrap = document.getElementById('sigilNavWrap');
+      if (snWrap) snWrap.style.display = (pendingTab === 'home') ? 'none' : '';
       updateSigilHub(idx, false);
+    }
+  } else {
+    // First load — on index.html show breath ring (hide sigil nav header)
+    // On matrix.html show sigil nav header
+    const snWrap = document.getElementById('sigilNavWrap');
+    if (snWrap) {
+      snWrap.style.display = 'none'; // home tab uses breath ring
     }
   }
 }
@@ -127,6 +137,13 @@ function performSigilTransition(idx, sn) {
     tabEl.classList.add('active');
     sn.activeIndex = idx;
     sn.isTransitioning = false;
+
+    // Show/hide sigil nav header ring based on current tab
+    // (home tab uses the breath ring instead; other pages keep the sigil nav header)
+    const snWrap = document.getElementById('sigilNavWrap');
+    if (snWrap) {
+      snWrap.style.display = (target.tab === 'home') ? 'none' : '';
+    }
 
     // Clear breath lock
     sn.breathLocked = false;
