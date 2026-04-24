@@ -245,6 +245,55 @@ body {
 .guide-n { color: var(--gold); font-size: 0.5rem; }
 
 /* Breath phase indicator strip */
+.conn-box {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(7,7,15,0.88);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 0.7rem;
+  z-index: 10;
+  min-width: 90px;
+}
+.conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.5s;
+}
+.conn-dot.connected { background: #5aaa5a; box-shadow: 0 0 5px rgba(90,170,90,0.5); }
+.conn-dot.disconnected { background: #aa5a5a; }
+.conn-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+.conn-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 16px;
+  text-align: center;
+  line-height: 1;
+}
+.conn-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.conn-sync {
+  font-size: 0.58rem;
+  color: var(--axis);
+  margin-left: 0.2rem;
+}
+
 .breath-strip {
   grid-column: 1 / -1;
   display: flex;

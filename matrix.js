@@ -798,6 +798,65 @@ function setupButtons() {
   });
 }
 
+/* ── WEBSOCKET — CONNECTION BOX ── */
+var matrixWs = null;
+var matrixWsConnected = false;
+var matrixTotalUsers = 0;
+var matrixInSyncCount = 0;
+
+function connectMatrixWS() {
+  if (matrixWs && matrixWs.readyState === WebSocket.OPEN) return;
+  try {
+    matrixWs = new WebSocket('wss://codex-portal.onrender.com');
+    matrixWs.onopen = function() {
+      matrixWsConnected = true;
+      updateMatrixConnBox();
+    };
+    matrixWs.onmessage = function(evt) {
+      try {
+        var msg = JSON.parse(evt.data);
+        if (msg.type === 'field_state') {
+          matrixTotalUsers = msg.userCount || 0;
+          matrixInSyncCount = msg.inSyncCount || 0;
+          updateMatrixConnBox();
+        }
+      } catch (e) { }
+    };
+    matrixWs.onclose = function() {
+      matrixWsConnected = false;
+      updateMatrixConnBox();
+      setTimeout(connectMatrixWS, 3000);
+    };
+    matrixWs.onerror = function() {
+      matrixWsConnected = false;
+      updateMatrixConnBox();
+    };
+  } catch (e) {
+    setTimeout(connectMatrixWS, 3000);
+  }
+}
+
+function updateMatrixConnBox() {
+  var dot = document.getElementById('matrixConnDot');
+  var count = document.getElementById('matrixConnCount');
+  var sync = document.getElementById('matrixConnSync');
+  if (!dot || !count) return;
+
+  if (matrixWsConnected && matrixTotalUsers > 0) {
+    dot.className = 'conn-dot connected';
+    count.textContent = matrixTotalUsers;
+    sync.textContent = matrixInSyncCount > 0 ? '· ' + matrixInSyncCount + ' sync' : '';
+  } else if (matrixWsConnected) {
+    dot.className = 'conn-dot connected';
+    count.textContent = '1';
+    sync.textContent = '';
+  } else {
+    dot.className = 'conn-dot disconnected';
+    count.textContent = '—';
+    sync.textContent = '';
+  }
+}
+
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', function() {
   buildMatrix();
@@ -809,5 +868,6 @@ document.addEventListener('DOMContentLoaded', function() {
   updateIntensityPanel();
   updatePreview();
   setTimeout(revealWave, 250);
+  connectMatrixWS();
   console.log('\u25C7 Harmonic Glyph Matrix v3 \u2014 Breath-Guided loaded');
 });
