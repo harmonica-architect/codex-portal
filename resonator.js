@@ -46,11 +46,11 @@ let canvasSize = 320;
 function resizeCanvases() {
   const wrap = document.getElementById('wheelWrap');
   const rect = wrap ? wrap.getBoundingClientRect() : null; const s = rect ? Math.min(rect.width, rect.height) : 320;
-  canvasSize = canvas.width / dpr;
   canvas.width = s * dpr;
   canvas.height = s * dpr;
   canvas.style.width = s + 'px';
   canvas.style.height = s + 'px';
+  canvasSize = s; // set AFTER dimensions so canvasSize always equals display px
   waveCanvas.width = waveCanvas.offsetWidth * dpr;
   waveCanvas.height = 18 * dpr;
 }
@@ -58,8 +58,8 @@ resizeCanvases();
 window.addEventListener('resize', resizeCanvases);
 
 function dims() {
-  // canvas.width is buffer px; divide by dpr to get display px for correct drawing coords
-  const s = canvas.width / dpr;
+  // canvasSize = display px (set after canvas.width assignment in resizeCanvases)
+  const s = canvasSize;
   return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 }
 ;
 }
