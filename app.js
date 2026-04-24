@@ -719,6 +719,34 @@ function enterPortal() {
   // Init sigil navigator
   initSigilNav();
 
+  // ── Spiral Log — visual journey memory ──
+  SPIRAL_LOG.mount('spiralLogCanvas');
+  // Sync spiral log with coherence bus every 2 seconds
+  setInterval(() => { SPIRAL_LOG.syncFromBus(); }, 2000);
+
+  // ── Community Resonance Field ──
+  COMMUNITY_FIELD.init().then(() => {
+    // Render field map
+    if (document.getElementById('fieldMapCanvas')) {
+      COMMUNITY_FIELD.renderFieldMap('fieldMapCanvas');
+    }
+    // Update community status UI
+    updateCommunityStatus();
+  });
+  COMMUNITY_FIELD.on('fieldUpdate', updateCommunityStatus);
+  COMMUNITY_FIELD.on('nodesChanged', updateCommunityStatus);
+
+  // Community intention submit
+  document.getElementById('csIntentionBtn')?.addEventListener('click', () => {
+    const input = document.getElementById('csIntentionInput');
+    if (!input?.value.trim()) return;
+    COMMUNITY_FIELD.setFieldIntention(input.value.trim());
+    input.value = '';
+    COMMUNITY_FIELD.state.intention = input.value.trim();
+    COHERENCE_BUS?.logInteraction('fieldIntention', { text: input.value.trim() });
+    updateCommunityStatus();
+  });
+
   // ── Glyph Linker ──
   initGlyphLinker();
 
@@ -901,6 +929,41 @@ function saveProfile() {
 }
 
 // ── JOURNEY / PHASE-LOG DISPLAY ──
+function updateCommunityStatus() {
+  if (typeof COMMUNITY_FIELD === 'undefined') return;
+  const state = COMMUNITY_FIELD.getState();
+  const dot = document.getElementById('csDot');
+  const statusText = document.getElementById('csStatusText');
+  const nodesList = document.getElementById('csNodesList');
+  const fieldIntentionEl = document.getElementById('csFieldIntention');
+
+  if (dot) {
+    dot.className = state.isOnline ? 'cs-dot online' : 'cs-dot offline';
+  }
+  if (statusText) {
+    statusText.textContent = state.isOnline
+      ? `${state.nodes.length} node${state.nodes.length !== 1 ? 's' : ''} online`
+      : 'Offline';
+  }
+  if (nodesList) {
+    const online = state.nodes.filter(n => n.online);
+    if (online.length) {
+      nodesList.innerHTML = online.slice(0, 6).map(n => {
+        const color = COMMUNITY_FIELD._archetypeColor(n.archetype);
+        return `<span class="cs-node-badge" style="border-color:${color}40;color:${color};">${n.sigil} <span style="opacity:0.5">${n.coh}%</span></span>`;
+      }).join('');
+    } else {
+      nodesList.innerHTML = '<span style="font-size:0.52rem;color:var(--muted);opacity:0.5;">No nodes online. Breathe to join.</span>';
+    }
+  }
+  if (fieldIntentionEl && state.fieldIntention) {
+    const fi = state.fieldIntention;
+    const age = Math.round((Date.now() - fi.ts) / 60000);
+    fieldIntentionEl.innerHTML = `<span style="font-size:0.52rem;color:var(--muted);">Field intention:</span> "${fi.text}" <span style="font-size:0.48rem;color:var(--muted);opacity:0.6;">— ${fi.author} · ${age}m ago</span>`;
+  }
+}
+
+// ── JOURNEY / PHASE-LOG DISPLAY ──
 function refreshJourneyDisplay() {
   if (typeof COHERENCE_BUS === 'undefined') return;
   const j = COHERENCE_BUS.getJourney();
@@ -912,7 +975,6 @@ function refreshJourneyDisplay() {
   if (jie) jie.textContent = j.interactions;
   if (jace) jace.textContent = j.avgCoherence + '%';
   if (jabb) {
-    // Build archetype bar
     const total = Object.values(j.archetypes).reduce((a, b) => a + b, 0) || 1;
     const archColors = {
       Seed: '#e8c86a', Bridge: '#b8a0d0', Axis: '#c8d0e0',

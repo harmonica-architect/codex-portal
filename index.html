@@ -166,6 +166,30 @@
         <div class="journey-archetype-bar" id="journeyArchetypeBar"></div>
       </div>
 
+      <!-- Spiral Log Canvas — visual journey map -->
+      <div class="spiral-log-section" id="spiralLogSection">
+        <div class="sls-label">Spiral Memory Map</div>
+        <canvas class="spiral-log-canvas" id="spiralLogCanvas" width="320" height="220"></canvas>
+      </div>
+
+      <!-- Community Resonance Section -->
+      <div class="community-section" id="communitySection">
+        <div class="cs-label">
+          <span>Community Resonance Field</span>
+          <span class="cs-status" id="csStatus">
+            <span class="cs-dot offline" id="csDot"></span>
+            <span id="csStatusText">Offline</span>
+          </span>
+        </div>
+        <canvas class="field-map-canvas" id="fieldMapCanvas" width="320" height="180"></canvas>
+        <div class="cs-intention-row">
+          <input class="cs-intention-input" id="csIntentionInput" placeholder="Set a field intention…" maxlength="120">
+          <button class="cs-intention-btn" id="csIntentionBtn">→</button>
+        </div>
+        <div class="cs-nodes-list" id="csNodesList"></div>
+        <div class="cs-field-intention" id="csFieldIntention"></div>
+      </div>
+
       <!-- Quick-nav cards -->
       <div class="dash-nav">
         <a class="dash-card" href="#" onclick="navTo('wheel');return false;">
@@ -477,6 +501,8 @@
 <script src="breath-controller.js"></script>
 <script src="coherence-bus.js"></script>
 <script src="sigil-nav.js"></script>
+<script src="spiral-log.js"></script>
+<script src="community-resonance.js"></script>
 <script src="breath-glyph-linker.js"></script>
 <script src="mirror-mode.js"></script>
 <script src="app.js?v=4"></script>
