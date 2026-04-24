@@ -40,7 +40,7 @@ const COMMUNITY_FIELD = {
     communityBreaths: 0, // Total breaths across all nodes
     lastWrite: 0,         // Last coherence write (for rate limiting)
     writeCooldown: 300000, // 5 minutes in ms
-    _fieldMapAnimId: null  // RAF animation tracker for renderFieldMap
+    _fieldMapAnimId: null  // RAF animation tracker
   },
 
   // ── Initialize community field (read-only by default) ──
@@ -55,9 +55,6 @@ const COMMUNITY_FIELD = {
 
     // Auto-write coherence when coherence is high (>70) — rate-limited
     this._setupAutoWrite();
-
-    // Cleanup RAF loops on page unload
-    window.addEventListener('beforeunload', () => this.stopFieldMap());
   },
 
   // ── Join the field — register this portal node ──
@@ -252,6 +249,12 @@ const COMMUNITY_FIELD = {
   renderFieldMap(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+
+    // Cancel any prior RAF chain
+    if (this.state._fieldMapAnimId) {
+      cancelAnimationFrame(this.state._fieldMapAnimId);
+      this.state._fieldMapAnimId = null;
+    }
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -359,15 +362,7 @@ const COMMUNITY_FIELD = {
     ctx.textBaseline = 'middle';
     ctx.fillText(gcoh + '%', cx, cy);
 
-    cancelAnimationFrame(this.state._fieldMapAnimId);
     this.state._fieldMapAnimId = requestAnimationFrame(() => this.renderFieldMap(canvasId));
-  },
-
-  stopFieldMap() {
-    if (this.state._fieldMapAnimId) {
-      cancelAnimationFrame(this.state._fieldMapAnimId);
-      this.state._fieldMapAnimId = null;
-    }
   },
 
   _archetypeColor(arch) {

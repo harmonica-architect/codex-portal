@@ -46,6 +46,10 @@ function initSigilNav() {
     breathCtrl.onPhaseChange((phase, phaseIdx, ctrl) => {
       updateSigilNavBreath(phase, phaseIdx, ctrl);
     });
+    // Cascade animation on full breath cycle (every 24 breaths)
+    breathCtrl.onCascade((breathCount, ctrl) => {
+      triggerBreathCascade();
+    });
   }
 
   // Coherence-aware orbit animation
@@ -95,8 +99,20 @@ function navigateToSigil(idx, skipBreathGate = false) {
   performSigilTransition(idx, sn);
 }
 
+// ── ANIMATION CLEANUP ──
+function stopOrbitAnimation() {
+  if (sigilNav.orbitAnimId) {
+    cancelAnimationFrame(sigilNav.orbitAnimId);
+    sigilNav.orbitAnimId = null;
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  stopOrbitAnimation();
+});
+
 function performSigilTransition(idx, sn) {
-  const target = SIGIL_TABS[idx];
+  stopOrbitAnimation();  // cancel orbit RAF before tab switch
   sn.isTransitioning = true;
 
   // Play sigil tone
@@ -278,10 +294,33 @@ function startOrbitAnimation() {
   animate();
 }
 
+// ── Cascade animation on full breath cycle ──
+function triggerBreathCascade() {
+  const dots = document.querySelectorAll('.br-dot');
+  if (!dots || dots.length === 0) return;
+  dots.forEach((dot, i) => {
+    setTimeout(() => {
+      dot.classList.add('cascade');
+      setTimeout(() => dot.classList.remove('cascade'), 600);
+    }, i * 60);
+  });
+}
+
 // ── Set coherence levels ──
 function setSigilNavCoherence(local, global) {
   sigilNav.coherenceLevel = local || 0;
   sigilNav.globalCoherence = global || 0;
+
+  // Update glow intensity CSS vars on sigil-nav-wrap
+  const snWrap = document.querySelector('.sigil-nav-wrap');
+  if (snWrap) {
+    const cohAvg = (sigilNav.coherenceLevel + sigilNav.globalCoherence) / 2;
+    const glowBase = 0.15;
+    const glowBoost = (cohAvg / 100) * 0.55; // 0.15 → 0.70
+    const glowSpread = 4 + (cohAvg / 100) * 16; // 4px → 20px
+    snWrap.style.setProperty('--sigil-glow-opacity', (glowBase + glowBoost).toFixed(3));
+    snWrap.style.setProperty('--sigil-glow-spread', glowSpread.toFixed(1) + 'px');
+  }
 }
 
 // ── Public navigation helpers ──

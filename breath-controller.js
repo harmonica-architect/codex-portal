@@ -87,6 +87,10 @@ class BreathController {
     this.listeners = [];
     this.audioCtx = null;
     this.element = null; // bound DOM element
+    this.breathCount = 0; // increments each _tick — full cycle every 24
+
+    // Custom event for cascade animation (full cycle = 24 breaths = 3 ring rotations)
+    this.cascadeListeners = [];
 
     // Bind
     this._tick = this._tick.bind(this);
@@ -120,6 +124,12 @@ class BreathController {
   _tick() {
     const p = this.phases[this.currentPhase];
 
+    // Count breaths and fire cascade on full cycle (every 24 = 3 rotations × 8 phases)
+    this.breathCount++;
+    if (this.breathCount % 24 === 0 && this.breathCount > 0) {
+      this._fireCascade();
+    }
+
     // Emit to all listeners
     this.listeners.forEach(fn => {
       try { fn(p, this.currentPhase, this); } catch (e) { }
@@ -132,6 +142,16 @@ class BreathController {
     // Schedule next
     clearTimeout(this.timer);
     this.timer = setTimeout(this._tick, next.duration);
+  }
+
+  // ── Fire cascade event every 24 breaths (3 full ring rotations) ──
+  onCascade(fn) {
+    this.cascadeListeners.push(fn);
+    return () => { this.cascadeListeners = this.cascadeListeners.filter(f => f !== fn); };
+  }
+
+  _fireCascade() {
+    this.cascadeListeners.forEach(fn => { try { fn(this.breathCount, this); } catch(e) { } });
   }
 
   // ── Public API ──
