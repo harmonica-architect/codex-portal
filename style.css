@@ -397,6 +397,52 @@ body {
   margin-left: 0.2rem;
 }
 
+/* ── 120-CELL TOGGLE ── */
+.toggle-120-wrap {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  z-index: 20;
+}
+.toggle-120 {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(7,7,15,0.88);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  transition: border-color 0.3s;
+}
+.toggle-120:hover {
+  border-color: var(--axis);
+}
+.t120-opt {
+  color: var(--muted);
+  padding: 0 0.4rem;
+  transition: color 0.3s;
+  line-height: 1;
+}
+.t120-opt.active {
+  color: var(--gold);
+}
+.t120-pill {
+  width: 18px;
+  height: 6px;
+  background: rgba(232,200,106,0.2);
+  border-radius: 3px;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toggle-120.show-120 .t120-pill {
+  background: rgba(232,200,106,0.55);
+  width: 22px;
+  margin-left: -2px;
+}
+
 /* ── WHEEL SECTION ── */
 .wheel-section { position: relative; width: 340px; height: 340px; flex-shrink: 0; margin-bottom: 0.5rem; }
 canvas { position: absolute; top: 0; left: 0; }

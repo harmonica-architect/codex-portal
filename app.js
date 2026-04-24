@@ -18,6 +18,7 @@ let nightMode = false;
 let glowP = 0, glowD = 1;
 let animId = null;
 let wheel24Rot = 0; // 24-cell rotation angle
+let isShowing120Cell = localStorage.getItem('wheelGeometry') === '120'; // 120-cell toggle
 let coherenceLevel = 0;
 let virtualUsers = 0;
 let selectedJournalGlyph = '';
@@ -262,6 +263,13 @@ function _wheelPosTo24Vert(wheelPos) {
 function drawWheel() {
   ctx.clearRect(0, 0, WHEEL_CONFIG.canvasSize, WHEEL_CONFIG.canvasSize);
   const night = nightMode;
+
+  // ── 120-CELL GEOMETRY PROJECTION (rendered on top of 24-cell) ──
+  if (isShowing120Cell && typeof壱百弐拾 !== 'undefined') {
+    const scale120 = or * 0.95;
+    const breathPhase = isRunning ? (Date.now() / 1000) : 0;
+    壱百弐拾.draw(ctx, cx, cy, scale120, breathPhase);
+  }
 
   // ── 24-CELL GEOMETRY WIREFRAME (rendered first, as background) ──
   const activeWheelPos = (isRunning && PHASES[currentPhase]) ? PHASES[currentPhase].wheelPos : -1;
@@ -1421,6 +1429,27 @@ document.getElementById('btnStart').onclick = startCycle;
 document.getElementById('btnRepeat').onclick = repeatCycle;
 document.getElementById('btnNight').onclick = applyNight;
 document.getElementById('axisMessage').onclick = () => document.getElementById('axisMessage').classList.remove('visible');
+
+// ── 24/120-CELL TOGGLE ──
+function applyToggle120(show120) {
+  isShowing120Cell = show120;
+  localStorage.setItem('wheelGeometry', show120 ? '120' : '24');
+  const wrap = document.getElementById('toggle120');
+  if (show120) {
+    wrap.classList.add('show-120');
+    wrap.querySelectorAll('.t120-opt').forEach(el => {
+      el.classList.toggle('active', el.dataset.val === '120');
+    });
+  } else {
+    wrap.classList.remove('show-120');
+    wrap.querySelectorAll('.t120-opt').forEach(el => {
+      el.classList.toggle('active', el.dataset.val === '24');
+    });
+  }
+}
+// Apply saved preference on load
+if (isShowing120Cell) applyToggle120(true);
+document.getElementById('toggle120').onclick = () => applyToggle120(!isShowing120Cell);
 
 // ── AUTO-LOGIN ──
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);

@@ -241,6 +241,14 @@
     <!-- THE WHEEL — primary focus -->
     <div class="wheel-section">
       <canvas id="wheel" width="340" height="340"></canvas>
+      <!-- 24/120 cell toggle -->
+      <div class="toggle-120-wrap">
+        <div class="toggle-120" id="toggle120" title="Toggle 24-Cell / 120-Cell geometry">
+          <span class="t120-opt" data-val="24">24</span>
+          <div class="t120-pill" id="toggle120Pill"></div>
+          <span class="t120-opt" data-val="120">120</span>
+        </div>
+      </div>
       <!-- Live connection box -->
       <div class="conn-box" id="connBox">
         <div class="conn-dot" id="connDot"></div>
@@ -559,6 +567,7 @@
 <script src="matrix-resonance.js"></script>
 <script src="mirror-mode.js"></script>
 <script src="twentyfour-cell.js"></script>
+<script src="onehundred20-cell.js"></script>
 <script src="app.js?v=5"></script>
 </body>
 </html>
