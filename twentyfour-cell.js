@@ -150,3 +150,8 @@ const二十四 = (() => {
     }
   };
 })();
+
+// Expose draw method for use by other modules (e.g. Mirror mode)
+window.draw24CellProjection = function(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos) {
+ 二十四.draw(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos);
+};

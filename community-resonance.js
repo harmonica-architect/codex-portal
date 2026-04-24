@@ -340,6 +340,22 @@ const COMMUNITY_FIELD = {
       ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
 
+      // Avatar circle — first char of sigil rendered as glyph
+      const avatar = (node.sigil || '?').charAt(0);
+      const ax = x - size - 6;
+      const ay = y;
+      const ar = 8;
+      const avatarColor = this._archetypeColor(node.archetype) + 'cc';
+      ctx.fillStyle = avatarColor;
+      ctx.beginPath();
+      ctx.arc(ax, ay, ar, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '0.5rem serif';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(avatar, ax, ay);
+
       // Label
       ctx.font = '0.48rem serif';
       ctx.fillStyle = color + 'bb';
