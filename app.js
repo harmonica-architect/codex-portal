@@ -17,6 +17,7 @@ let cycleCount = 0;
 let nightMode = false;
 let glowP = 0, glowD = 1;
 let animId = null;
+let wheel24Rot = 0; // 24-cell rotation angle
 let coherenceLevel = 0;
 let virtualUsers = 0;
 let selectedJournalGlyph = '';
@@ -201,9 +202,26 @@ function pAngle(i) {
   return (i / WHEEL_CONFIG.segments) * Math.PI * 2 - Math.PI / 2;
 }
 
+// Map wheelPos (0-23) → 24-cell vertex index (0-23)
+// The 24-cell's 24 vertices map directly to the 24 wheel positions.
+// Active vertex highlights when the breath phase's wheelPos is at that segment.
+function _wheelPosTo24Vert(wheelPos) {
+  return (wheelPos >= 0 && wheelPos < 24) ? wheelPos : -1;
+}
+
 function drawWheel() {
   ctx.clearRect(0, 0, WHEEL_CONFIG.canvasSize, WHEEL_CONFIG.canvasSize);
   const night = nightMode;
+
+  // ── 24-CELL GEOMETRY WIREFRAME (rendered first, as background) ──
+  const activeWheelPos = (isRunning && PHASES[currentPhase]) ? PHASES[currentPhase].wheelPos : -1;
+  const night24 = night ? 0.6 : 0.4; // night mode slightly brighter
+  if (typeof二十四 !== 'undefined') {
+    const scale24 = or * 0.92;
+    const breathPhase = isRunning ? (Date.now() / 1000) : 0;
+    const activeVert = _wheelPosTo24Vert(activeWheelPos);
+    二十四.draw(ctx, cx, cy, scale24, wheel24Rot * 0.4, wheel24Rot * 0.7, wheel24Rot * 0.25, breathPhase, activeVert);
+  }
 
   // Outer glow
   const g = ctx.createRadialGradient(cx, cy, or - 25, cx, cy, or + 35);
@@ -322,6 +340,8 @@ function animateWheel() {
   glowP += WHEEL_CONFIG.glowSpeed * glowD;
   if (glowP >= 1) { glowP = 1; glowD = -1; }
   if (glowP <= 0) { glowP = 0; glowD = 1; }
+  // Advance 24-cell rotation continuously
+  wheel24Rot += ROTATION_PER_FRAME * 0.6;
   drawWheel();
   animId = requestAnimationFrame(animateWheel);
 }
