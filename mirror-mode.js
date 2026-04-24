@@ -368,6 +368,11 @@ class MirrorMode {
     if (this.glyphEl) {
       this.glyphEl.textContent = result.reflectionGlyph;
       this.glyphEl.className = 'mirror-glyph-display';
+      // PRIORITY 3: Pulse gold when resonance is found at this matAddr
+      if (result.matAddrItemCount !== null && result.matAddrItemCount > 0) {
+        this.glyphEl.classList.add('pulse-gold');
+        setTimeout(() => this.glyphEl?.classList.remove('pulse-gold'), 1600);
+      }
     }
 
     if (this.strengthEl) {
