@@ -4,7 +4,7 @@
 // as the user breathes through the 24-cell
 // ══════════════════════════════════════════════
 
-const PRIME_POSITIONS = [2, 3, 5, 7, 11, 13, 17, 19]; // primes mod 24
+const AXIS_PRIME_POS = [2, 3, 5, 7, 11, 13, 17, 19]; // primes mod 24
 const PRIME_NAMES    = ['2', '3', '5', '7', '11', '13', '17', '19'];
 
 // Breath position maps to a 24-cell vertex (0–23)
@@ -13,11 +13,11 @@ function getCurrentBreathPos(breathCount) {
 }
 
 function isPrimePosition(pos) {
-  return PRIME_POSITIONS.includes(pos);
+  return AXIS_PRIME_POS.includes(pos);
 }
 
 function getPrimeIndex(pos) {
-  return PRIME_POSITIONS.indexOf(pos);
+  return AXIS_PRIME_POS.indexOf(pos);
 }
 
 // Draw the prime axis tracker spiral visualization
@@ -64,7 +64,7 @@ function drawPrimeAxisTracker(ctx, x, y, size, currentPos, coherenceLevel) {
   ctx.strokeStyle = 'rgba(232, 200, 106, 0.45)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  PRIME_POSITIONS.forEach((pos, i) => {
+  AXIS_PRIME_POS.forEach((pos, i) => {
     const angle = (pos / 24) * Math.PI * 2 - Math.PI / 2;
     const px = centerX + Math.cos(angle) * ringR;
     const py = centerY + Math.sin(angle) * ringR;
