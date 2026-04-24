@@ -177,7 +177,7 @@ const DEFAULT_SEQUENCE = BREATH_GLYPH_SEQUENCES['△'];
 // The 8 prime positions on the icositetragon (V = prime indices, positions 0-23)
 const PRIME_POSITIONS = [0, 4, 6, 10, 12, 16, 18, 22];
 // Corresponding glyphs at prime positions (matches config.js primeLabels)
-const PRIME_GLYPHS = ['△', '◇', '◁△▷', '◇', '△', '◇', '◇', '⬟'];
+const PRIME_GLYPHS = ['△', '◇', '▽', '○', '◎', '◇', '▽', '△'];
 
 class BreathGlyphLinker {
   constructor() {
