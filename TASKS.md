@@ -12,25 +12,28 @@
     {
       "id": "P1-coherence-sparkline",
       "label": "Coherence Trend Sparkline",
-      "status": "IN_PROGRESS",
-      "subagent": "55a8fe53-bdf3-437e-bafb-a5876822b204",
+      "status": "DONE",
+      "commit": "063c265",
       "branch": "feat/coherence-sparkline",
+      "note": "80×24px canvas, quadratic bezier line, up/down arrow indicator, updates on every tick.",
       "priority": 1
     },
     {
       "id": "P2-community-write",
       "label": "Community Field Write Path",
-      "status": "IN_PROGRESS",
-      "subagent": "f2da06cd-fbe6-4129-9f11-86d5ccf43cde",
+      "status": "DONE",
+      "commit": "c9c8446",
       "branch": "feat/community-write",
+      "note": "Token input in UI, rate-limited auto-write when coherence >70, field update indicator.",
       "priority": 2
     },
     {
       "id": "P3-mirror-resonance",
       "label": "Mirror Mode → Matrix Resonance",
-      "status": "IN_PROGRESS",
-      "subagent": "d3635390-9a5f-4e15-9b1f-5b068521e85d",
+      "status": "DONE",
+      "commit": "c818b2a",
       "branch": "feat/mirror-resonance",
+      "note": "Gold pulse animation added when resonance found. Pipeline was already wired (text→freq→V/F→matAddr). Pre-existing test failures (10/34) are unrelated to this change — wheel/dream/journal/profile tabs.",
       "priority": 3
     }
   ],
@@ -43,8 +46,11 @@
     },
     {
       "id": "P5-120cell",
-      "label": "120-Cell Geometry in Wheel Tab",
-      "description": "The 24-cell (current) is the breath-phase polytope. The 120-cell is the dodecahedral recursive depth — add it as a secondary layer or toggle. More complex than 24-cell (120 cells, 600 vertices in 4D).",
+      "label": "120-Cell Geometry Toggle in Wheel Tab",
+      "status": "DONE",
+      "commit": "6672c91",
+      "branch": "feat/120cell",
+      "note": "Pill toggle [24·120] in wheel section. Gold dots, 1/5 rotation speed, depth-shaded. Shared canvas area, localStorage preference.",
       "priority": 5
     },
     {
