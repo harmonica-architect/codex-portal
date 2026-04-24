@@ -1,0 +1,63 @@
+/* PRIORITY 3: matAddr Geometric Resonance Panel */
+.mataddr-resonance-panel {
+  margin-top: 1rem;
+  background: var(--surface2, #181830);
+  border: 1px solid var(--border, #252545);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: none; /* shown only when Mirror Mode is active */
+}
+.mirror-active .mataddr-resonance-panel {
+  display: block;
+}
+.mataddr-panel-header {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent, #9090ff);
+  margin-bottom: 0.6rem;
+}
+.mataddr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--border, #252545);
+}
+.mataddr-row:last-of-type { border-bottom: none; }
+.mataddr-label {
+  font-size: 11px;
+  color: var(--text-dim, #505070);
+}
+.mataddr-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #c0c0e0);
+  font-family: monospace;
+}
+.mataddr-resonance-info {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border, #252545);
+  font-size: 11px;
+}
+.mataddr-res-empty {
+  color: var(--text-dim, #505070);
+  font-style: italic;
+}
+.mataddr-label-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--codex-color, #40d0c8);
+}
+.mataddr-domains {
+  font-size: 10px;
+  color: var(--text-dim, #505070);
+  margin-top: 0.2rem;
+}
+.mataddr-domain-codex { color: #40d0c8; }
+.mataddr-domain-protein { color: #00e5a0; }
+.mataddr-domain-music { color: #4d9fff; }
+.mataddr-domain-finance { color: #ff8c42; }
+.mataddr-domain-anthro { color: #c070ff; }

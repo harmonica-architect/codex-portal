@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════
-// MIRROR MODE — Fractal Reflection Layer
-// User inputs are reflected as harmonic responses
-// using quasi-prime symbolic mapping.
+// MIRROR MODE — Fractal Reflection Layer (Priority 3)
+// Now wired to matAddr geometric resonance:
+// text → frequency → V/F → matAddr → resonance lookup
 //
 // The icositetragon (24-gon) is the mirror surface.
 // Numbers are wrapped to 0-23 (their position on the wheel).
@@ -17,7 +17,7 @@
 
 // ── Quasi-prime positions on the icositetragon ──
 // These are the positions that are NOT prime but are adjacent to primes
-// on the 24-gon wheel. They are "open" positions that resonate broadly.
+// on the 24-gon wheel. They "open" positions that resonate broadly.
 const QUASI_PRIMES = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
 // Prime positions: [0, 4, 6, 10, 12, 16, 18, 22]
 
@@ -166,7 +166,6 @@ function findArchetypeZone(pos) {
   for (const zone of ARCHETYPE_ZONES) {
     if (zone.quasiRange.includes(pos)) return zone;
   }
-  // Default — use the nearest prime anchor
   const anchor = nearestPrime(pos);
   for (const zone of ARCHETYPE_ZONES) {
     if (zone.primeAnchor === anchor) return zone;
@@ -174,7 +173,7 @@ function findArchetypeZone(pos) {
   return ARCHETYPE_ZONES[0];
 }
 
-// ── Core mirror function ──
+// ── Core mirror function (extended with matAddr geometric resonance) ──
 function reflect(input, inputType = INPUT_TYPES.TEXT) {
   let wheelPos;
   let inputLabel;
@@ -198,7 +197,7 @@ function reflect(input, inputType = INPUT_TYPES.TEXT) {
       inputLabel = `breath "${input}"`;
       break;
     case INPUT_TYPES.FREQUENCY:
-      wheelPos = numToWheelPos(Math.round(input / 24)); // 432→18, 528→22, 639→26...
+      wheelPos = numToWheelPos(Math.round(input / 24));
       inputLabel = `${input}Hz`;
       break;
     case INPUT_TYPES.TEXT:
@@ -222,6 +221,25 @@ function reflect(input, inputType = INPUT_TYPES.TEXT) {
   const reflectionGlyph = isPrimeReflection ? zone.glyph :
     (isQP ? '◇' : zone.glyph);
 
+  // ── PRIORITY 3: Add matAddr geometric resonance ──
+  // Build resonance from Mirror Mode text → frequency → V/F → matAddr
+  let resonanceInfo = null;
+  if (typeof window.matrixResonance !== 'undefined') {
+    const res = window.matrixResonance.buildResonanceResult(input);
+    resonanceInfo = {
+      wheelPos: res.wheelPos,
+      frequency: res.frequency,
+      V: res.V,
+      F: res.F,
+      matAddr: res.matAddr,
+      resonanceLabel: res.resonanceLabel,
+      resonanceGlyph: res.resonanceGlyph,
+      resonanceCount: res.resonanceCount,
+      resonanceDomains: res.resonanceDomains,
+      resonanceItems: res.resonanceItems
+    };
+  }
+
   return {
     // Input analysis
     inputLabel: inputLabel,
@@ -232,7 +250,7 @@ function reflect(input, inputType = INPUT_TYPES.TEXT) {
     archetype: zone.archetype,
     reflectionGlyph: reflectionGlyph,
     glyph: zone.glyph,
-    strength: Math.round(strength * 100) / 100, // 0.0 - 1.0
+    strength: Math.round(strength * 100) / 100,
 
     // Resonance info
     primeAnchor: prime,
@@ -250,7 +268,18 @@ function reflect(input, inputType = INPUT_TYPES.TEXT) {
     mirrorSays: response,
 
     // Coherence contribution (stronger near primes)
-    coherenceBonus: Math.round(strength * 15)
+    coherenceBonus: Math.round(strength * 15),
+
+    // ── PRIORITY 3: matAddr geometric resonance ──
+    matAddr: resonanceInfo ? resonanceInfo.matAddr : null,
+    matAddrFrequency: resonanceInfo ? resonanceInfo.frequency : null,
+    matAddrV: resonanceInfo ? resonanceInfo.V : null,
+    matAddrF: resonanceInfo ? resonanceInfo.F : null,
+    matAddrWheelPos: resonanceInfo ? resonanceInfo.wheelPos : null,
+    matAddrLabel: resonanceInfo ? resonanceInfo.resonanceLabel : null,
+    matAddrDomains: resonanceInfo ? resonanceInfo.resonanceDomains : [],
+    matAddrItemCount: resonanceInfo ? resonanceInfo.resonanceCount : 0,
+    matAddrGlyph: resonanceInfo ? resonanceInfo.resonanceGlyph : null
   };
 }
 
@@ -258,22 +287,32 @@ function reflect(input, inputType = INPUT_TYPES.TEXT) {
 class MirrorMode {
   constructor() {
     this.isActive = false;
-    this.history = [];     // Array of reflection results
-    this.sessionDeph = 0;  // Cumulative depth of session
+    this.history = [];
+    this.sessionDeph = 0;
     this.inputEl = null;
     this.outputEl = null;
     this.glyphEl = null;
     this.strengthEl = null;
     this.historyEl = null;
+    // NEW: matAddr display elements
+    this.matAddrEl = null;
+    this.matAddrFreqEl = null;
+    this.matAddrVFEl = null;
+    this.matAddrResEl = null;
   }
 
   // ── Mount into DOM ──
-  mount(inputEl, outputEl, glyphEl, strengthEl, historyEl) {
+  mount(inputEl, outputEl, glyphEl, strengthEl, historyEl,
+        matAddrEl, matAddrFreqEl, matAddrVFEl, matAddrResEl) {
     this.inputEl = inputEl;
     this.outputEl = outputEl;
     this.glyphEl = glyphEl;
     this.strengthEl = strengthEl;
     this.historyEl = historyEl;
+    this.matAddrEl = matAddrEl;
+    this.matAddrFreqEl = matAddrFreqEl;
+    this.matAddrVFEl = matAddrVFEl;
+    this.matAddrResEl = matAddrResEl;
   }
 
   // ── Activate ──
@@ -311,6 +350,7 @@ class MirrorMode {
   }
 
   _updateDisplay(result) {
+    // Mirror Mode text response
     if (this.outputEl) {
       this.outputEl.innerHTML = `
         <div class="mirror-response">${result.mirrorSays}</div>
@@ -320,7 +360,6 @@ class MirrorMode {
           <span class="mirror-strength">${Math.round(result.strength * 100)}% resonance</span>
         </div>
       `;
-      // Animate
       this.outputEl.classList.remove('mirror-flip');
       void this.outputEl.offsetWidth;
       this.outputEl.classList.add('mirror-flip');
@@ -334,16 +373,43 @@ class MirrorMode {
     if (this.strengthEl) {
       this.strengthEl.textContent = `${Math.round(result.strength * 100)}%`;
     }
+
+    // ── PRIORITY 3: Update matAddr geometric resonance panel ──
+    if (this.matAddrEl && result.matAddr !== null) {
+      this.matAddrEl.textContent = result.matAddr;
+    }
+    if (this.matAddrFreqEl && result.matAddrFrequency !== null) {
+      this.matAddrFreqEl.textContent = `${result.matAddrFrequency} Hz`;
+    }
+    if (this.matAddrVFEl && result.matAddrV !== null) {
+      this.matAddrVFEl.textContent = `V=${result.matAddrV} F=${result.matAddrF}`;
+    }
+    if (this.matAddrResEl && result.matAddrLabel !== null) {
+      const domains = result.matAddrDomains ? result.matAddrDomains.join(', ') : '';
+      const count = result.matAddrItemCount !== null ? result.matAddrItemCount : 0;
+      const items = result.matAddrDomains && result.matAddrDomains.length > 0
+        ? `<div class="mataddr-resonance-items">${result.matAddrDomains.map(d => `<span class="mataddr-domain-${d}">${d} (${count})</span>`).join('')}</div>`
+        : '';
+      this.matAddrResEl.innerHTML = `
+        <div class="mataddr-label">${result.matAddrLabel}</div>
+        <div class="mataddr-domains">${domains}</div>
+        ${items}
+      `;
+    }
   }
 
   _updateHistory(result) {
     if (!this.historyEl) return;
     let html = '<div class="mirror-history-label">Recent reflections</div>';
     for (const r of this.history) {
+      const matAddrInfo = r.matAddr !== null
+        ? `<span class="mhi-mataddr">#${r.matAddr} ${r.matAddrFrequency}Hz</span>`
+        : '';
       html += `<div class="mirror-history-item">
         <span class="mhi-glyph">${r.reflectionGlyph}</span>
         <span class="mhi-archetype">${r.archetype}</span>
         <span class="mhi-input">${r.inputLabel}</span>
+        ${matAddrInfo}
       </div>`;
     }
     this.historyEl.innerHTML = html;

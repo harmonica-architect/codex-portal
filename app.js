@@ -897,8 +897,13 @@ function enterPortal() {
     const glyphEl = document.getElementById('mirrorGlyphDisplay');
     const strengthEl = document.getElementById('mirrorStrength');
     const historyEl = document.getElementById('mirrorHistoryList');
+    const matAddrEl = document.getElementById('mataddrPos');
+    const matAddrFreqEl = document.getElementById('mataddrFreq');
+    const matAddrVFEl = document.getElementById('mataddrVF');
+    const matAddrResEl = document.getElementById('mataddrResInfo');
 
-    mirrorMode.mount(inputEl, outputEl, glyphEl, strengthEl, historyEl);
+    mirrorMode.mount(inputEl, outputEl, glyphEl, strengthEl, historyEl,
+      matAddrEl, matAddrFreqEl, matAddrVFEl, matAddrResEl);
 
     // Submit on button click
     document.getElementById('mirrorSubmit').addEventListener('click', () => {
