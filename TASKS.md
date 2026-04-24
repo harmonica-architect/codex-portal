@@ -3,7 +3,7 @@
   "portal_url": "https://harmonica-architect.github.io/codex-portal/",
   "workspace": "C:\\Users\\c\\.openclaw\\workspace\\codex-portal",
   "commits": {
-    "latest": "56604cc",
+    "latest": "08cbada",
     "feat_24cell": "658c3fb",
     "feat_coherence": "abab659",
     "feat_breath_ring": "d498e56"
@@ -70,6 +70,27 @@
       "status": "DONE",
       "commit": "56604cc",
       "note": "--sigil-glow-opacity and --sigil-glow-spread CSS vars driven by coherence level"
+    },
+    {
+      "id": "P9-journal-peak-glow",
+      "label": "Journal Tab Peak Glow",
+      "status": "DONE",
+      "commit": "08cbada",
+      "note": "Journal drawer item flashes gold when auto-coherence logs a peak (coherence >80%)."
+    },
+    {
+      "id": "P11-night-mode-breath",
+      "label": "Night Mode Breath Ring",
+      "status": "DONE",
+      "commit": "08cbada",
+      "note": "Night mode sets --breath-ring-color to muted amber. Cascade animation has night variant."
+    },
+    {
+      "id": "P12-community-avatar",
+      "label": "Community Avatar Initials",
+      "status": "DONE",
+      "commit": "08cbada",
+      "note": "Each community node renders an avatar circle showing first char of sigil glyph."
     }
   ],
   "PENDING": [
@@ -84,19 +105,9 @@
       "description": "Add --sigil-glow-opacity CSS var driven by COHERENCE_BUS. Currently sigil nav pulse speed scales with coherence. Add glow-intensity scaling on the same var."
     },
     {
-      "id": "P9-journal-peak-glow",
-      "label": "Journal Tab Glows When Peak Logged",
-      "description": "When auto-coherence logs a ✦ peak entry, the journal tab in the drawer should briefly flash gold. Creates visual feedback loop."
-    },
-    {
       "id": "P10-community-avatar",
       "label": "Community Field User Avatar/Initials",
       "description": "The community coherence bar shows user count. Add initials/avatar display next to each user's contribution in the community panel. Use first chars of stored sigil glyphs."
-    },
-    {
-      "id": "P11-night-mode-breath",
-      "label": "Night Mode Breath Integration",
-      "description": "When night mode is active (dark amber tones), the breath ring should use muted amber instead of gold. The checkNight() function in app.js already exists — extend it to also set --breath-ring-color."
     },
     {
       "id": "P12-dream-glyph-progression",

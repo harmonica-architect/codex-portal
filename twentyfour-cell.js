@@ -1,4 +1,4 @@
-// 24-cell (icositetrachoron) for Codex Portal Wheel tab
+﻿// 24-cell (icositetrachoron) for Codex Portal Wheel tab
 // 4D vertices: all (i,j,±1,±1) where i≠j  →  24 vertices, 96 edges at √2
 // Stereographic projection from 4D → 3D → 2D canvas
 // The breath phase's wheelPos (0–23) maps to 4D vertex index
@@ -155,3 +155,4 @@ const二十四 = (() => {
 window.draw24CellProjection = function(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos) {
  二十四.draw(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos);
 };
+

@@ -95,6 +95,10 @@ function navigateToSigil(idx, skipBreathGate = false) {
   // Stop wheel animations when navigating away from wheel tab
   if (typeof stopWheelAnimation === 'function') stopWheelAnimation();
   if (typeof stopMiniWheelAnimation === 'function') stopMiniWheelAnimation();
+  // Stop mirror 24-cell RAF when leaving the Dream/Mirror tab
+  if (target.tab !== 'dream' && typeof stopMirror24CellRAF === 'function') {
+    stopMirror24CellRAF();
+  }
 
   performSigilTransition(idx, sn);
 }
