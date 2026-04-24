@@ -280,9 +280,75 @@
 
   </div>
 
-  <!-- ══ DREAM TAB ══ -->
+  <!-- ══ DREAM / MIRROR TAB ══ -->
   <div class="tab-content" id="tab-dream">
-    <div class="collapse-section open" id="dreamInputCollapse">
+
+    <!-- Mirror Mode Header -->
+    <div class="mirror-header" id="mirrorHeader">
+      <div class="mirror-title">◈ Fractal Reflection</div>
+      <div class="mirror-subtitle">Speak to the field. The icositetragon remembers.</div>
+    </div>
+
+    <!-- Breath Glyph Linker Row -->
+    <div class="glyph-linker-section" id="glyphLinkerSection">
+      <div class="gls-label">Activate a glyph breath sequence</div>
+      <div class="glyph-linker-row" id="glyphLinkerRow">
+        <button class="gls-btn" data-g="△">△</button>
+        <button class="gls-btn" data-g="◇">◇</button>
+        <button class="gls-btn" data-g="◁△▷">◁△▷</button>
+        <button class="gls-btn" data-g="⬟">⬟</button>
+        <button class="gls-btn" data-g="⊕">⊕</button>
+        <button class="gls-btn" data-g="◈">◈</button>
+      </div>
+      <div class="glyph-linker-status" id="glyphLinkerStatus">
+        <span class="glss-glyph" id="glssGlyph">◇</span>
+        <span class="glss-step" id="glssStep">Select a glyph to begin</span>
+        <span class="glss-pos" id="glssPos"></span>
+      </div>
+      <div class="glyph-linker-interpretation" id="glyphLinkerInterpretation"></div>
+      <button class="btn" id="btnStopGlyphLinker" style="display:none;margin-top:0.4rem;">⊘ Stop Sequence</button>
+    </div>
+
+    <!-- Mirror Input -->
+    <div class="mirror-input-section" id="mirrorInputSection">
+      <div class="mirror-prompt">What do you bring to the field?</div>
+      <div class="mirror-input-row">
+        <input type="text" class="mirror-input" id="mirrorInput" placeholder="Enter a word, breath, or frequency..." maxlength="60">
+        <button class="mirror-submit" id="mirrorSubmit">⟟</button>
+      </div>
+    </div>
+
+    <!-- Mirror Output -->
+    <div class="mirror-output-section" id="mirrorOutput">
+      <div class="mirror-reflection">
+        <div class="mirror-glyph-display" id="mirrorGlyphDisplay">◈</div>
+        <div class="mirror-archetype-label" id="mirrorArchetypeLabel">Star</div>
+      </div>
+      <div class="mirror-response-text" id="mirrorResponseText">
+        The field awaits your reflection.
+      </div>
+      <div class="mirror-meta-row" id="mirrorMetaRow">
+        <span class="mirror-strength" id="mirrorStrength">—</span>
+        <span class="mirror-archetype-badge" id="mirrorArchetypeBadge">△ Seed</span>
+      </div>
+    </div>
+
+    <!-- Reflection History -->
+    <div class="mirror-history-section" id="mirrorHistorySection">
+      <div class="mirror-history-label">Recent reflections</div>
+      <div id="mirrorHistoryList"></div>
+    </div>
+
+    <!-- Breath sequence output (from glyph linker) -->
+    <div class="breath-sequence-panel" id="breathSequencePanel" style="display:none;">
+      <div class="bsp-header">24-Step Breath Sequence</div>
+      <div class="bsp-glyph" id="bspGlyph">△</div>
+      <div class="bsp-progress-bar"><div class="bsp-progress-fill" id="bspProgressFill"></div></div>
+      <div class="bsp-step-text" id="bspStepText"></div>
+    </div>
+
+    <!-- Legacy Dream Record — collapsible -->
+    <div class="collapse-section" id="dreamInputCollapse">
       <div class="collapse-header" onclick="toggleCollapse('dreamInputCollapse')">
         <span class="collapse-title">◭ Dream Record</span>
         <span class="collapse-icon">▼</span>
@@ -297,6 +363,7 @@
         <div class="dream-interpretation" id="dreamInterpretation" style="display:none"></div>
       </div>
     </div>
+
   </div>
 
   <!-- ══ JOURNAL TAB ══ -->
@@ -358,6 +425,8 @@
 <script src="state.js"></script>
 <script src="breath-controller.js"></script>
 <script src="sigil-nav.js"></script>
-<script src="app.js?v=3"></script>
+<script src="breath-glyph-linker.js"></script>
+<script src="mirror-mode.js"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

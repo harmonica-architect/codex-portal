@@ -719,6 +719,12 @@ function enterPortal() {
   // Init sigil navigator
   initSigilNav();
 
+  // ── Glyph Linker ──
+  initGlyphLinker();
+
+  // ── Mirror Mode ──
+  initMirrorMode();
+
   // Sync sigil nav with dashboard coherence
   setInterval(() => {
     setSigilNavCoherence(coherenceLevel, globalCoherence);
@@ -733,6 +739,95 @@ function enterPortal() {
 
   initGlyphRing();
   initDashboard();
+
+  // ── BREATH GLYPH LINKER ──
+  function initGlyphLinker() {
+    const glyphBtns = document.querySelectorAll('.gls-btn');
+    glyphBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const g = btn.dataset.g;
+        glyphBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        glyphLinker.activate(g);
+        document.getElementById('btnStopGlyphLinker').style.display = 'inline-block';
+      });
+    });
+
+    document.getElementById('btnStopGlyphLinker').addEventListener('click', () => {
+      glyphLinker.deactivate();
+      glyphBtns.forEach(b => b.classList.remove('active'));
+      document.getElementById('btnStopGlyphLinker').style.display = 'none';
+      document.getElementById('glssGlyph').textContent = '◇';
+      document.getElementById('glssStep').textContent = 'Sequence stopped';
+      document.getElementById('glssPos').textContent = '';
+      document.getElementById('glyphLinkerInterpretation').textContent = '';
+      document.getElementById('glyphLinkerInterpretation').classList.remove('visible');
+    });
+
+    // Listen to glyph linker steps
+    glyphLinker.onStep((payload) => {
+      if (!payload.isActive) return;
+      // Update status display
+      document.getElementById('glssGlyph').textContent = payload.glyph;
+      document.getElementById('glssStep').textContent = payload.breath + ' · pos ' + payload.pos + '/23';
+      document.getElementById('glssPos').textContent = '↑ ' + payload.resonanceGlyph + ' near prime ' + payload.nearestPrime;
+      const interpEl = document.getElementById('glyphLinkerInterpretation');
+      interpEl.textContent = payload.text;
+      interpEl.classList.add('visible');
+      // Update breath sequence panel
+      const bsp = document.getElementById('breathSequencePanel');
+      if (bspsp) bsp.style.display = 'block';
+      document.getElementById('bspGlyph').textContent = payload.glyph;
+      document.getElementById('bspProgressFill').style.width = ((payload.stepIndex / 23) * 100) + '%';
+      document.getElementById('bspStepText').textContent = payload.text;
+      // Play step tone
+      glyphLinker.playStepTone(payload.freq);
+      // Also update the wheel glyph big display when on wheel tab
+      const glyphBig = document.getElementById('glyphBig');
+      if (glyphBig) glyphBig.textContent = payload.glyph;
+      // Update phase display if visible
+      const phaseNum = document.getElementById('phaseNum');
+      if (phaseNum) phaseNum.textContent = 'STEP ' + (payload.stepIndex + 1) + ' OF 24';
+      const phaseName = document.getElementById('phaseName');
+      if (phaseName) phaseName.textContent = payload.breath.charAt(0).toUpperCase() + payload.breath.slice(1) + ' — ' + payload.glyph;
+      const instruction = document.getElementById('instruction');
+      if (instruction) instruction.textContent = payload.text;
+    });
+  }
+
+  // ── MIRROR MODE ──
+  function initMirrorMode() {
+    const inputEl = document.getElementById('mirrorInput');
+    const outputEl = document.getElementById('mirrorOutput');
+    const glyphEl = document.getElementById('mirrorGlyphDisplay');
+    const strengthEl = document.getElementById('mirrorStrength');
+    const historyEl = document.getElementById('mirrorHistoryList');
+
+    mirrorMode.mount(inputEl, outputEl, glyphEl, strengthEl, historyEl);
+
+    // Submit on button click
+    document.getElementById('mirrorSubmit').addEventListener('click', () => {
+      const val = inputEl.value.trim();
+      if (!val) return;
+      // Detect input type
+      const freq = parseFloat(val);
+      let inputType = 'text';
+      if (!isNaN(freq) && freq > 20 && freq < 2000) inputType = 'frequency';
+      else if (['inhale', 'hold', 'exhale', 'still'].includes(val.toLowerCase())) inputType = 'breath';
+      else if (GLYPHS.some(g => g.glyph === val)) inputType = 'glyph';
+      mirrorMode.reflectInput(val, inputType);
+      inputEl.value = '';
+    });
+
+    // Submit on Enter
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('mirrorSubmit').click();
+      }
+    });
+  }
+
   document.getElementById('btnOpenMatrix')?.addEventListener('click', () => {
     window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
   });
