@@ -820,6 +820,26 @@ function enterPortal() {
   animateWheel();
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
+  // Auto-coherence journal logging
+  let lastCohLog = null;
+  const cohLogInterval = setInterval(() => {
+    if (typeof COHERENCE_BUS === 'undefined' || !profile) return;
+    const coh = COHERENCE_BUS.coherenceLevel || 0;
+    // Log high-coherence moment (>80, not already logged)
+    if (coh > 80 && lastCohLog !== 'high') {
+      if (!profile.journal) profile.journal = [];
+      profile.journal.push({ glyph: '✦', text: '↑ Field coherence peak: ' + coh + '%', ts: Date.now() });
+      saveProfile();
+      lastCohLog = 'high';
+    } else if (coh < 30 && lastCohLog !== 'low') {
+      if (!profile.journal) profile.journal = [];
+      profile.journal.push({ glyph: '·', text: '↓ Field friction: ' + coh + '%', ts: Date.now() });
+      saveProfile();
+      lastCohLog = 'low';
+    } else if (coh >= 30 && coh <= 80) {
+      lastCohLog = null; // Reset when back in neutral zone
+    }
+  }, 8000); // Check every 8 seconds
   checkNight();
   initNavTabs();
   initCodex();
