@@ -449,3 +449,120 @@ function escapeHtml(str) {
 
 // Singleton
 const mirrorMode = new MirrorMode();
+
+// ══════════════════════════════════════════════════════
+// BREATH-GEOMETRIC MIRROR — 24-cell projection in Mirror tab
+// ══════════════════════════════════════════════════════
+
+let _mirror24cellRaf = null;
+let _mirror24cellAngle = 0;          // continuous rotation angle
+let _mirror24cellHighlight = -1;     // current wheelPos highlight (0–23)
+let _mirror24cellTabActive = false;  // true when on Dream/Mirror tab
+
+// ── Get or create the mirror 24-cell canvas ──
+function getMirror24CellCanvas() {
+  return document.getElementById('mirror24cell');
+}
+
+// ── Render one frame of the 24-cell in the Mirror tab ──
+function renderMirror24Cell() {
+  const canvas = getMirror24CellCanvas();
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const scale = W / 8;  // scale relative to canvas size
+
+  // Continuous slow rotation — breath drives the wobble
+  const t = Date.now() / 1000;
+  const breathPhase = t;  // time-based breath phase
+
+  // Get current highlight vertex (0–23) from mirror input wheelPos
+  // If no highlight set, use -1 (no vertex highlighted)
+  const activeWheelPos = _mirror24cellHighlight;
+
+  // Get coherence from COHERENCE_BUS
+  let coherenceLevel = 50; // default fallback
+  if (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.currentCoh !== undefined) {
+    coherenceLevel = COHERENCE_BUS.currentCoh;
+  }
+
+  // Clear canvas
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw the 24-cell with current state
+  if (typeof window.draw24CellProjection === 'function') {
+    window.draw24CellProjection(
+      ctx, cx, cy, scale,
+      _mirror24cellAngle * 0.4,   // rx
+      _mirror24cellAngle * 0.7,   // ry
+      _mirror24cellAngle * 0.25,  // rz
+      breathPhase,
+      activeWheelPos
+    );
+  }
+
+  // ── Coherence glow overlay on the canvas border ──
+  // The glow intensity scales with coherenceLevel (30% → barely visible, 100% → full)
+  const normCoh = Math.max(0.05, coherenceLevel / 100);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.min(cx, cy) - 2, 0, Math.PI * 2);
+  const grd = ctx.createRadialGradient(cx, cy, Math.min(cx, cy) * 0.6, cx, cy, Math.min(cx, cy));
+  grd.addColorStop(0, `rgba(232,200,106,${normCoh * 0.18})`);
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grd;
+  ctx.fill();
+  ctx.restore();
+
+  // Advance angle
+  _mirror24cellAngle += 0.008;
+}
+
+// ── Start the mirror 24-cell RAF loop ──
+function startMirror24CellRAF() {
+  _mirror24cellTabActive = true;
+  if (_mirror24cellRaf !== null) return; // already running
+  function loop() {
+    renderMirror24Cell();
+    _mirror24cellRaf = requestAnimationFrame(loop);
+  }
+  _mirror24cellRaf = requestAnimationFrame(loop);
+}
+
+// ── Stop the mirror 24-cell RAF loop ──
+function stopMirror24CellRAF() {
+  _mirror24cellTabActive = false;
+  if (_mirror24cellRaf !== null) {
+    cancelAnimationFrame(_mirror24cellRaf);
+    _mirror24cellRaf = null;
+  }
+}
+
+// ── Update the highlighted vertex from mirror input ──
+// Called by app.js on every mirrorUpdate() so the vertex stays in sync
+function updateMirror24CellHighlight(wheelPos) {
+  _mirror24cellHighlight = (wheelPos !== null && wheelPos !== undefined) ? wheelPos : -1;
+}
+
+// ── Watch tab visibility: start/stop RAF on Dream/Mirror tab ──
+// Call this once from app.js init
+function initMirror24CellTabWatcher() {
+  // Use MutationObserver on .tab-content to detect tab changes
+  const observer = new MutationObserver(() => {
+    const dreamTab = document.getElementById('tab-dream');
+    if (dreamTab && dreamTab.classList.contains('active')) {
+      startMirror24CellRAF();
+    } else {
+      stopMirror24CellRAF();
+    }
+  });
+  const portal = document.getElementById('portal');
+  if (portal) {
+    observer.observe(portal, { attributes: true, attributeFilter: ['class'] });
+  }
+}

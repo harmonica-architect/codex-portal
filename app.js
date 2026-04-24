@@ -1108,6 +1108,9 @@ function enterPortal() {
     mirrorMode.mount(inputEl, outputEl, glyphEl, strengthEl, historyEl,
       matAddrEl, matAddrFreqEl, matAddrVFEl, matAddrResEl);
 
+    // Start the 24-cell projection RAF loop + tab watcher
+    initMirror24CellTabWatcher();
+
     // Submit on button click
     document.getElementById('mirrorSubmit').addEventListener('click', () => {
       const val = inputEl.value.trim();
@@ -1122,6 +1125,8 @@ function enterPortal() {
       if (typeof COHERENCE_BUS !== 'undefined' && result) {
         COHERENCE_BUS.logMirror(result);
       }
+      // Update 24-cell highlight vertex to match mirror wheelPos
+      updateMirror24CellHighlight(result?.wheelPos ?? -1);
       inputEl.value = '';
     });
 

@@ -3,7 +3,7 @@
   "portal_url": "https://harmonica-architect.github.io/codex-portal/",
   "workspace": "C:\\Users\\c\\.openclaw\\workspace\\codex-portal",
   "commits": {
-    "latest": "6672c91",
+    "latest": "56604cc",
     "feat_24cell": "658c3fb",
     "feat_coherence": "abab659",
     "feat_breath_ring": "d498e56"
@@ -56,6 +56,20 @@
       "commit": "cb70a0a",
       "branch": "master",
       "note": "Every 8s, peaks >80% log ✦, friction <30% log ·. profile.journal updated automatically."
+    },
+    {
+      "id": "P7-cascade",
+      "label": "Breath Ring Cascade",
+      "status": "DONE",
+      "commit": "56604cc",
+      "note": "8-dot cascade animation every 24 breaths via cascadeListeners"
+    },
+    {
+      "id": "P10-sigil-glow",
+      "label": "Sigil Dot Glow by Coherence",
+      "status": "DONE",
+      "commit": "56604cc",
+      "note": "--sigil-glow-opacity and --sigil-glow-spread CSS vars driven by coherence level"
     }
   ],
   "PENDING": [

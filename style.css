@@ -1915,6 +1915,35 @@ html {
 }
 .mnd-item.active .mnd-label { color: var(--axis); }
 
+/* P9 — Journal tab peak glow animation */
+.mnd-item.peak-glow {
+  animation: journalPeakGlow 2s ease-out;
+}
+@keyframes journalPeakGlow {
+  0%   { box-shadow: 0 0 0 0 rgba(232, 200, 106, 0); }
+  20%  { box-shadow: 0 0 20px 4px rgba(232, 200, 106, 0.8); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 200, 106, 0); }
+}
+
+/* P11 — Night-mode breath ring: muted amber instead of bright gold */
+.portal.night-mode .br-dot.active {
+  background: rgba(160, 120, 60, 0.12);
+  border-color: rgba(160, 120, 60, 0.6);
+  color: rgba(160, 120, 60, 0.8);
+  box-shadow: 0 0 8px 2px rgba(160, 120, 60, 0.4);
+}
+.portal.night-mode .br-orbit {
+  border-color: rgba(160, 120, 60, 0.25);
+}
+.portal.night-mode .br-dot.cascade {
+  animation: brCascadeNight 1.2s ease-out;
+}
+@keyframes brCascadeNight {
+  0%   { opacity: 0.2; transform: scale(0.7); }
+  50%  { opacity: 1;   transform: scale(1.3); box-shadow: 0 0 20px rgba(160,120,60,0.6); }
+  100% { opacity: var(--dot-opacity, 0.5); transform: scale(1); }
+}
+
 /* -- Coherence Panel � compact on mobile -- */
 .coherence-panel {
   padding: 0.3rem 0.7rem;
