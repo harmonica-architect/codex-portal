@@ -951,12 +951,14 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   z-index: 2;
   user-select: none;
   transform: translate(-50%,-50%);
+  filter: drop-shadow(0 0 var(--sigil-glow-spread, 4px) rgba(232,200,106, var(--sigil-glow-opacity, 0.3)));
 }
 .sn-dot:hover {
   border-color: var(--gold);
   color: var(--gold);
   box-shadow: 0 0 12px rgba(232,200,106,0.3);
   z-index: 10;
+  filter: drop-shadow(0 0 var(--sigil-glow-spread, 4px) rgba(232,200,106, var(--sigil-glow-opacity, 0.4)));
 }
 .sn-dot.active {
   border-color: var(--gold);

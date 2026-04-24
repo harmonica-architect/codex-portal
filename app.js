@@ -753,6 +753,7 @@ function applyNight() {
     document.documentElement.style.setProperty('--surface', '#0e0e1a');
     document.documentElement.style.setProperty('--gold', NIGHT_MODE.nightGold);
     document.documentElement.style.setProperty('--axis', NIGHT_MODE.nightAxis);
+    document.documentElement.style.setProperty('--breath-ring-color', 'rgba(160,120,60,0.5)');
     document.getElementById('btnNight').classList.add('active-btn');
   } else {
     ind.textContent = 'Day mode — gold field';
@@ -760,6 +761,7 @@ function applyNight() {
     document.documentElement.style.setProperty('--surface', '#0e0e1a');
     document.documentElement.style.setProperty('--gold', NIGHT_MODE.dayGold);
     document.documentElement.style.setProperty('--axis', NIGHT_MODE.dayAxis);
+    document.documentElement.style.setProperty('--breath-ring-color', 'rgba(232,200,106,0.8)');
     document.getElementById('btnNight').classList.remove('active-btn');
   }
 }
@@ -867,6 +869,12 @@ function enterPortal() {
       profile.journal.push({ glyph: '✦', text: '↑ Field coherence peak: ' + coh + '%', ts: Date.now() });
       saveProfile();
       lastCohLog = 'high';
+      // P9 — flash Journal drawer item on peak
+      const journalBtn = document.querySelector('.mnd-item[data-tab="journal"]');
+      if (journalBtn) {
+        journalBtn.classList.add('peak-glow');
+        setTimeout(() => journalBtn.classList.remove('peak-glow'), 2000);
+      }
     } else if (coh < 30 && lastCohLog !== 'low') {
       if (!profile.journal) profile.journal = [];
       profile.journal.push({ glyph: '·', text: '↓ Field friction: ' + coh + '%', ts: Date.now() });
