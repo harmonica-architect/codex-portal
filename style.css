@@ -683,58 +683,16 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   animation: none; /* driven by JS */
 }
 
-/* 8 dots arranged on the orbit ring */
-.sn-dot {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: 1.5px solid var(--muted);
-  background: var(--surface);
-  color: var(--muted);
-  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-  transform-origin: center;
-  --breath-scale: 1;
-  user-select: none;
-}
-.sn-dot:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-  transform: scale(1.2) translate(0, 0) !important;
-  box-shadow: 0 0 12px rgba(232,200,106,0.3);
-}
-.sn-dot.active {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: var(--gold-dim);
-  box-shadow: 0 0 16px rgba(232,200,106,0.4), 0 0 30px rgba(232,200,106,0.15);
-  transform: scale(1.25) translate(0, 0) !important;
-}
-.sn-dot.passed {
-  border-color: rgba(232,200,106,0.3);
-  color: rgba(232,200,106,0.4);
-}
-.sn-dot.queued {
-  animation: queuedPulse 0.6s ease;
-}
-.sn-dot.glow-breathe {
-  animation: breatheGlow 2s ease-in-out infinite;
-}
-
-/* 8-dot clock positions on the 112px orbit */
-.sn-dot-0 { top: -13px; left: 50%; transform: translateX(-50%) rotate(0deg) translateY(-44px) rotate(0deg); }
-.sn-dot-1 { top: -3px; left: 75%; transform: translate(-50%,-50%) rotate(45deg) translateY(-38px) rotate(-45deg); }
-.sn-dot-2 { top: 25%; right: -13px; transform: rotate(90deg) translateY(-38px) rotate(-90deg); }
-.sn-dot-3 { bottom: 0; left: 75%; transform: translate(-50%,50%) rotate(135deg) translateY(-38px) rotate(-135deg); }
-.sn-dot-4 { bottom: -13px; left: 50%; transform: translateX(-50%) rotate(180deg) translateY(-44px) rotate(-180deg); }
-.sn-dot-5 { bottom: 0; left: 25%; transform: translate(50%,50%) rotate(225deg) translateY(-38px) rotate(-225deg); }
-.sn-dot-6 { top: 25%; left: -13px; transform: rotate(270deg) translateY(-38px) rotate(-270deg); }
-.sn-dot-7 { top: -3px; left: 25%; transform: translate(50%,-50%) rotate(315deg) translateY(-38px) rotate(-315deg); }
+/* 8 dots — clock positions via plain X/Y offset, no rotation.
+   Parent .sn-orbit rotates the whole constellation as one unit. */
+.sn-dot-0 { top: 0;    left: 50%;  transform: translate(-50%, -56px); }
+.sn-dot-1 { top: 15%;  left: 85%;  transform: translate(-50%, -50%); }
+.sn-dot-2 { top: 50%;  left: 100%; transform: translate(-56px, -50%); }
+.sn-dot-3 { top: 85%;  left: 85%;  transform: translate(-50%, -50%); }
+.sn-dot-4 { top: 100%; left: 50%;  transform: translate(-50%, -50%); }
+.sn-dot-5 { top: 85%;  left: 15%;  transform: translate(-50%, -50%); }
+.sn-dot-6 { top: 50%;  left: 0%;   transform: translate(-50%, -50%); }
+.sn-dot-7 { top: 15%;  left: 15%;  transform: translate(-50%, -50%); }
 
 /* Hub — center of the sigil ring */
 .sn-hub {
@@ -814,13 +772,69 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 
 /* Glyph hover scale with breath sync */
 .sn-dot {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1.5px solid var(--muted);
+  background: var(--surface);
+  color: var(--muted);
   transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
               border-color 0.3s ease,
               color 0.3s ease,
-              box-shadow 0.3s ease;
+              box-shadow 0.3s ease,
+              background 0.3s ease;
+  z-index: 2;
+  user-select: none;
+}
+.sn-dot:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: scale(1.2) translate(-50%,-50%) !important;
+  box-shadow: 0 0 12px rgba(232,200,106,0.3);
+  z-index: 10;
+}
+.sn-dot.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-dim);
+  box-shadow: 0 0 16px rgba(232,200,106,0.4), 0 0 30px rgba(232,200,106,0.15);
+  transform: scale(1.25) translate(-50%,-50%) !important;
+  z-index: 10;
+}
+.sn-dot.passed {
+  border-color: rgba(232,200,106,0.3);
+  color: rgba(232,200,106,0.4);
+}
+.sn-dot.queued {
+  animation: queuedPulse 0.6s ease;
+}
+.sn-dot.glow-breathe {
+  animation: breatheGlow 2s ease-in-out infinite;
 }
 
-/* ── QUASI-PRIME TIMER INDICATOR ──
+/* 8 dots — clock positions via plain X/Y offset, no rotation.
+   Parent .sn-orbit rotates the whole constellation as one unit. */
+.sn-dot-0 { top: 0;    left: 50%;  transform: translate(-50%, -56px); }
+.sn-dot-1 { top: 15%;  left: 85%;  transform: translate(-50%, -50%); }
+.sn-dot-2 { top: 50%;  left: 100%; transform: translate(-56px, -50%); }
+.sn-dot-3 { top: 85%;  left: 85%;  transform: translate(-50%, -50%); }
+.sn-dot-4 { top: 100%; left: 50%;  transform: translate(-50%, -50%); }
+.sn-dot-5 { top: 85%;  left: 15%;  transform: translate(-50%, -50%); }
+.sn-dot-6 { top: 50%;  left: 0%;   transform: translate(-50%, -50%); }
+.sn-dot-7 { top: 15%;  left: 15%;  transform: translate(-50%, -50%); }
+
+/* -- SCROLLBAR -- */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* -- QUASI-PRIME TIMER INDICATOR --
    Small pulsing dot on hub showing breath timer */
 .sn-hub::after {
   content: '';
@@ -842,8 +856,3 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   0%, 100% { opacity: 0.3; transform: scale(0.8); }
   50% { opacity: 0.9; transform: scale(1.2); }
 }
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
