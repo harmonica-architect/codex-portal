@@ -589,6 +589,11 @@ function updateCoherence() {
   document.getElementById('cohBar').style.width = coherenceLevel + '%';
   document.getElementById('cohValue').textContent = Math.round(coherenceLevel) + '%';
 
+  // Sparkline from COHERENCE_BUS rolling history
+  if (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.coherenceHistory && COHERENCE_BUS.coherenceHistory.length > 1) {
+    drawCohSparkline(COHERENCE_BUS.coherenceHistory.slice(-30));
+  }
+
   // User dots
   const dots = document.getElementById('userDots');
   const colors = ['#e8c86a', '#a090d0', '#90b0c0', '#b0a080', '#80b090'];
