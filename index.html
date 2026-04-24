@@ -115,6 +115,57 @@
         </div>
       </div>
 
+      <!-- Breath Prompt Strip — driven by coherence bus -->
+      <div class="breath-prompt-strip" id="breathPromptStrip">
+        <div class="bps-glyph" id="bpsGlyph">◎</div>
+        <div class="bps-text" id="bpsText">The field awaits your breath…</div>
+        <div class="bps-archetype" id="bpsArchetype">Seed</div>
+      </div>
+
+      <!-- Archetype Spiral Ring — phase-log + spiral navigation -->
+      <div class="archetype-spiral-section" id="archetypeSpiralSection">
+        <div class="ass-label">Phase Spiral · click to align</div>
+        <div class="archetype-ring" id="archetypeRing">
+          <div class="ar-node ar-node-0" data-archetype="Seed" data-glyph="△">
+            <span class="ar-glyph">△</span><span class="ar-label">Seed</span>
+          </div>
+          <div class="ar-node ar-node-1" data-archetype="Seed" data-glyph="◎">
+            <span class="ar-glyph">◎</span><span class="ar-label">Seed·2</span>
+          </div>
+          <div class="ar-node ar-node-2" data-archetype="Bridge" data-glyph="◁△▷">
+            <span class="ar-glyph">◁△▷</span><span class="ar-label">Bridge</span>
+          </div>
+          <div class="ar-node ar-node-3" data-archetype="Axis" data-glyph="◇">
+            <span class="ar-glyph">◇</span><span class="ar-label">Axis</span>
+          </div>
+          <div class="ar-node ar-node-4" data-archetype="Star" data-glyph="◎">
+            <span class="ar-glyph">◎</span><span class="ar-label">Star</span>
+          </div>
+          <div class="ar-node ar-node-5" data-archetype="Star" data-glyph="◉">
+            <span class="ar-glyph">◉</span><span class="ar-label">Star·2</span>
+          </div>
+          <div class="ar-node ar-node-6" data-archetype="Convergence" data-glyph="○">
+            <span class="ar-glyph">○</span><span class="ar-label">Convergence</span>
+          </div>
+          <div class="ar-node ar-node-7" data-archetype="Return" data-glyph="·">
+            <span class="ar-glyph">·</span><span class="ar-label">Return</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Journey / Phase-Log Summary -->
+      <div class="journey-section" id="journeySection">
+        <div class="journey-label">Your Harmonic Journey</div>
+        <div class="journey-stats" id="journeyStats">
+          <div class="js-item"><span class="js-num" id="jsBreaths">0</span><span class="js-label">breaths</span></div>
+          <div class="js-sep">·</div>
+          <div class="js-item"><span class="js-num" id="jsInteractions">0</span><span class="js-label">interactions</span></div>
+          <div class="js-sep">·</div>
+          <div class="js-item"><span class="js-num" id="jsAvgCoh">0%</span><span class="js-label">avg coherence</span></div>
+        </div>
+        <div class="journey-archetype-bar" id="journeyArchetypeBar"></div>
+      </div>
+
       <!-- Quick-nav cards -->
       <div class="dash-nav">
         <a class="dash-card" href="#" onclick="navTo('wheel');return false;">
@@ -424,6 +475,7 @@
 <script src="config.js"></script>
 <script src="state.js"></script>
 <script src="breath-controller.js"></script>
+<script src="coherence-bus.js"></script>
 <script src="sigil-nav.js"></script>
 <script src="breath-glyph-linker.js"></script>
 <script src="mirror-mode.js"></script>

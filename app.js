@@ -725,9 +725,10 @@ function enterPortal() {
   // ── Mirror Mode ──
   initMirrorMode();
 
-  // Sync sigil nav with dashboard coherence
+  // Sync sigil nav + coherence bus with dashboard state
   setInterval(() => {
     setSigilNavCoherence(coherenceLevel, globalCoherence);
+    COHERENCE_BUS.updateCoherence(coherenceLevel);
     // Drive hub pulse class
     const hub = document.getElementById('snHub');
     if (hub) {
@@ -735,7 +736,65 @@ function enterPortal() {
       hub.classList.toggle('coh-pulse', coh > 70);
       hub.classList.toggle('breath-active', isRunning);
     }
-  }, 400);
+    // Update journey display
+    refreshJourneyDisplay();
+  }, 500);
+
+  // ── BREATH PHASE SUBSCRIPTIONS — bus drives all UI ──
+  onBreathPhase(({ phase, phaseIdx, archetype, prompt, bt, ctrl }) => {
+    // Breath prompt strip
+    const bpsGlyph = document.getElementById('bpsGlyph');
+    const bpsText = document.getElementById('bpsText');
+    const bpsArchetype = document.getElementById('bpsArchetype');
+    if (bpsGlyph) bpsGlyph.textContent = phase.glyph;
+    if (bpsText) bpsText.textContent = prompt;
+    if (bpsArchetype) bpsArchetype.textContent = archetype;
+
+    // Breath prompt strip animation — fades between phases
+    const bps = document.getElementById('breathPromptStrip');
+    if (bps) {
+      bps.classList.remove('prompt-inhale', 'prompt-hold', 'prompt-exhale', 'prompt-still');
+      void bps.offsetWidth; // reflow
+      bps.classList.add('prompt-' + bt);
+    }
+
+    // Archetype ring — highlight active phase node
+    const arNodes = document.querySelectorAll('.ar-node');
+    arNodes.forEach((n, i) => {
+      n.classList.toggle('ar-active', i === phaseIdx);
+    });
+
+    // Sigil nav dots — update breath-glow class
+    const dots = document.querySelectorAll('.sn-dot');
+    dots.forEach((d, i) => {
+      d.classList.toggle('glow-breathe', ctrl.isInhale() && i === sigilNav.activeIndex);
+    });
+
+    // Dash phase badge — update with breath glyph
+    const dpg = document.getElementById('dashPhaseGlyph');
+    const dpb = document.getElementById('dashBreath');
+    const dpn = document.getElementById('dashPhaseName');
+    if (dpg) dpg.textContent = phase.glyph;
+    if (dpb) dpb.textContent = phase.name;
+    if (dpn) dpn.textContent = archetype;
+
+    // Breath phase on sigil nav hub (override tab label with phase glyph)
+    const snhg = document.getElementById('snHubGlyph');
+    if (snhg && !sigilNav.isTransitioning) snhg.textContent = phase.glyph;
+  });
+
+  // Archetype ring click → jump to that breath context
+  document.querySelectorAll('.ar-node').forEach(node => {
+    node.addEventListener('click', () => {
+      const arch = node.dataset.archetype;
+      const glyph = node.dataset.glyph;
+      COHERENCE_BUS.logInteraction('archetypeClick', { archetype: arch, glyph });
+      // Navigate to wheel tab
+      navigateToSigil(1);
+      // Play archetype tone
+      if (typeof breathCtrl !== 'undefined') breathCtrl.playTone(432 + sigilNav.activeIndex * 27, 0.08, 1.5);
+    });
+  });
 
   initGlyphRing();
   initDashboard();
@@ -776,7 +835,7 @@ function enterPortal() {
       interpEl.classList.add('visible');
       // Update breath sequence panel
       const bsp = document.getElementById('breathSequencePanel');
-      if (bspsp) bsp.style.display = 'block';
+      if (bsp) bsp.style.display = 'block';
       document.getElementById('bspGlyph').textContent = payload.glyph;
       document.getElementById('bspProgressFill').style.width = ((payload.stepIndex / 23) * 100) + '%';
       document.getElementById('bspStepText').textContent = payload.text;
@@ -815,7 +874,10 @@ function enterPortal() {
       if (!isNaN(freq) && freq > 20 && freq < 2000) inputType = 'frequency';
       else if (['inhale', 'hold', 'exhale', 'still'].includes(val.toLowerCase())) inputType = 'breath';
       else if (GLYPHS.some(g => g.glyph === val)) inputType = 'glyph';
-      mirrorMode.reflectInput(val, inputType);
+      const result = mirrorMode.reflectInput(val, inputType);
+      if (typeof COHERENCE_BUS !== 'undefined' && result) {
+        COHERENCE_BUS.logMirror(result);
+      }
       inputEl.value = '';
     });
 
@@ -836,6 +898,34 @@ function enterPortal() {
 function saveProfile() {
   if (!profile) return;
   localStorage.setItem(STORAGE_KEYS.profile + ':' + profile.sigil.join(''), JSON.stringify(profile));
+}
+
+// ── JOURNEY / PHASE-LOG DISPLAY ──
+function refreshJourneyDisplay() {
+  if (typeof COHERENCE_BUS === 'undefined') return;
+  const j = COHERENCE_BUS.getJourney();
+  const je = document.getElementById('jsBreaths');
+  const jie = document.getElementById('jsInteractions');
+  const jace = document.getElementById('jsAvgCoh');
+  const jabb = document.getElementById('journeyArchetypeBar');
+  if (je) je.textContent = j.breathCount;
+  if (jie) jie.textContent = j.interactions;
+  if (jace) jace.textContent = j.avgCoherence + '%';
+  if (jabb) {
+    // Build archetype bar
+    const total = Object.values(j.archetypes).reduce((a, b) => a + b, 0) || 1;
+    const archColors = {
+      Seed: '#e8c86a', Bridge: '#b8a0d0', Axis: '#c8d0e0',
+      Star: '#e8c86a', Convergence: '#a0c0c0', Return: '#c0a0b0'
+    };
+    let barHtml = '';
+    for (const [arch, count] of Object.entries(j.archetypes)) {
+      const pct = Math.round((count / total) * 100);
+      const color = archColors[arch] || 'var(--gold)';
+      barHtml += `<div class="abb-segment" style="width:${pct}%;background:${color};" title="${arch}: ${count}"></div>`;
+    }
+    jabb.innerHTML = `<div class="abb-bar">${barHtml}</div><div class="abb-legend">${Object.entries(j.archetypes).map(([a,c]) => `<span style="color:${archColors[a]||'var(--gold)'};font-size:0.52rem;">${a} ${c}</span>`).join(' · ')}</div>`;
+  }
 }
 
 // ── GLYPH OVERLAY + TONE PANEL ──
