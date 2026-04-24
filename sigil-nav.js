@@ -91,8 +91,20 @@ function navigateToSigil(idx, skipBreathGate = false) {
   performSigilTransition(idx, sn);
 }
 
+// ── ANIMATION CLEANUP ──
+function stopOrbitAnimation() {
+  if (sigilNav.orbitAnimId) {
+    cancelAnimationFrame(sigilNav.orbitAnimId);
+    sigilNav.orbitAnimId = null;
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  stopOrbitAnimation();
+});
+
 function performSigilTransition(idx, sn) {
-  const target = SIGIL_TABS[idx];
+  stopOrbitAnimation();  // cancel orbit RAF before tab switch
   sn.isTransitioning = true;
 
   // Play sigil tone

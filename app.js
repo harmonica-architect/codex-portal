@@ -46,6 +46,26 @@ let glyphOverlay = { glyph: '△', show: true };
 let personalTone = 432;
 let toneFreq = 432;
 
+// ── ANIMATION CLEANUP ──
+function stopWheelAnimation() {
+  if (typeof animId !== 'undefined' && animId !== null) {
+    cancelAnimationFrame(animId);
+    animId = null;
+  }
+}
+
+function stopMiniWheelAnimation() {
+  if (typeof miniAnimId !== 'undefined' && miniAnimId !== null) {
+    cancelAnimationFrame(miniAnimId);
+    miniAnimId = null;
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  stopWheelAnimation();
+  stopMiniWheelAnimation();
+});
+
 // ── DASHBOARD ──
 let miniAnimId = null;
 
