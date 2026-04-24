@@ -67,38 +67,26 @@ function initSigilNav() {
         document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
         tabEl.classList.add('active');
       }
-      // Show sigil nav header unless on home tab (home uses breath ring)
-      const snWrap = document.getElementById('sigilNavWrap');
-      if (snWrap) snWrap.style.display = (pendingTab === 'home') ? 'none' : '';
-      updateSigilHub(idx, false);
+      // Toggle .non-home on portal (CSS reads this for visibility)
+      document.getElementById('portal').classList.toggle('non-home', pendingTab !== 'home');
+      if (pendingTab === 'home') updateSigilHub(idx, false);
     }
   } else {
-    // First load — on index.html show breath ring (hide sigil nav header)
-    // On matrix.html show sigil nav header
-    const snWrap = document.getElementById('sigilNavWrap');
-    if (snWrap) {
-      snWrap.style.display = 'none'; // home tab uses breath ring
-    }
+    // First load on index.html — home tab is active, hide sigil nav
+    const portal = document.getElementById('portal');
+    if (portal) portal.classList.remove('non-home');
   }
 }
 
 // ── Navigate to a sigil tab ──
 function navigateToSigil(idx, skipBreathGate = false) {
   const sn = window.sigilNav;
+  // Sigil nav is always immediate — no breath gate (home tab breath ring handles breath navigation)
   if (idx === sn.activeIndex) return;
   if (sn.isTransitioning) return;
 
   const target = SIGIL_TABS[idx];
   if (!target) return;
-
-  if (!skipBreathGate && breathCtrl.isActive) {
-    if (!breathCtrl.isStill() && !breathCtrl.isHold()) {
-      sn.pendingTab = idx;
-      sn.breathLocked = true;
-      flashDot(idx, 'queued');
-      return;
-    }
-  }
 
   performSigilTransition(idx, sn);
 }
@@ -138,12 +126,9 @@ function performSigilTransition(idx, sn) {
     sn.activeIndex = idx;
     sn.isTransitioning = false;
 
-    // Show/hide sigil nav header ring based on current tab
-    // (home tab uses the breath ring instead; other pages keep the sigil nav header)
-    const snWrap = document.getElementById('sigilNavWrap');
-    if (snWrap) {
-      snWrap.style.display = (target.tab === 'home') ? 'none' : '';
-    }
+    // Show sigil nav header unless on home tab
+    const portal = document.getElementById('portal');
+    if (portal) portal.classList.toggle('non-home', target.tab !== 'home');
 
     // Clear breath lock
     sn.breathLocked = false;

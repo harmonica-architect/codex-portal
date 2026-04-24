@@ -323,7 +323,7 @@ body {
 }
 
 /* ── PORTAL SHELL ── */
-.portal { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 0.75rem; }
+.portal { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 0.75rem; position: relative; }
 
 /* ── COHERENCE METER ── */
 .coherence-panel {
@@ -650,12 +650,24 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 
 /* ── SIGIL NAVIGATOR — Glyph Portal Ring ── */
 .sigil-nav-wrap {
-  /* Floats to top-right corner — not part of normal flow */
+  /* Hidden by default — shown via CSS only on desktop non-home tabs */
+  display: none;
   position: absolute;
   top: 0;
   right: 0.75rem;
   width: auto;
   z-index: 10;
+}
+
+/* Show sigil nav on desktop only when a non-home tab is active */
+@media (min-width: 600px) {
+  /* Default: hidden (home tab uses breath ring instead) */
+  .sigil-nav-wrap { display: none; }
+
+  /* Show sigil nav when .portal has .non-home class (JS-driven, reliable) */
+  .portal.non-home .sigil-nav-wrap {
+    display: block;
+  }
 }
 
 .sigil-nav-ring {
@@ -1715,7 +1727,7 @@ html {
 /* -- Portal body � max-width container centered -- */
 .sigil-nav-wrap {
   /* Mobile: static centered */
-  position: static;
+  
   right: auto;
   width: 100%;
   justify-content: center;
