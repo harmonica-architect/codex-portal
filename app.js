@@ -693,6 +693,36 @@ function initLogin() {
   };
 }
 
+// ── MOBILE NAV DRAWER ──
+function initMobileNavDrawer() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  if (!drawer) return;
+  drawer.classList.add('visible');
+  drawer.querySelectorAll('.mnd-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const tab = item.dataset.tab;
+      const navTab = document.querySelector('.nav-tab[data-tab="' + tab + '"]');
+      if (navTab) {
+        navTab.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      if (window.matchMedia('(min-width: 600px)').matches) {
+        drawer.classList.remove('visible');
+      }
+    });
+  });
+  drawer.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+}
+
+function updateMobileNavState() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  if (!drawer) return;
+  const activeTab = document.querySelector('.nav-tab.active')?.dataset.tab || 'home';
+  drawer.querySelectorAll('.mnd-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === activeTab);
+  });
+}
+
 function enterPortal() {
   document.getElementById('loginScreen').classList.add('hide');
   document.getElementById('portal').style.display = 'flex';
@@ -718,72 +748,15 @@ function enterPortal() {
       setTimeout(() => tab.click(), 80);
     }
   }
-  // ── Mobile Nav Drawer ──
-  function initMobileNavDrawer() {
-    const drawer = document.getElementById('mobileNavDrawer');
-    if (!drawer) return;
-    drawer.querySelectorAll('.mnd-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const tab = item.dataset.tab;
-        const navTab = document.querySelector('.nav-tab[data-tab="' + tab + '"]');
-        if (navTab) {
-          navTab.click();
-          // On mobile: scroll to top of content after tab switch
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        drawer.classList.remove('visible');
-      });
-    });
-    drawer.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
-  }
-
-  function updateMobileNavState() {
-    const drawer = document.getElementById('mobileNavDrawer');
-    if (!drawer) return;
-    const activeTab = document.querySelector('.nav-tab.active')?.dataset.tab || 'home';
-    drawer.querySelectorAll('.mnd-item').forEach(item => {
-      item.classList.toggle('active', item.dataset.tab === activeTab);
-    });
-  }
-
-  initMobileNavDrawer();
-  updateMobileNavState();
-  // Init sigil navigator
-  initSigilNav();
-
-  // ── Spiral Log — visual journey memory ──
-  SPIRAL_LOG.mount('spiralLogCanvas');
-  // Sync spiral log with coherence bus every 2 seconds
-  setInterval(() => { SPIRAL_LOG.syncFromBus(); }, 2000);
-
-  // ── Community Resonance Field ──
-  COMMUNITY_FIELD.init().then(() => {
-    // Render field map
-    if (document.getElementById('fieldMapCanvas')) {
-      COMMUNITY_FIELD.renderFieldMap('fieldMapCanvas');
-    }
-    // Update community status UI
-    updateCommunityStatus();
-  });
-  COMMUNITY_FIELD.on('fieldUpdate', updateCommunityStatus);
-  COMMUNITY_FIELD.on('nodesChanged', updateCommunityStatus);
-
-  // Community intention submit
-  document.getElementById('csIntentionBtn')?.addEventListener('click', () => {
-    const input = document.getElementById('csIntentionInput');
-    if (!input?.value.trim()) return;
-    COMMUNITY_FIELD.setFieldIntention(input.value.trim());
-    input.value = '';
-    COMMUNITY_FIELD.state.intention = input.value.trim();
-    COHERENCE_BUS?.logInteraction('fieldIntention', { text: input.value.trim() });
-    updateCommunityStatus();
-  });
-
   // ── Glyph Linker ──
   initGlyphLinker();
 
   // ── Mirror Mode ──
   initMirrorMode();
+
+  // ── Mobile Nav Drawer ──
+  initMobileNavDrawer();
+  updateMobileNavState();
 
   // Sync sigil nav + coherence bus with dashboard state
   setInterval(() => {

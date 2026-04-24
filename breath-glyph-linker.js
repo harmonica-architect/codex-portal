@@ -186,7 +186,6 @@ class BreathGlyphLinker {
     this.isRunning = false;
     this.timer = null;
     this.listeners = [];
-    this._tick = this._tick.bind(this);
   }
 
   // ── Start a glyph breath sequence ──
