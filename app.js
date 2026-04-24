@@ -758,6 +758,9 @@ function enterPortal() {
   initMobileNavDrawer();
   updateMobileNavState();
 
+  // ── Sigil Navigator (desktop orbit nav) ──
+  initSigilNav();
+
   // Sync sigil nav + coherence bus with dashboard state
   setInterval(() => {
     setSigilNavCoherence(coherenceLevel, globalCoherence);
