@@ -4,11 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Field Resonator — Monadic Spiral</title>
+<link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="resonator.css">
+<style>
+body { display: flex; flex-direction: column; align-items: center; padding: 0.75rem; }
+.page-body { width: 100%; max-width: 900px; }
+</style>
 </head>
 <body>
 
-<a class="back-btn" href="index.html">← Codex</a>
+<!-- ══ SIGIL NAVIGATOR ══ -->
+<div class="sigil-nav-wrap" id="sigilNavWrap">
+  <div class="sigil-nav-ring">
+    <div class="sn-orbit sn-orbit-outer" id="snOrbitOuter">
+      <div class="sn-dot sn-dot-0" data-idx="0">⊙</div>
+      <div class="sn-dot sn-dot-1" data-idx="1">◎</div>
+      <div class="sn-dot sn-dot-2" data-idx="2">◇</div>
+      <div class="sn-dot sn-dot-3" data-idx="3">◉</div>
+      <div class="sn-dot sn-dot-4" data-idx="4">○</div>
+      <div class="sn-dot sn-dot-5" data-idx="5">◈</div>
+      <div class="sn-dot sn-dot-6 sn-dot-active" data-idx="6">◇</div>
+      <div class="sn-dot sn-dot-7" data-idx="7">·</div>
+    </div>
+    <div class="sn-hub" id="snHub">
+      <div class="sn-hub-glyph" id="snHubGlyph">◇</div>
+      <div class="sn-hub-label" id="snHubLabel">Resonator</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
 
 <!-- Resonator — guide is inline, no overlay -->
 
@@ -287,6 +312,23 @@
 <!-- Sidebar toggle -->
 <button class="sidebar-toggle-btn active" id="sidebarToggleBtn">⚙</button>
 
+<script src="breath-controller.js"></script>
+<script src="sigil-nav.js"></script>
 <script src="resonator.js?v=2"></script>
+<script>
+// Activate Resonator nav dot
+document.addEventListener('DOMContentLoaded', function() {
+  initSigilNav();
+  // Highlight the Resonator dot (index 6)
+  var dots = document.querySelectorAll('.sn-dot');
+  if (dots[6]) { dots[6].classList.add('active'); }
+  document.querySelectorAll('.sn-dot').forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      var idx = parseInt(dot.dataset.idx);
+      navigateToSigil(idx);
+    });
+  });
+});
+</script>
 </body>
 </html>

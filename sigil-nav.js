@@ -92,14 +92,8 @@ function performSigilTransition(idx) {
   // Switch tab content with breath transition
   const tabEl = document.getElementById('tab-' + target.tab);
   if (!tabEl) {
-    // Special case — open another HTML page
-    if (target.tab === 'matrix') {
-      window.open('matrix.html', '_blank', 'width=700,height=800,scrollbars=yes');
-    } else if (target.tab === 'resonator') {
-      window.open('resonator.html', '_blank', 'width=700,height=800,scrollbars=yes');
-    } else {
-      // Unknown tab — treat as missing
-    }
+    // External page — navigate in same tab
+    window.location.href = target.tab + '.html';
     sigilNav.isTransitioning = false;
     sigilNav.activeIndex = idx;
     return;
@@ -265,9 +259,9 @@ function navTo(tab) {
 }
 
 function navToMatrix() {
-  navigateToSigil(5, true);
+  window.location.href = 'matrix.html';
 }
 
 function navToResonator() {
-  navigateToSigil(6, true);
+  window.location.href = 'resonator.html';
 }
