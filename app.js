@@ -773,6 +773,18 @@ function initMobileNavDrawer() {
   const drawer = document.getElementById('mobileNavDrawer');
   if (!drawer) return;
   drawer.classList.add('visible');
+
+  // Breath-phase-aware animation: exhale opens fast (receptive), inhale closes fast (contracting)
+  if (typeof breathCtrl !== 'undefined') {
+    breathCtrl.onPhaseChange((phase, phaseIdx) => {
+      if (phase.name === 'exhale' || phase.name === 'hold') {
+        drawer.style.transition = 'opacity 0.15s ease-out, transform 0.2s ease-out';
+      } else if (phase.name === 'inhale') {
+        drawer.style.transition = 'opacity 0.3s ease-in, transform 0.4s ease-in';
+      }
+    });
+  }
+
   drawer.querySelectorAll('.mnd-item').forEach(item => {
     item.addEventListener('click', () => {
       const tab = item.dataset.tab;
@@ -792,7 +804,8 @@ function initMobileNavDrawer() {
 function updateMobileNavState() {
   const drawer = document.getElementById('mobileNavDrawer');
   if (!drawer) return;
-  const activeTab = document.querySelector('.nav-tab.active')?.dataset.tab || 'home';
+  // Sync active drawer item to the actual active tab content (not the hidden nav-tab bar)
+  const activeTab = document.querySelector('.tab-content.active')?.id?.replace('tab-', '') || 'home';
   drawer.querySelectorAll('.mnd-item').forEach(item => {
     item.classList.toggle('active', item.dataset.tab === activeTab);
   });
