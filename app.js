@@ -46,6 +46,38 @@ let glyphOverlay = { glyph: '△', show: true };
 let personalTone = 432;
 let toneFreq = 432;
 
+// ── PRIME AXIS TRACKER RAF ──
+let primeTrackerAnimId = null;
+
+function primeTrackerRAF() {
+  const canvas = document.getElementById('primeAxisTracker');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 40;
+  const cy = 44;
+  const size = 36;
+  const pos = typeof breathCtrl !== 'undefined'
+    ? breathCtrl.breathCount % 24
+    : 0;
+  const coh = typeof COHERENCE_BUS !== 'undefined'
+    ? COHERENCE_BUS.coherenceLevel
+    : 0;
+  drawPrimeAxisTracker(ctx, cx, cy, size, pos, coh);
+  primeTrackerAnimId = requestAnimationFrame(primeTrackerRAF);
+}
+
+function startPrimeTracker() {
+  if (primeTrackerAnimId) return;
+  primeTrackerRAF();
+}
+
+function stopPrimeTracker() {
+  if (primeTrackerAnimId) {
+    cancelAnimationFrame(primeTrackerAnimId);
+    primeTrackerAnimId = null;
+  }
+}
+
 // ── ANIMATION CLEANUP ──
 function stopWheelAnimation() {
   if (typeof animId !== 'undefined' && animId !== null) {
@@ -909,6 +941,23 @@ function enterPortal() {
   // ── Mobile Nav Drawer ──
   initMobileNavDrawer();
   updateMobileNavState();
+
+  // ── Audio autoplay policy: resume audio context on first user interaction ──
+  document.addEventListener('click', () => {
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.audioCtx && breathCtrl.audioCtx.state === 'suspended') {
+      breathCtrl.audioCtx.resume();
+    }
+  }, { once: true });
+
+  // Sync mute button state from localStorage on load
+  if (typeof breathCtrl !== 'undefined') {
+    const btn = document.getElementById('audioMuteBtn');
+    if (btn) {
+      btn.classList.toggle('muted', breathCtrl.audioMuted);
+      btn.textContent = breathCtrl.audioMuted ? '⊘' : '♩';
+      btn.title = breathCtrl.audioMuted ? 'Unmute breath tones' : 'Mute breath tones';
+    }
+  }
 
   // ── Sigil Navigator (desktop orbit nav) ──
   initSigilNav();
