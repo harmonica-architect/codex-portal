@@ -101,6 +101,7 @@ function updateCoherenceDisplay() {
   // Coherence bar breath glow
   if (cohBar) cohBar.style.boxShadow = breathHold() > 0.5 ? `0 0 ${breathHold()*12}px rgba(232,200,106,${breathHold()*0.5})` : '';
   if (cohVal) cohVal.style.opacity = 0.7 + breathHold() * 0.3;
+  drawCoherenceRadar();
 }
 
 // ── PRIME / QUASI-PRIME HELPERS ──
@@ -243,6 +244,66 @@ function drawCohSparkline(samples) {
     ctx.fillStyle = 'rgba(232,200,106,0.45)';
     ctx.font = '9px sans-serif';
     ctx.fillText('\u2191', W - 10, 8);
+  }
+}
+
+function drawCoherenceRadar() {
+  const canvas = document.getElementById('cohRadar');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const cx2 = W / 2, cy2 = H / 2, r = W / 2 - 4;
+
+  // 4 axes: Breath, Prime, Wave, CrossDomain
+  const axes = [
+    { label: 'br', value: breathHold() },  // breath alignment
+    { label: 'pr', value: selectedWheelPos !== null
+      ? WHEEL_CONFIG.primePositions.includes(selectedWheelPos) ? 1.0
+      : isQuasiPrime(selectedWheelPos) ? 0.6 : 0.2 : 0 },  // prime proximity
+    { label: 'wv', value: 0.5 },  // wave coherence (placeholder)
+    { label: 'cd', value: 0.4 }   // cross-domain (placeholder)
+  ];
+  const n = axes.length;
+
+  // Draw axes
+  ctx.strokeStyle = 'rgba(100,90,160,0.3)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx2, cy2);
+    ctx.lineTo(cx2 + r * Math.cos(angle), cy2 + r * Math.sin(angle));
+    ctx.stroke();
+  }
+
+  // Draw filled polygon
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const v = Math.max(0, Math.min(1, axes[i].value));
+    const px = cx2 + r * v * Math.cos(angle);
+    const py = cy2 + r * v * Math.sin(angle);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(232,200,106,0.15)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(232,200,106,0.5)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Draw axis labels
+  ctx.fillStyle = 'rgba(180,160,220,0.7)';
+  ctx.font = '5px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const lx = cx2 + (r + 6) * Math.cos(angle);
+    const ly = cy2 + (r + 6) * Math.sin(angle);
+    ctx.fillText(axes[i].label, lx, ly);
   }
 }
 
