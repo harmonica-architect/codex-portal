@@ -361,27 +361,6 @@ function drawWheel() {
     }
   }
 
-  // R2.1 — Frequency Ratio Labels at prime nodes (when breathHold > 0.65)
-  if (breathHold() > 0.65) {
-    const noteRatios = [
-      { pos: 0, ratio: '1/1' },   // C
-      { pos: 4, ratio: '5/4' },   // E
-      { pos: 7, ratio: '3/2' },   // G
-      { pos: 9, ratio: '15/8' },  // B
-      { pos: 11, ratio: '5/3' }   // F#
-    ];
-    ctx.font = '7px sans-serif';
-    ctx.fillStyle = 'rgba(232,200,106,0.7)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    for (const { pos, ratio } of noteRatios) {
-      if (WHEEL_CONFIG.primePositions.includes(pos)) {
-        const a = pAngle(pos);
-        ctx.fillText(ratio, cx + Math.cos(a) * (ir - 60), cy + Math.sin(a) * (ir - 60));
-      }
-    }
-  }
-
   // Active arc
   if (isRunning && PHASES[currentPhase]) {
     const a = pAngle(PHASES[currentPhase].wheelPos);
