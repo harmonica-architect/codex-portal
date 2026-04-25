@@ -651,6 +651,107 @@ function drawWheel() {
     ctx.lineWidth = 2;
     ctx.stroke();
   }
+
+  // T13: Zero-variance station markers — concentric ring at station positions
+  if (typeof ZV_STATIONS !== 'undefined' && ZV_STATIONS.length > 0) {
+    for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+      const station = ZV_STATIONS.find(s => s.matAddr === i);
+      if (station) {
+        const angle = pAngle(i);
+        const sx = cx + (ir - 22) * Math.cos(angle);
+        const sy = cy + (ir - 22) * Math.sin(angle);
+        const bh = breathHold();
+        ctx.beginPath();
+        ctx.arc(sx, sy, 12 + bh * 3, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(200,160,255,${0.3 + bh * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(sx, sy, 16 + bh * 4, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(200,160,255,${0.15 + bh * 0.2})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // T14: Interference lines — positions in same zeta residue class connect
+  if (typeof ZV_STATIONS !== 'undefined' && ZV_STATIONS.length > 1) {
+    for (let i = 0; i < ZV_STATIONS.length; i++) {
+      for (let j = i + 1; j < ZV_STATIONS.length; j++) {
+        const a1 = ZV_STATIONS[i].matAddr % 30;
+        const a2 = ZV_STATIONS[j].matAddr % 30;
+        if (a1 === a2) {
+          const wp1 = ZV_STATIONS[i].matAddr % 24;
+          const wp2 = ZV_STATIONS[j].matAddr % 24;
+          const ang1 = pAngle(wp1);
+          const ang2 = pAngle(wp2);
+          const r1 = ir + (or - ir) * 0.5;
+          const r2 = ir + (or - ir) * 0.5;
+          const x1 = cx + r1 * Math.cos(ang1);
+          const y1 = cy + r1 * Math.sin(ang1);
+          const x2 = cx + r2 * Math.cos(ang2);
+          const y2 = cy + r2 * Math.sin(ang2);
+          const freq = (a1 + a2) / 2;
+          const interferenceAlpha = 0.06 + Math.abs(Math.sin(breathPhase * Math.PI * 2 * freq / 15)) * 0.12;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = `rgba(180,140,255,${interferenceAlpha})`;
+          ctx.lineWidth = 0.6;
+          ctx.setLineDash([2, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+    }
+  }
+
+  // T16: Digital root tint per wheel segment — subtle color wash
+  for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+    const a = pAngle(i);
+    const nx = cx + Math.cos(a) * (ir - 22);
+    const ny = cy + Math.sin(a) * (ir - 22);
+    const dr = 1 + ((i - 1) % 9);
+    const drGlow = [
+      '',
+      'rgba(200,60,60,0.03)',
+      'rgba(200,120,60,0.03)',
+      'rgba(220,160,60,0.025)',
+      'rgba(200,200,80,0.02)',
+      'rgba(100,200,100,0.02)',
+      'rgba(60,180,180,0.025)',
+      'rgba(80,120,220,0.025)',
+      'rgba(120,80,200,0.03)'
+    ];
+    ctx.fillStyle = drGlow[dr];
+    ctx.beginPath();
+    ctx.arc(nx, ny, 14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // T20: Prime density tick marks — count primes within ±5 positions
+  for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+    const pp = WHEEL_CONFIG.primePositions.includes(i);
+    const act = (i === PHASES[currentPhase]?.wheelPos && isRunning);
+    if (act) continue; // skip active node
+    const primeNeighbors = WHEEL_CONFIG.primePositions.filter(p => {
+      const diff = Math.abs(p - i);
+      return Math.min(diff, 24 - diff) <= 5;
+    }).length;
+    if (primeNeighbors > 0) {
+      const tickR = pp ? 12 : 8;
+      for (let t = 0; t < Math.min(primeNeighbors, 6); t++) {
+        const ta = pAngle(i) + (t - primeNeighbors / 2) * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(cx + (ir - 22 - 2) * Math.cos(pAngle(i)), cy + (ir - 22 - 2) * Math.sin(pAngle(i)));
+        ctx.lineTo(cx + (ir - 22 - tickR) * Math.cos(ta), cy + (ir - 22 - tickR) * Math.sin(ta));
+        ctx.strokeStyle = pp ? `rgba(232,200,106,${0.4 + breathHold() * 0.3})` : `rgba(150,130,200,${0.2 + breathHold() * 0.2})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+      }
+    }
+  }
 }
 
 function animateWheel() {
