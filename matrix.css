@@ -1,4 +1,21 @@
-﻿:root {
+/* Back button */
+.back-btn {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(14,14,26,0.9);
+  border: 1px solid #1e1e32;
+  color: #6a6050;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  border-radius: 20px;
+  z-index: 100;
+  transition: all 0.3s;
+}
+.back-btn:hover { border-color: #e8c86a; color: #e8c86a; }
+:root {
   --bg: #07070f; --surface: #0e0e1a; --border: #1e1e32;
   --text: #d8d0c0; --muted: #6a6050; --dim: #3a3848;
   --gold: #e8c86a; --gold-dim: rgba(232,200,106,0.15);
@@ -37,7 +54,7 @@ body {
 .matrix-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
 .matrix-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* The 12Ãƒâ€”12 grid */
+/* The 12Ã—12 grid */
 .harmonic-matrix {
   display: grid;
   grid-template-columns: 88px repeat(12, 1fr);
@@ -96,7 +113,7 @@ body {
   font-size: 0.48rem; color: var(--gold); letter-spacing: 0.08em; padding: 0.3rem;
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ SIDEBAR Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* â”€â”€ SIDEBAR â”€â”€ */
 .sidebar { display: flex; flex-direction: column; gap: 0.5rem; }
 
 /* Preview panel */
@@ -207,7 +224,7 @@ body {
 .tooltip-arch { color: var(--muted); font-style: italic; }
 
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ DRAG SELECTION RECTANGLE Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* â”€â”€ DRAG SELECTION RECTANGLE â”€â”€ */
 .drag-rect {
   position: absolute; border: 1px solid rgba(232,200,106,0.6);
   background: rgba(232,200,106,0.08); pointer-events: none; z-index: 100;
@@ -226,3 +243,92 @@ body {
 .guide-steps { display: flex; gap: 1rem; flex-wrap: wrap; }
 .guide-step { font-size: 0.58rem; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; }
 .guide-n { color: var(--gold); font-size: 0.5rem; }
+
+/* Breath phase indicator strip */
+.conn-box {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(7,7,15,0.88);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 0.7rem;
+  z-index: 10;
+  min-width: 90px;
+}
+.conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.5s;
+}
+.conn-dot.connected { background: #5aaa5a; box-shadow: 0 0 5px rgba(90,170,90,0.5); }
+.conn-dot.disconnected { background: #aa5a5a; }
+.conn-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+.conn-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 16px;
+  text-align: center;
+  line-height: 1;
+}
+.conn-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.conn-sync {
+  font-size: 0.58rem;
+  color: var(--axis);
+  margin-left: 0.2rem;
+}
+
+.breath-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  background: rgba(6,6,14,0.7);
+  border-bottom: 1px solid rgba(232,200,106,0.1);
+  margin-bottom: 0.15rem;
+  flex-wrap: wrap;
+}
+.breath-strip-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-right: 0.3rem;
+}
+.breath-chip {
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 0.18rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all 0.4s ease;
+}
+.breath-chip.active {
+  border-color: rgba(232,200,106,0.3);
+  background: rgba(232,200,106,0.08);
+}
+.breath-phase-label {
+  margin-left: auto;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  transition: color 0.4s ease;
+}

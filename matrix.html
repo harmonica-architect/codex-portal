@@ -4,9 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Harmonic Glyph Matrix — Codex Portal</title>
+<link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="matrix.css">
+<style>
+/* Shared sigil nav body layout */
+body { display: flex; flex-direction: column; align-items: center; padding: 0.75rem; }
+.page-body { width: 100%; max-width: 900px; }
+</style>
 </head>
 <body>
+
+<!-- ══ SIGIL NAVIGATOR ══ -->
+<div class="sigil-nav-wrap" id="sigilNavWrap">
+  <div class="sigil-nav-ring">
+    <div class="sn-orbit sn-orbit-outer" id="snOrbitOuter">
+      <div class="sn-dot sn-dot-0" data-idx="0">⊙</div>
+      <div class="sn-dot sn-dot-1" data-idx="1">◎</div>
+      <div class="sn-dot sn-dot-2" data-idx="2">◇</div>
+      <div class="sn-dot sn-dot-3" data-idx="3">◉</div>
+      <div class="sn-dot sn-dot-4" data-idx="4">○</div>
+      <div class="sn-dot sn-dot-5 sn-dot-active" data-idx="5">◈</div>
+      <div class="sn-dot sn-dot-6" data-idx="6">◇</div>
+      <div class="sn-dot sn-dot-7" data-idx="7">·</div>
+    </div>
+    <div class="sn-hub" id="snHub">
+      <div class="sn-hub-glyph" id="snHubGlyph">◈</div>
+      <div class="sn-hub-label" id="snHubLabel">Matrix</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+
+<!-- Connection status box -->
+<div class="conn-box" id="matrixConnBox">
+  <div class="conn-dot" id="matrixConnDot"></div>
+  <div class="conn-info">
+    <span class="conn-count" id="matrixConnCount">—</span>
+    <span class="conn-label">online</span>
+  </div>
+  <div class="conn-sync" id="matrixConnSync"></div>
+</div>
 
 <!-- Inline Guide Banner -->
 <div class="inline-guide">
@@ -81,6 +119,24 @@
 
 <!-- Matrix — no tutorial overlay needed — guide is inline -->
 
-<script src="matrix.js"></script>
+<script src="breath-controller.js"></script>
+<script src="sigil-nav.js"></script>
+<script src="matrix.js?v=5"></script>
+<script>
+// Activate Matrix nav dot
+document.addEventListener('DOMContentLoaded', function() {
+  initSigilNav();
+  // Highlight the Matrix dot
+  var dots = document.querySelectorAll('.sn-dot');
+  if (dots[5]) { dots[5].classList.add('active'); }
+  // Route sigil nav clicks for matrix/resonator pages
+  document.querySelectorAll('.sn-dot').forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      var idx = parseInt(dot.dataset.idx);
+      navigateToSigil(idx);
+    });
+  });
+});
+</script>
 </body>
 </html>

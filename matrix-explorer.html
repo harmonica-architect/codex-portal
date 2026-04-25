@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex Matrix Explorer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111120;
+    --surface2: #181830;
+    --border: #252545;
+    --text: #c0c0e0;
+    --text-dim: #505070;
+    --protein: #00e5a0;
+    --protein-dim: #00e5a022;
+    --music: #4d9fff;
+    --music-dim: #4d9fff22;
+    --finance: #ff8c42;
+    --finance-dim: #ff8c4222;
+    --anthro: #c070ff;
+    --anthro-dim: #c070ff22;
+    --codex: #40d0c8;
+    --codex-dim: #40d0c822;
+    --accent: #9090ff;
+    --radius: 5px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  header h1 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  #search {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+    padding: 6px 12px;
+    width: 220px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--text-dim); }
+
+  .toggles {
+    display: flex;
+    gap: 6px;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .toggle.active { color: var(--text); }
+  .toggle.protein.active  { border-color: var(--protein); color: var(--protein); background: var(--protein-dim); }
+  .toggle.music.active    { border-color: var(--music);   color: var(--music);   background: var(--music-dim); }
+  .toggle.finance.active  { border-color: var(--finance);  color: var(--finance);  background: var(--finance-dim); }
+  .toggle.anthro.active   { border-color: var(--anthro);  color: var(--anthro);  background: var(--anthro-dim); }
+  .toggle.codex.active    { border-color: var(--codex);    color: var(--codex);    background: var(--codex-dim); }
+
+  .view-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 2px;
+  }
+  .view-tab {
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--text-dim);
+    border: none;
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .view-tab.active {
+    background: var(--surface);
+    color: var(--accent);
+    box-shadow: 0 0 8px #9090ff33;
+  }
+
+  .stat-bar {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .stat-bar strong { color: var(--text); }
+
+  /* ─── MAIN ─── */
+  main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ─── CANVAS AREA ─── */
+  #canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  /* ─── SIDE PANEL ─── */
+  #detail-panel {
+    width: 300px;
+    min-width: 260px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .panel-header h2 {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .panel-pos {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .panel-wheel-pos {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .panel-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .panel-domain-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .panel-domain-badge.protein { background: var(--protein-dim); color: var(--protein); border: 1px solid var(--protein); }
+  .panel-domain-badge.music   { background: var(--music-dim);   color: var(--music);   border: 1px solid var(--music); }
+  .panel-domain-badge.finance  { background: var(--finance-dim); color: var(--finance);  border: 1px solid var(--finance); }
+  .panel-domain-badge.anthro   { background: var(--anthro-dim);  color: var(--anthro);  border: 1px solid var(--anthro); }
+  .panel-domain-badge.codex    { background: var(--codex-dim);   color: var(--codex);   border: 1px solid var(--codex); }
+
+  .panel-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .panel-empty {
+    padding: 20px 16px;
+    color: var(--text-dim);
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  .panel-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .panel-item:hover { background: #ffffff0a; border-color: var(--accent); }
+  .panel-item-name {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    word-break: break-word;
+  }
+  .panel-item-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+  }
+  .panel-item-meta b { color: var(--text); font-weight: 500; }
+  .panel-item-type {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    background: var(--border);
+  }
+
+  /* ─── LEGEND ─── */
+  .legend {
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+  .legend-title {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+  }
+  .legend-items { display: flex; gap: 10px; flex-wrap: wrap; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+  }
+  .legend-dot.protein { background: var(--protein); }
+  .legend-dot.music   { background: var(--music); }
+  .legend-dot.finance  { background: var(--finance); }
+  .legend-dot.anthro   { background: var(--anthro); }
+  .legend-dot.codex    { background: var(--codex); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── LOADING ─── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 1000;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  #loading.hidden { display: none; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .panel-resonance-info {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .panel-resonance-info strong { color: var(--accent); }
+  .domain-group-header {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 8px 0 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--border);
+  }
+
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div>Initializing Codex Matrix…</div>
+</div>
+
+<header>
+  <h1>⬡ CODEX MATRIX</h1>
+  <div class="header-controls">
+    <input id="search" type="text" placeholder="Search (e.g. Arche, F3, arithmetic)" autocomplete="off">
+    <div class="toggles">
+      <button class="toggle protein active"  data-dom="protein">● Protein</button>
+      <button class="toggle music active"    data-dom="music">● Music</button>
+      <button class="toggle finance active"  data-dom="finance">● Finance</button>
+      <button class="toggle anthro active"   data-dom="anthro">● Anthro</button>
+      <button class="toggle codex active"    data-dom="codex">● Codex</button>
+    </div>
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab-wheel">Wheel</button>
+      <button class="view-tab" id="tab-cube">Matrix Cube</button>
+      <button class="view-tab" id="tab-res">Resonance</button>
+    </div>
+    <div class="stat-bar">
+      <span><strong id="stat-items">—</strong> items</span>
+      <span><strong id="stat-pos">—</strong>/144</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="canvas-wrap">
+    <canvas id="main-canvas"></canvas>
+  </div>
+
+  <div id="detail-panel">
+    <div class="panel-header">
+      <h2>Position</h2>
+      <div class="panel-pos" id="panel-pos">—</div>
+      <div class="panel-wheel-pos" id="panel-wheel-pos"></div>
+      <div class="panel-meta" id="panel-meta"></div>
+    </div>
+    <div class="panel-items" id="panel-items">
+      <div class="panel-empty" id="panel-empty">Select a position to explore</div>
+    </div>
+    <div class="legend">
+      <div class="legend-title">Domains</div>
+      <div class="legend-items">
+        <div class="legend-item"><div class="legend-dot protein"></div>Protein</div>
+        <div class="legend-item"><div class="legend-dot music"></div>Music</div>
+        <div class="legend-item"><div class="legend-dot finance"></div>Finance</div>
+        <div class="legend-item"><div class="legend-dot anthro"></div>Anthro</div>
+        <div class="legend-item"><div class="legend-dot codex"></div>Codex</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// EMBEDDED DATA (1,379 items — no fetch needed)
+// ─────────────────────────────────────────────────────────────────────────────
+// Loaded via script tag before this module
+// ─── RESONANCE VIEW ─────────────────────────────────────────────────────────
+// Two-panel: Wheel (top) + Grid (bottom)
+// Shows which domains occupy each position
+
+function renderRes() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2;
+  const cy = H * 0.36;
+
+  // Background
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── TOP: RESONANCE WHEEL ────────────────────────────────────────────────
+  renderResWheel(cx, cy, W * 0.5, H * 0.62);
+
+  // ── BOTTOM: RESONANCE GRID ──────────────────────────────────────────────
+  renderResGrid(W / 2, H * 0.70, W * 0.85, H * 0.26);
+}
+
+function renderResWheel(cx, cy, radius, canvasHeight) {
+  const N = 24;
+  const outerR = Math.min(radius, canvasHeight) * 0.85;
+  const innerR = outerR * 0.20;
+
+  // Title
+  ctx.fillStyle = '#5050b0';
+  ctx.font = 'bold 11px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('RESONANCE WHEEL', cx, cy - outerR - 16);
+
+  // 3 clean rings (V_row bands grouped: 0-3, 4-7, 8-11)
+  const ringBands = [
+    { rFrac: 0.20, label: 'V 0–3' },
+    { rFrac: 0.55, label: 'V 4–7' },
+    { rFrac: 0.85, label: 'V 8–11' },
+  ];
+  ringBands.forEach(({ rFrac, label }) => {
+    const r = innerR + (outerR - innerR) * rFrac;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#252545';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Outer circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+  ctx.strokeStyle = '#353570';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Spokes (0–23)
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
+    ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
+    ctx.strokeStyle = '#1e1e38';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Domain dots per wheel position
+  for (let wp = 0; wp < N; wp++) {
+    const angle = (wp / N) * Math.PI * 2 - Math.PI / 2;
+    const r = innerR + (outerR - innerR) * 0.5;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+
+    const items = getFilteredItems().filter(item => wheelPos(item.matAddr) === wp);
+    const domains = [...new Set(items.map(it => it.domain))];
+    const count = items.length;
+
+    if (count === 0) {
+      // Empty — small dashed circle
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#252545';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (domains.length === 1) {
+      // Single domain — solid dot with count
+      const color = DOMAIN_COLORS[domains[0]];
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      if (count > 1) {
+        ctx.fillStyle = '#ffffffcc';
+        ctx.font = 'bold 9px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count, x, y);
+      }
+    } else {
+      // Multi-domain — ring of small colored dots
+      domains.forEach((d, di) => {
+        const a = (di / domains.length) * Math.PI * 2;
+        const dx = x + 7 * Math.cos(a);
+        const dy = y + 7 * Math.sin(a);
+        ctx.beginPath();
+        ctx.arc(dx, dy, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = DOMAIN_COLORS[d];
+        ctx.fill();
+      });
+      if (count > domains.length) {
+        ctx.fillStyle = '#ffffffcc';
+        ctx.font = 'bold 9px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count, x, y);
+      }
+    }
+  }
+
+  // Wheel position number labels (0–23), large and clear
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const lx = cx + (outerR + 16) * Math.cos(angle);
+    const ly = cy + (outerR + 16) * Math.sin(angle);
+    ctx.fillStyle = '#6060a0';
+    ctx.font = 'bold 10px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i, lx, ly);
+  }
+
+  // Hover highlight
+  if (hoveredAddr != null) {
+    const wp = wheelPos(hoveredAddr);
+    const angle = (wp / N) * Math.PI * 2 - Math.PI / 2;
+    const r = innerR + (outerR - innerR) * 0.5;
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 16, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Selection highlight
+  if (selectedAddr != null) {
+    const wp = wheelPos(selectedAddr);
+    const angle = (wp / N) * Math.PI * 2 - Math.PI / 2;
+    const r = innerR + (outerR - innerR) * 0.5;
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 18, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}function renderResGrid(cx, cy, gridW, gridH) {
+  const cols = 12, rows = 12;
+  const cellW = gridW / cols;
+  const cellH = gridH / rows;
+  const PAD_LEFT = 26;  // space for V_row labels
+  const PAD_BOTTOM = 18; // space for F_col labels
+  const domainOrder = ['protein', 'music', 'finance', 'anthro', 'codex'];
+
+  const gridX = cx - gridW / 2 + PAD_LEFT;
+  const gridY = cy - gridH / 2;
+  const innerW = gridW - PAD_LEFT;
+  const innerH = gridH - PAD_BOTTOM;
+  const innerCellW = innerW / cols;
+  const innerCellH = innerH / rows;
+
+  // Title
+  ctx.fillStyle = '#5050b0';
+  ctx.font = 'bold 11px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('144 MATADDR GRID', cx, gridY - 10);
+
+  // ── Column headers (F_col 0–11) ─────────────────────────────────────────
+  ctx.fillStyle = '#404080';
+  ctx.font = '8px Segoe UI';
+  ctx.textAlign = 'center';
+  for (let col = 0; col < cols; col++) {
+    const x = gridX + col * innerCellW + innerCellW / 2;
+    ctx.fillText(col % 12 + '', x, gridY + innerH + 10);
+  }
+
+  // ── Row headers (V_row 0–11) ──────────────────────────────────────────────
+  ctx.textAlign = 'right';
+  for (let row = 0; row < rows; row++) {
+    const y = gridY + row * innerCellH + innerCellH / 2;
+    ctx.fillText(row % 12 + '', gridX - 4, y + 4);
+  }
+
+  // ── Outer border ─────────────────────────────────────────────────────────
+  ctx.strokeStyle = '#2a2a50';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(gridX, gridY, innerW, innerH);
+
+  // ── Cells ─────────────────────────────────────────────────────────────────
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const addr = row * 12 + col; // 0..143, no wrap needed
+      const x = gridX + col * innerCellW;
+      const y = gridY + row * innerCellH;
+      const isSelected = addr === selectedAddr;
+      const isHovered  = addr === hoveredAddr;
+
+      const items = getItemsAt(addr);
+      const domains = [...new Set(items.map(it => it.domain))];
+      const count = items.length;
+
+      // Cell background
+      if (count === 0) {
+        ctx.fillStyle = '#0c0c18';
+        ctx.fillRect(x, y, innerCellW, innerCellH);
+        ctx.strokeStyle = '#1a1a30';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([2, 3]);
+        ctx.strokeRect(x, y, innerCellW, innerCellH);
+        ctx.setLineDash([]);
+      } else {
+        ctx.fillStyle = isSelected ? '#1a1a38' : '#101025';
+        ctx.fillRect(x, y, innerCellW, innerCellH);
+      }
+
+      // Border
+      ctx.strokeStyle = isSelected ? '#ffffff' : isHovered ? 'rgba(255,255,255,0.35)' : '#1e1e38';
+      ctx.lineWidth = isSelected ? 1.5 : isHovered ? 1 : 0.5;
+      ctx.strokeRect(x, y, innerCellW, innerCellH);
+
+      // Domain dots (centered, if cell is big enough)
+      if (count > 0 && innerCellW > 16) {
+        const dotR = Math.min(3.5, innerCellW / 5);
+        if (domains.length === 1) {
+          ctx.beginPath();
+          ctx.arc(x + innerCellW / 2, y + innerCellH / 2, dotR + 1, 0, Math.PI * 2);
+          ctx.fillStyle = DOMAIN_COLORS[domains[0]];
+          ctx.fill();
+        } else {
+          const ringR = dotR + 2;
+          for (let d = 0; d < domains.length; d++) {
+            const a = (d / domains.length) * Math.PI * 2 - Math.PI / 2;
+            ctx.beginPath();
+            ctx.arc(x + innerCellW / 2 + ringR * Math.cos(a), y + innerCellH / 2 + ringR * Math.sin(a), dotR - 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = DOMAIN_COLORS[domains[d]];
+            ctx.fill();
+          }
+        }
+
+        // Count badge (top-left)
+        if (count > 1) {
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.font = `bold ${Math.min(10, innerCellW / 3)}px Segoe UI`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(count, x + 2, y + 2);
+        }
+      }
+
+      // matAddr label (bottom-right, only when occupied or hovered)
+      if ((count > 0 || isHovered || isSelected) && innerCellW > 22) {
+        ctx.fillStyle = isSelected ? '#aaaacc' : '#303055';
+        ctx.font = `${Math.min(9, innerCellW / 3.5)}px Segoe UI`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(addr, x + innerCellW - 2, y + innerCellH - 2);
+      }
+
+      // Hover/select overlays
+      if (isSelected) {
+        ctx.strokeStyle = '#ffffffcc';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 1, y + 1, innerCellW - 2, innerCellH - 2);
+      }
+      if (isHovered && !isSelected) {
+        ctx.strokeStyle = '#ffffff33';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 1, y + 1, innerCellW - 2, innerCellH - 2);
+      }
+    }
+  }
+
+  // Axis labels
+  ctx.fillStyle = '#404080';
+  ctx.font = '9px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('F_col →', cx, gridY + innerH + 16);
+  ctx.save();
+  ctx.translate(gridX - 20, cy);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('V_row →', 0, 0);
+  ctx.restore();
+}
+
+function resAddrAt(clientX, clientY) {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2;
+  const cy = H * 0.36;
+
+  // ── Wheel region ──────────────────────────────────────────────────────────
+  const wheelRadius = Math.min(cx, H * 0.62) * 0.85;
+  const wheelInnerR = wheelRadius * 0.20;
+  const dx = clientX - cx;
+  const dy = clientY - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist >= wheelInnerR && dist <= wheelRadius + 24) {
+    let angle = Math.atan2(dy, dx) + Math.PI / 2;
+    if (angle < 0) angle += Math.PI * 2;
+    const wp = Math.round((angle / (Math.PI * 2)) * 24) % 24;
+    // Return the matAddr that actually lands at this wheel position
+    // If something is already selected here, keep it; otherwise find first item
+    const items = getFilteredItems().filter(x => wheelPos(x.matAddr) === wp);
+    if (items.length > 0) {
+      if (selectedAddr != null && wheelPos(selectedAddr) === wp) return selectedAddr;
+      return items[0].matAddr;
+    }
+    // Empty wheel position: return first possible matAddr (wp + 0*24)
+    return wp < 144 ? wp : wp % 144;
+  }
+
+  // ── Grid region ────────────────────────────────────────────────────────────
+  const gridW = W * 0.88;
+  const gridH = H * 0.28;
+  const gridCX = W / 2;
+  const gridCY = H * 0.67;
+  const gridX = gridCX - gridW / 2;
+  const gridY = gridCY - gridH / 2;
+
+  if (clientX >= gridX && clientX <= gridX + gridW &&
+      clientY >= gridY && clientY <= gridY + gridH) {
+    const col = Math.floor((clientX - gridX) / (gridW / 12));
+    const row = Math.floor((clientY - gridY) / (gridH / 12));
+    if (col >= 0 && col < 12 && row >= 0 && row < 12) {
+      return row * 12 + col; // direct address calculation
+    }
+  }
+
+  return null;
+}
+</script>
+<script src="embed-data.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CORE MATH (verified by matrix-explorer-tests.js)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function pos12(n) { return ((n % 12) + 12) % 12; }
+
+/** V_pos and F_pos can exceed 11 — raw V*12+F then mod 144 */
+function computeMatAddr(x) {
+  const Vp = x.V_pos != null ? x.V_pos : (x.V_row != null ? x.V_row : pos12(x.V));
+  const Fp = x.F_pos != null ? x.F_pos : (x.F_col != null ? x.F_col : pos12(x.F));
+  return (Vp * 12 + Fp) % 144;
+}
+
+/** Icositetragon wheel: matAddr → 0-23 position */
+function wheelPos(matAddr) { return matAddr % 24; }
+
+// ─── DATA PARSING ─────────────────────────────────────────────────────────────
+
+const DOMAIN_COLORS = {
+  protein: '#00e5a0',
+  music:   '#4d9fff',
+  finance: '#ff8c42',
+  anthro:  '#c070ff',
+  codex:   '#40d0c8',
+};
+
+function parseItem(x) {
+  const d = x._domain || x.lang || '';
+  let domain;
+  if (d === 'anthroposophy') domain = 'anthro';
+  else if (d === 'music')     domain = 'music';
+  else if (d === 'protein')   domain = 'protein';
+  else if (d === 'finance')   domain = 'finance';
+  else if (d === 'codex')     domain = 'codex';
+  else domain = d || 'codex';
+  const name = x.term_de || x._id || x.name || '(unknown)';
+  const matAddr = x.matAddr != null ? x.matAddr : computeMatAddr(x);
+  return { ...x, domain, name, matAddr };
+}
+
+// ─── GLOBAL STATE ─────────────────────────────────────────────────────────────
+
+let allItems = [];
+let activeDomains = new Set(['protein', 'music', 'finance', 'anthro', 'codex']);
+let selectedAddr = null;
+let currentView = 'wheel'; // 'wheel' | 'cube' | 'res'
+let canvas, ctx;
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+window.addEventListener('DOMContentLoaded', () => {
+  canvas = document.getElementById('main-canvas');
+  ctx = canvas.getContext('2d');
+
+  // Load embedded data
+  if (typeof EMBED_DATA === 'undefined') {
+    document.getElementById('loading').innerHTML =
+      '<div style="color:#ff6060">Error: embed-data.js not loaded</div>';
+    return;
+  }
+
+  allItems = EMBED_DATA.map(parseItem);
+  document.getElementById('loading').classList.add('hidden');
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  canvas.addEventListener('click', onCanvasClick);
+  canvas.addEventListener('mousemove', onCanvasHover);
+  canvas.addEventListener('mouseleave', () => {
+    hoveredAddr = null;
+    updateDetailPanel(selectedAddr);
+  });
+
+  setupControls();
+  render();
+});
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  canvas.width  = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  render();
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────────────────────
+
+function setupControls() {
+  // Domain toggles
+  document.querySelectorAll('.toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dom = btn.dataset.dom;
+      if (activeDomains.has(dom)) {
+        activeDomains.delete(dom);
+        btn.classList.remove('active');
+      } else {
+        activeDomains.add(dom);
+        btn.classList.add('active');
+      }
+      render();
+      updateDetailPanel(selectedAddr);
+    });
+  });
+
+  // View tabs
+  document.getElementById('tab-wheel').addEventListener('click', () => {
+    currentView = 'wheel';
+    document.getElementById('tab-wheel').classList.add('active');
+    document.getElementById('tab-cube').classList.remove('active');
+    render();
+    updateDetailPanel(selectedAddr);
+  });
+  document.getElementById('tab-cube').addEventListener('click', () => {
+    currentView = 'cube';
+    document.getElementById('tab-wheel').classList.remove('active');
+    document.getElementById('tab-cube').classList.remove('active');
+    document.getElementById('tab-res').classList.remove('active');
+    document.getElementById('tab-cube').classList.add('active');
+    render();
+    updateDetailPanel(selectedAddr);
+  });
+  document.getElementById('tab-res').addEventListener('click', () => {
+    currentView = 'res';
+    document.getElementById('tab-wheel').classList.remove('active');
+    document.getElementById('tab-cube').classList.remove('active');
+    document.getElementById('tab-res').classList.remove('active');
+    document.getElementById('tab-res').classList.add('active');
+    render();
+    updateDetailPanel(selectedAddr);
+  });
+
+  // Search
+  document.getElementById('search').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) return;
+    const found = allItems.find(x =>
+      x.name.toLowerCase().includes(q) ||
+      (x.term_en || '').toLowerCase().includes(q) ||
+      (x._id || '').toLowerCase().includes(q)
+    );
+    if (found) {
+      selectAddr(found.matAddr);
+      render();
+      updateDetailPanel(found.matAddr);
+    }
+  });
+}
+
+// ─── ITEM QUERY ─────────────────────────────────────────────────────────────
+
+function getFilteredItems() {
+  return allItems.filter(x => activeDomains.has(x.domain));
+}
+
+function getItemsAt(addr) {
+  return getFilteredItems().filter(x => x.matAddr === addr);
+}
+
+function getCellColor(addr) {
+  const items = getItemsAt(addr);
+  if (items.length === 0) return null;
+  const domains = [...new Set(items.map(x => x.domain))];
+  if (domains.length > 1) return 'multi';
+  return domains[0];
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+
+function updateStats() {
+  const items = getFilteredItems();
+  const positions = new Set(items.map(x => x.matAddr));
+  document.getElementById('stat-items').textContent = items.length;
+  document.getElementById('stat-pos').textContent = positions.size;
+}
+
+// ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
+
+function selectAddr(addr) {
+  selectedAddr = addr;
+  updateDetailPanel(addr);
+}
+
+function updateDetailPanel(addr) {
+  const panelPos = document.getElementById('panel-pos');
+  const panelWheelPos = document.getElementById('panel-wheel-pos');
+  const metaEl = document.getElementById('panel-meta');
+  const itemsEl = document.getElementById('panel-items');
+  const emptyEl = document.getElementById('panel-empty');
+
+  panelPos.textContent = addr != null ? addr : '—';
+  panelWheelPos.textContent = addr != null
+    ? `Wheel ${wheelPos(addr)} · matAddr ${addr}`
+    : '';
+
+  metaEl.innerHTML = '';
+  itemsEl.innerHTML = '';
+  emptyEl.style.display = 'none';
+
+  if (addr == null) {
+    emptyEl.textContent = 'Click any position to explore';
+    emptyEl.style.display = 'block';
+    updateStats();
+    return;
+  }
+
+  const items = getItemsAt(addr);
+  const allAtAddr = allItems.filter(x => x.matAddr === addr);
+  const allDomains = [...new Set(allAtAddr.map(x => x.domain))];
+  const domains = [...new Set(items.map(x => x.domain))];
+
+  // Always show domain badges for this position (dimmed if filtered out)
+  if (allDomains.length > 0) {
+    const badgeRow = document.createElement('div');
+    badgeRow.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;';
+    allDomains.forEach(d => {
+      const b = document.createElement('span');
+      b.className = `panel-domain-badge ${d}`;
+      const count = allAtAddr.filter(x => x.domain === d).length;
+      if (!domains.includes(d)) {
+        b.style.opacity = '0.3';
+        b.textContent = `${d} (${count})✗`;
+      } else {
+        b.textContent = d;
+      }
+      badgeRow.appendChild(b);
+    });
+    metaEl.appendChild(badgeRow);
+  }
+
+  if (items.length === 0) {
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = allAtAddr.length > 0
+      ? `All ${allAtAddr.length} items here are filtered out`
+      : 'Empty position — uncharted resonance';
+    updateStats();
+    return;
+  }
+
+  // Count summary
+  const byDomain = {};
+  items.forEach(it => { byDomain[it.domain] = (byDomain[it.domain] || 0) + 1; });
+  const summary = document.createElement('div');
+  summary.style.cssText = 'font-size:10px;color:var(--text-dim);margin-bottom:6px;';
+  summary.textContent = Object.entries(byDomain).map(([d,n]) => `${n}× ${d}`).join(' · ');
+  metaEl.appendChild(summary);
+
+  // Items
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'panel-item';
+    div.style.cssText = 'cursor:pointer;';
+    div.addEventListener('click', () => {
+      selectAddr(item.matAddr);
+      render();
+      updateDetailPanel(item.matAddr);
+    });
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'panel-item-name';
+    nameEl.textContent = item.name || item._id || '(unknown)';
+    div.appendChild(nameEl);
+
+    const metaRow = document.createElement('div');
+    metaRow.className = 'panel-item-meta';
+    if (item.V != null) { const s = document.createElement('span'); s.innerHTML = `<b>V</b>=${item.V}`; metaRow.appendChild(s); }
+    if (item.E != null) { const s = document.createElement('span'); s.innerHTML = `<b>E</b>=${item.E}`; metaRow.appendChild(s); }
+    if (item.F != null) { const s = document.createElement('span'); s.innerHTML = `<b>F</b>=${item.F}`; metaRow.appendChild(s); }
+    if (item.frequency) { const s = document.createElement('span'); s.innerHTML = `<b>Hz</b>=${item.frequency}`; metaRow.appendChild(s); }
+    if (item.family) { const t = document.createElement('span'); t.className = 'panel-item-type'; t.textContent = item.family; metaRow.appendChild(t); }
+    if (item.type) { const t = document.createElement('span'); t.className = 'panel-item-type'; t.textContent = item.type; metaRow.appendChild(t); }
+    if (item.term_en) { const s = document.createElement('span'); s.style.color = 'var(--anthro)'; s.textContent = item.term_en; metaRow.appendChild(s); }
+    if (item.sector) { const t = document.createElement('span'); t.className = 'panel-item-type'; t.textContent = item.sector; metaRow.appendChild(t); }
+
+    div.appendChild(metaRow);
+    itemsEl.appendChild(div);
+  });
+
+  updateStats();
+}
+// ─── CANVAS INTERACTION ───────────────────────────────────────────────────────
+
+let hoveredAddr = null;
+
+function onCanvasClick(e) {
+  const addr = addrAtCoord(e.clientX, e.clientY);
+  if (addr != null) {
+    selectAddr(addr);
+    render();
+    updateDetailPanel(addr);
+  }
+}
+
+// Debug: also log getItemsAt
+const originalGetItemsAt = getItemsAt;
+getItemsAt = function(addr) {
+  const result = originalGetItemsAt(addr);
+  console.log('getItemsAt(' + addr + ') = ' + result.length + ' items');
+  return result;
+};
+
+function onCanvasHover(e) {
+  const addr = addrAtCoord(e.clientX, e.clientY);
+  if (addr !== hoveredAddr) {
+    hoveredAddr = addr;
+    render();
+    updateDetailPanel(addr);
+  }
+}
+
+function addrAtCoord(clientX, clientY) {
+  if (currentView === 'wheel') return wheelAddrAt(clientX, clientY);
+  if (currentView === 'res') return resAddrAt(clientX, clientY);
+  return cubeAddrAt(clientX, clientY);
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (currentView === 'wheel') renderWheel();
+  else if (currentView === 'cube') renderCube();
+  else renderRes();
+  updateStats();
+}
+
+// ─── WHEEL VIEW ───────────────────────────────────────────────────────────────
+// 24 positions around a circle, concentric rings per V_row band (0–11)
+
+function renderWheel() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const outerR = Math.min(W, H) * 0.44;
+  const innerR = outerR * 0.18;
+  const N = 24;
+
+  // Background
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Concentric rings (V_row bands)
+  for (let ring = 0; ring < 12; ring++) {
+    const r0 = innerR + (outerR - innerR) * ring / 11;
+    const r1 = innerR + (outerR - innerR) * (ring + 1) / 11;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r1, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1e1e38';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Spokes
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
+    ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
+    ctx.strokeStyle = '#1e1e38';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+  ctx.strokeStyle = '#2a2a50';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Inner ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+  ctx.strokeStyle = '#2a2a50';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Draw items as colored dots
+  const itemsByWheelPos = {};
+  for (let i = 0; i < 24; i++) itemsByWheelPos[i] = [];
+  getFilteredItems().forEach(item => {
+    const wp = wheelPos(item.matAddr);
+    itemsByWheelPos[wp].push(item);
+  });
+
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const items = itemsByWheelPos[i];
+    const domains = [...new Set(items.map(x => x.domain))];
+    const r = innerR + (outerR - innerR) * 0.5;
+
+    if (items.length > 0) {
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+
+      if (domains.length > 1) {
+        // Multi-domain: draw ring
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#9090ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#4040a0';
+        ctx.fill();
+      } else {
+        const color = DOMAIN_COLORS[domains[0]];
+        ctx.beginPath();
+        ctx.arc(x, y, domains.length > 1 ? 6 : 5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+    }
+  }
+
+  // Position labels: show matAddr(s) for this wheel position
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const lx = cx + (outerR + 16) * Math.cos(angle);
+    const ly = cy + (outerR + 16) * Math.sin(angle);
+    // Find matAddrs at this wheel position
+    const matAddrsHere = [...new Set(getFilteredItems().filter(x => wheelPos(x.matAddr) === i).map(x => x.matAddr))];
+    const label = matAddrsHere.length > 0 ? matAddrsHere.sort((a,b)=>a-b).join(',') : i + '';
+    ctx.fillStyle = '#404060';
+    ctx.font = '8px Segoe UI, system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, lx, ly);
+  }
+
+  // Hover highlight
+  if (hoveredAddr != null) {
+    const wp = wheelPos(hoveredAddr);
+    const angle = (wp / N) * Math.PI * 2 - Math.PI / 2;
+    const r = innerR + (outerR - innerR) * 0.5;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Selection highlight
+  if (selectedAddr != null) {
+    const wp = wheelPos(selectedAddr);
+    const angle = (wp / N) * Math.PI * 2 - Math.PI / 2;
+    const r = innerR + (outerR - innerR) * 0.5;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Center label
+  ctx.fillStyle = '#303050';
+  ctx.font = '10px Segoe UI, system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('WHEEL VIEW', cx, cy - 8);
+  ctx.fillText('24 positions', cx, cy + 8);
+}
+
+function wheelAddrAt(clientX, clientY) {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const outerR = Math.min(W, H) * 0.44;
+  const innerR = outerR * 0.18;
+  const dx = clientX - cx, dy = clientY - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist < innerR || dist > outerR + 20) return null;
+  let angle = Math.atan2(dy, dx) + Math.PI / 2;
+  if (angle < 0) angle += Math.PI * 2;
+  const wp = Math.round((angle / (Math.PI * 2)) * 24) % 24;
+  // Return first matAddr in active domains that maps to this wheel pos
+  const items = getFilteredItems().filter(x => wheelPos(x.matAddr) === wp);
+  if (items.length === 0) return null;
+  // If selected, prefer selected addr
+  if (selectedAddr != null && wheelPos(selectedAddr) === wp) return selectedAddr;
+  return items[0].matAddr;
+}
+
+// ─── CUBE VIEW ───────────────────────────────────────────────────────────────
+// 12×12 matrix rendered as isometric 3D cube
+// X axis = V_row (0-11), Y axis = F_col (0-11), Z depth = V_row band
+
+function renderCube() {
+  const W = canvas.width, H = canvas.height;
+  const CX = W / 2, CY = H / 2 + 20;
+
+  const cellW = Math.min(W, H) * 0.048;
+  const cellH = cellW * 0.75;
+  const depth = cellW * 0.6;
+
+  const cols = 12, rows = 12;
+  const gridW = cols * cellW;
+  const gridH = rows * cellH;
+
+  // Isometric transform: screen_x = CX + (col - row) * cellW/2
+  //                       screen_y = CY + (col + row) * cellH/2 - depth*col/12
+  function toScreen(col, row) {
+    const z = (col / 12) * depth; // depth rises along columns
+    return {
+      x: CX + (col - row) * cellW / 2 - gridW / 2,
+      y: CY + (col + row) * cellH / 2 - z,
+    };
+  }
+
+  // Background
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw cells back-to-front ( Painter's algorithm: increasing col+row )
+  for (let sum = 0; sum <= (cols - 1) + (rows - 1); sum++) {
+    for (let row = 0; row < rows; row++) {
+      const col = sum - row;
+      if (col < 0 || col >= cols) continue;
+
+      const addr = (row * 12 + col) % 144;
+      const { x, y } = toScreen(col, row);
+      const domains = getCellColor(addr);
+      const isSelected = addr === selectedAddr;
+      const isHovered  = addr === hoveredAddr;
+
+      // Cell fill
+      if (domains) {
+        const color = domains === 'multi' ? '#6040c0' : DOMAIN_COLORS[domains];
+        ctx.fillStyle = color + '33';
+        ctx.fillRect(x - cellW / 2, y - cellH / 2, cellW, cellH);
+      }
+
+      // Border
+      ctx.strokeStyle = isSelected ? '#ffffff' : isHovered ? 'rgba(255,255,255,0.3)' : '#1e1e38';
+      ctx.lineWidth = isSelected ? 1.5 : isHovered ? 1 : 0.5;
+      ctx.strokeRect(x - cellW / 2, y - cellH / 2, cellW, cellH);
+
+      // Selection/hover overlay
+      if (isSelected || isHovered) {
+        ctx.strokeStyle = isSelected ? '#ffffffcc' : '#ffffff44';
+        ctx.lineWidth = isSelected ? 2 : 1.5;
+        ctx.strokeRect(x - cellW / 2 + 1, y - cellH / 2 + 1, cellW - 2, cellH - 2);
+      }
+
+      // Item count dot
+      const count = getItemsAt(addr).length;
+      if (count > 0 && cellW > 20) {
+        const dotR = Math.min(4, cellW / 5);
+        const dotX = x + cellW / 2 - dotR - 2;
+        const dotY = y + cellH / 2 - dotR - 2;
+        const dotColor = domains === 'multi' ? '#9090ff' : (domains ? DOMAIN_COLORS[domains] : '#666');
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = dotColor;
+        ctx.fill();
+      }
+    }
+  }
+
+  // Axis labels
+  ctx.fillStyle = '#303050';
+  ctx.font = '10px Segoe UI, system-ui';
+  ctx.textAlign = 'center';
+
+  // V_row label (bottom-left → top-right direction)
+  const v0 = toScreen(0, 11);
+  const v11 = toScreen(11, 0);
+  ctx.fillStyle = '#5050a0';
+  ctx.fillText('V_row →', (v0.x + v11.x) / 2, (v0.y + v11.y) / 2 + 18);
+
+  // F_col label (top-left → bottom-right direction)
+  const f0 = toScreen(0, 0);
+  const f11 = toScreen(11, 11);
+  ctx.fillStyle = '#5050a0';
+  ctx.fillText('F_col →', (f0.x + f11.x) / 2 + 20, (f0.y + f11.y) / 2);
+
+  // Corner labels
+  const tl = toScreen(0, 0);
+  ctx.fillStyle = '#303060';
+  ctx.font = '9px Segoe UI, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('V=0,F=0', tl.x - cellW / 2, tl.y - cellH / 2 - 6);
+
+  // Matrix cube title
+  ctx.fillStyle = '#303050';
+  ctx.font = '10px Segoe UI, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('MATRIX CUBE VIEW  —  12×12  isometric', CX, H - 20);
+}
+
+function cubeAddrAt(clientX, clientY) {
+  const W = canvas.width, H = canvas.height;
+  const CX = W / 2, CY = H / 2 + 20;
+  const cellW = Math.min(W, H) * 0.048;
+  const cellH = cellW * 0.75;
+  const depth = cellW * 0.6;
+  const cols = 12, rows = 12;
+  const gridW = cols * cellW;
+  const gridH = rows * cellH;
+
+  function toScreen(col, row) {
+    const z = (col / 12) * depth;
+    return {
+      x: CX + (col - row) * cellW / 2 - gridW / 2,
+      y: CY + (col + row) * cellH / 2 - z,
+    };
+  }
+
+  // Find closest cell
+  let best = null, bestDist = Infinity;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const { x, y } = toScreen(col, row);
+      const dx = clientX - x, dy = clientY - y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < bestDist && dist < cellW) {
+        bestDist = dist;
+        best = (row * 12 + col) % 144;
+      }
+    }
+  }
+  return best;
+}
+</script>
+</body>
+</html>

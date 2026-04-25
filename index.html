@@ -2,14 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, viewport-fit=cover">
 <title>Codex Portal — Icositetragon Harmonic Field</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="matrix-resonance.css">
 </head>
 <body>
-
-<!-- Breath background layer -->
-<div class="breath-bg" id="breathBg"></div>
 
 <!-- ═══════════════ SYMBOLIC LOGIN ═══════════════ -->
 <div id="loginScreen">
@@ -26,40 +24,241 @@
     <button class="login-g" data-g="◈">◈</button>
     <button class="login-g" data-g=""> </button>
   </div>
-  <button class="login-btn" id="loginBtn" disabled>Enter the Field</button>
+  <button class="login-btn" id="loginBtn">Enter the Field</button>
   <div class="login-error" id="loginError">Incomplete sigil. Select 3 glyphs to proceed.</div>
   <div class="login-new" id="loginNew">Create new Codex profile</div>
 </div>
 
 <!-- ═══════════════ MAIN PORTAL ═══════════════ -->
 <div class="portal" id="portal" style="display:none">
-<div class="breath-bg"></div>
+
+  <!-- ══ SIGIL NAVIGATOR (replaces tab bar) ══ -->
+  <div class="sigil-nav-wrap" id="sigilNavWrap">
+    <div class="sigil-nav-ring">
+      <div class="sn-orbit sn-orbit-outer" id="snOrbitOuter">
+        <div class="sn-dot sn-dot-0" data-idx="0">△</div>
+        <div class="sn-dot sn-dot-1" data-idx="1">◎</div>
+        <div class="sn-dot sn-dot-2" data-idx="2">◇</div>
+        <div class="sn-dot sn-dot-3" data-idx="3">◉</div>
+        <div class="sn-dot sn-dot-4" data-idx="4">○</div>
+        <div class="sn-dot sn-dot-5" data-idx="5">◈</div>
+        <div class="sn-dot sn-dot-6" data-idx="6">◇</div>
+        <div class="sn-dot sn-dot-7" data-idx="7">·</div>
+      </div>
+      <!-- Center hub — current tab glyph -->
+      <div class="sn-hub" id="snHub">
+        <div class="sn-hub-glyph" id="snHubGlyph">⊙</div>
+        <div class="sn-hub-label" id="snHubLabel">Home</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Coherence + Field Status -->
   <div class="coherence-panel">
     <div class="coh-label">Coherence</div>
     <div class="coh-bar-wrap"><div class="coh-bar" id="cohBar" style="width:0%"></div></div>
+    <canvas id="cohSparkline" width="80" height="24"></canvas>
     <div class="coh-value" id="cohValue">0%</div>
-    <div class="coh-sub-label" id="cohSubLabel">—</div>
     <div class="user-dots" id="userDots"></div>
+    <button class="audio-mute-btn" id="audioMuteBtn" onclick="toggleAudioMute()" title="Mute breath tones">♩</button>
   </div>
   <div class="field-status" id="fieldStatus"></div>
 
-  <!-- Nav Tabs -->
-  <div class="nav-tabs">
-    <div class="nav-tab active" data-tab="wheel">Wheel</div>
+  <!-- Nav tabs (hidden — replaced by sigil nav) -->
+  <div class="nav-tabs" id="navTabsOld" style="display:none">
+    <div class="nav-tab active" data-tab="home">Home</div>
+    <div class="nav-tab" data-tab="wheel">Wheel</div>
     <div class="nav-tab" data-tab="codex">Codex</div>
     <div class="nav-tab" data-tab="dream">Dream</div>
     <div class="nav-tab" data-tab="journal">Journal</div>
     <div class="nav-tab" data-tab="profile">Profile</div>
   </div>
 
+  <!-- ══ HOME / DASHBOARD TAB ══ -->
+  <div class="tab-content active" id="tab-home">
+    <div class="dashboard">
+
+      <!-- Mini Wheel + Coherence row -->
+      <div class="dash-top">
+        <!-- Breath ring — sigil nav integrated as breath-phase display -->
+        <div class="dash-wheel">
+          <div class="breath-ring-wrap" id="breathRingWrap">
+            <div class="br-orbit" id="brOrbit">
+              <div class="br-dot br-dot-0" data-idx="0" data-glyph="△">△</div>
+              <div class="br-dot br-dot-1" data-idx="1" data-glyph="◎">◎</div>
+              <div class="br-dot br-dot-2" data-idx="2" data-glyph="◇">◇</div>
+              <div class="br-dot br-dot-3" data-idx="3" data-glyph="◉">◉</div>
+              <div class="br-dot br-dot-4" data-idx="4" data-glyph="○">○</div>
+              <div class="br-dot br-dot-5" data-idx="5" data-glyph="◈">◈</div>
+              <div class="br-dot br-dot-6" data-idx="6" data-glyph="◇">◇</div>
+              <div class="br-dot br-dot-7" data-idx="7" data-glyph="·">·</div>
+            </div>
+            <div class="br-hub" id="brHub">⊙</div>
+          </div>
+          <div class="dash-wheel-label">Icositetragon</div>
+        </div>
+
+        <!-- Coherence readout -->
+        <div class="dash-coherence">
+          <div class="dash-coh-main">
+            <div class="dash-coh-glyph" id="dashGlyph">△</div>
+            <div class="dash-coh-value"><span id="dashCohValue">0</span><span class="dash-coh-pct">%</span></div>
+          </div>
+          <div class="dash-coh-label">field coherence</div>
+          <div class="dash-coh-bar-wrap"><div class="dash-coh-bar" id="dashCohBar" style="width:0%"></div></div>
+          <div class="dash-field-status" id="dashFieldStatus">Waiting for field…</div>
+        </div>
+      </div>
+
+      <!-- Breath phase indicator -->
+      <div class="dash-breath-row">
+        <div class="dash-phase-badge" id="dashPhaseBadge">
+          <span class="dpb-glyph" id="dashPhaseGlyph">◇</span>
+          <span class="dpb-info">
+            <span class="dpb-breath" id="dashBreath">—</span>
+            <span class="dpb-name" id="dashPhaseName">Not breathing</span>
+          </span>
+        </div>
+        <div class="dash-cycle-count">
+          <span class="dcc-num" id="dashCycles">0</span>
+          <span class="dcc-label">cycles</span>
+        </div>
+      </div>
+
+      <!-- Breath Prompt Strip — driven by coherence bus -->
+      <div class="breath-prompt-strip" id="breathPromptStrip">
+        <div class="bps-glyph" id="bpsGlyph">◎</div>
+        <div class="bps-text" id="bpsText">The field awaits your breath…</div>
+        <div class="bps-archetype" id="bpsArchetype">Seed</div>
+      </div>
+
+      <!-- Archetype Spiral Ring — phase-log + spiral navigation -->
+      <div class="archetype-spiral-section" id="archetypeSpiralSection">
+        <div class="ass-label">Phase Spiral · click to align</div>
+        <div class="archetype-ring" id="archetypeRing">
+          <div class="ar-node ar-node-0" data-archetype="Seed" data-glyph="△">
+            <span class="ar-glyph">△</span><span class="ar-label">Seed</span>
+          </div>
+          <div class="ar-node ar-node-1" data-archetype="Seed" data-glyph="◎">
+            <span class="ar-glyph">◎</span><span class="ar-label">Seed·2</span>
+          </div>
+          <div class="ar-node ar-node-2" data-archetype="Bridge" data-glyph="◁△▷">
+            <span class="ar-glyph">◁△▷</span><span class="ar-label">Bridge</span>
+          </div>
+          <div class="ar-node ar-node-3" data-archetype="Axis" data-glyph="◇">
+            <span class="ar-glyph">◇</span><span class="ar-label">Axis</span>
+          </div>
+          <div class="ar-node ar-node-4" data-archetype="Star" data-glyph="◎">
+            <span class="ar-glyph">◎</span><span class="ar-label">Star</span>
+          </div>
+          <div class="ar-node ar-node-5" data-archetype="Star" data-glyph="◉">
+            <span class="ar-glyph">◉</span><span class="ar-label">Star·2</span>
+          </div>
+          <div class="ar-node ar-node-6" data-archetype="Convergence" data-glyph="○">
+            <span class="ar-glyph">○</span><span class="ar-label">Convergence</span>
+          </div>
+          <div class="ar-node ar-node-7" data-archetype="Return" data-glyph="·">
+            <span class="ar-glyph">·</span><span class="ar-label">Return</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Journey / Phase-Log Summary -->
+      <div class="journey-section" id="journeySection">
+        <div class="journey-label">Your Harmonic Journey</div>
+        <div class="journey-stats" id="journeyStats">
+          <div class="js-item"><span class="js-num" id="jsBreaths">0</span><span class="js-label">breaths</span></div>
+          <div class="js-sep">·</div>
+          <div class="js-item"><span class="js-num" id="jsInteractions">0</span><span class="js-label">interactions</span></div>
+          <div class="js-sep">·</div>
+          <div class="js-item"><span class="js-num" id="jsAvgCoh">0%</span><span class="js-label">avg coherence</span></div>
+        </div>
+        <div class="journey-archetype-bar" id="journeyArchetypeBar"></div>
+      </div>
+
+      <!-- Spiral Log Canvas — visual journey map -->
+      <div class="spiral-log-section" id="spiralLogSection">
+        <div class="sls-label">Spiral Memory Map</div>
+        <canvas class="spiral-log-canvas" id="spiralLogCanvas" width="320" height="220"></canvas>
+      </div>
+
+      <!-- Community Resonance Section -->
+      <div class="community-section" id="communitySection">
+        <div class="cs-label">
+          <span>Community Resonance Field</span>
+          <span class="cs-status" id="csStatus">
+            <span class="cs-dot offline" id="csDot"></span>
+            <span id="csStatusText">Offline</span>
+          </span>
+        </div>
+        <canvas class="field-map-canvas" id="fieldMapCanvas" width="320" height="180"></canvas>
+        <div class="cs-intention-row">
+          <input class="cs-intention-input" id="csIntentionInput" placeholder="Set a field intention…" maxlength="120">
+          <button class="cs-intention-btn" id="csIntentionBtn">→</button>
+        </div>
+        <div class="cs-nodes-list" id="csNodesList"></div>
+        <div class="cs-field-intention" id="csFieldIntention"></div>
+      </div>
+
+      <!-- Quick-nav cards -->
+      <div class="dash-nav">
+        <a class="dash-card" href="#" onclick="navTo('wheel');return false;">
+          <div class="dc-icon">◎</div>
+          <div class="dc-title">Wheel</div>
+          <div class="dc-desc">Breath cycle · 6-phase spiral</div>
+        </a>
+        <a class="dash-card" href="matrix.html">
+          <div class="dc-icon">◈</div>
+          <div class="dc-title">Matrix</div>
+          <div class="dc-desc">12×12 harmonic grid · sigils</div>
+        </a>
+        <a class="dash-card" href="resonator.html">
+          <div class="dc-icon">♫</div>
+          <div class="dc-title">Resonator</div>
+          <div class="dc-desc">Soundscapes · waveform collapse</div>
+        </a>
+      </div>
+
+      <!-- 12-Glyph Tonal Ring -->
+      <div class="glyph-ring" id="glyphRing">
+        <div class="gr-label">Tonal Ring · click to resonate</div>
+        <div class="gr-buttons" id="grButtons"></div>
+      </div>
+
+      <!-- Quick links row -->
+      <div class="dash-links">
+        <button class="btn" onclick="navTo('codex')">Codex</button>
+        <button class="btn" onclick="navTo('dream')">Dream</button>
+        <button class="btn" onclick="navTo('journal')">Journal</button>
+        <button class="btn" onclick="navTo('profile')">Profile</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ══ WHEEL TAB ══ -->
-  <div class="tab-content active" id="tab-wheel">
+  <div class="tab-content" id="tab-wheel">
 
     <!-- THE WHEEL — primary focus -->
     <div class="wheel-section">
-      <canvas id="wheel" width="340" height="340" onclick="onWheelClick(event)"></canvas>
+      <canvas id="wheel" width="340" height="340"></canvas>
+      <!-- 24/120 cell toggle -->
+      <div class="toggle-120-wrap">
+        <div class="toggle-120" id="toggle120" title="Toggle 24-Cell / 120-Cell geometry">
+          <span class="t120-opt" data-val="24">24</span>
+          <div class="t120-pill" id="toggle120Pill"></div>
+          <span class="t120-opt" data-val="120">120</span>
+        </div>
+      </div>
+      <!-- Live connection box -->
+      <div class="conn-box" id="connBox">
+        <div class="conn-dot" id="connDot"></div>
+        <div class="conn-info">
+          <span class="conn-count" id="connCount">—</span>
+          <span class="conn-label">online</span>
+        </div>
+        <div class="conn-sync" id="connSync"></div>
+      </div>
       <div class="axis-layer">
         <div class="axis-band"></div>
         <div class="axis-label">5D AXIS</div>
@@ -75,6 +274,9 @@
       <div class="glyph-big" id="glyphBig">△</div>
       <div class="instruction" id="instruction">Begin cycle to activate the field.<br>The wheel awaits your breath.</div>
     </div>
+
+    <!-- Prime Axis Tracker — spiral path through prime 24-cell vertices -->
+    <canvas id="primeAxisTracker" width="80" height="96"></canvas>
 
     <!-- ANONYMOUS BREATHERS (subtle) -->
     <div class="coherence-users" id="anonUsers"></div>
@@ -174,9 +376,95 @@
 
   </div>
 
-  <!-- ══ DREAM TAB ══ -->
+  <!-- ══ DREAM / MIRROR TAB ══ -->
   <div class="tab-content" id="tab-dream">
-    <div class="collapse-section open" id="dreamInputCollapse">
+
+    <!-- Mirror Mode Header -->
+    <div class="mirror-header" id="mirrorHeader">
+      <div class="mirror-title">◈ Fractal Reflection</div>
+      <div class="mirror-subtitle">Speak to the field. The icositetragon remembers.</div>
+    </div>
+
+    <!-- Breath Glyph Linker Row -->
+    <div class="glyph-linker-section" id="glyphLinkerSection">
+      <div class="gls-label">Activate a glyph breath sequence</div>
+      <div class="glyph-linker-row" id="glyphLinkerRow">
+        <button class="gls-btn" data-g="△">△</button>
+        <button class="gls-btn" data-g="◇">◇</button>
+        <button class="gls-btn" data-g="◁△▷">◁△▷</button>
+        <button class="gls-btn" data-g="⬟">⬟</button>
+        <button class="gls-btn" data-g="⊕">⊕</button>
+        <button class="gls-btn" data-g="◈">◈</button>
+      </div>
+      <div class="glyph-linker-status" id="glyphLinkerStatus">
+        <span class="glss-glyph" id="glssGlyph">◇</span>
+        <span class="glss-step" id="glssStep">Select a glyph to begin</span>
+        <span class="glss-pos" id="glssPos"></span>
+      </div>
+      <div class="glyph-linker-interpretation" id="glyphLinkerInterpretation"></div>
+      <button class="btn" id="btnStopGlyphLinker" style="display:none;margin-top:0.4rem;">⊘ Stop Sequence</button>
+    </div>
+
+    <!-- Mirror Input -->
+    <div class="mirror-input-section" id="mirrorInputSection">
+      <div class="mirror-prompt">What do you bring to the field?</div>
+      <div class="mirror-input-row">
+        <input type="text" class="mirror-input" id="mirrorInput" placeholder="Enter a word, breath, or frequency..." maxlength="60">
+        <button class="mirror-submit" id="mirrorSubmit">⟟</button>
+      </div>
+    </div>
+
+    <!-- Mirror Output -->
+    <div class="mirror-output-section" id="mirrorOutput">
+      <canvas id="mirror24cell" width="200" height="200"></canvas>
+      <div class="mirror-reflection">
+        <div class="mirror-glyph-display" id="mirrorGlyphDisplay">◈</div>
+        <div class="mirror-archetype-label" id="mirrorArchetypeLabel">Star</div>
+      </div>
+      <div class="mirror-response-text" id="mirrorResponseText">
+        The field awaits your reflection.
+      </div>
+      <div class="mirror-meta-row" id="mirrorMetaRow">
+        <span class="mirror-strength" id="mirrorStrength">—</span>
+        <span class="mirror-archetype-badge" id="mirrorArchetypeBadge">△ Seed</span>
+      </div>
+      <!-- PRIORITY 3: matAddr Geometric Resonance Panel -->
+      <div class="mataddr-resonance-panel" id="mataddrResPanel">
+        <div class="mataddr-panel-header">⬡ Matrix Resonance</div>
+        <div class="mataddr-row">
+          <span class="mataddr-label">Position</span>
+          <span class="mataddr-value" id="mataddrPos">—</span>
+        </div>
+        <div class="mataddr-row">
+          <span class="mataddr-label">Frequency</span>
+          <span class="mataddr-value" id="mataddrFreq">—</span>
+        </div>
+        <div class="mataddr-row">
+          <span class="mataddr-label">V · F</span>
+          <span class="mataddr-value" id="mataddrVF">—</span>
+        </div>
+        <div class="mataddr-resonance-info" id="mataddrResInfo">
+          <div class="mataddr-res-empty">No resonance data yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reflection History -->
+    <div class="mirror-history-section" id="mirrorHistorySection">
+      <div class="mirror-history-label">Recent reflections</div>
+      <div id="mirrorHistoryList"></div>
+    </div>
+
+    <!-- Breath sequence output (from glyph linker) -->
+    <div class="breath-sequence-panel" id="breathSequencePanel" style="display:none;">
+      <div class="bsp-header">24-Step Breath Sequence</div>
+      <div class="bsp-glyph" id="bspGlyph">△</div>
+      <div class="bsp-progress-bar"><div class="bsp-progress-fill" id="bspProgressFill"></div></div>
+      <div class="bsp-step-text" id="bspStepText"></div>
+    </div>
+
+    <!-- Legacy Dream Record — collapsible -->
+    <div class="collapse-section" id="dreamInputCollapse">
       <div class="collapse-header" onclick="toggleCollapse('dreamInputCollapse')">
         <span class="collapse-title">◭ Dream Record</span>
         <span class="collapse-icon">▼</span>
@@ -191,6 +479,7 @@
         <div class="dream-interpretation" id="dreamInterpretation" style="display:none"></div>
       </div>
     </div>
+
   </div>
 
   <!-- ══ JOURNAL TAB ══ -->
@@ -246,10 +535,45 @@
 
 </div>
 
+<!-- ══ MOBILE NAVIGATION DRAWER ══ -->
+<nav class="mobile-nav-drawer visible" id="mobileNavDrawer">
+  <div class="mnd-inner">
+    <div class="mnd-item" data-tab="home">
+      <span class="mnd-glyph">⊙</span><span class="mnd-label">Home</span>
+    </div>
+    <div class="mnd-item" data-tab="wheel">
+      <span class="mnd-glyph">◎</span><span class="mnd-label">Wheel</span>
+    </div>
+    <div class="mnd-item" data-tab="codex">
+      <span class="mnd-glyph">◇</span><span class="mnd-label">Codex</span>
+    </div>
+    <div class="mnd-item" data-tab="dream">
+      <span class="mnd-glyph">◉</span><span class="mnd-label">Dream</span>
+    </div>
+    <div class="mnd-item" data-tab="journal">
+      <span class="mnd-glyph">○</span><span class="mnd-label">Journal</span>
+    </div>
+    <div class="mnd-item" data-tab="profile">
+      <span class="mnd-glyph">·</span><span class="mnd-label">Profile</span>
+    </div>
+  </div>
+</nav>
+
 <button class="help-fab" id="helpFab">?</button>
 
 <script src="config.js"></script>
 <script src="state.js"></script>
-<script src="app.js"></script>
+<script src="breath-controller.js"></script>
+<script src="coherence-bus.js"></script>
+<script src="sigil-nav.js"></script>
+<script src="spiral-log.js"></script>
+<script src="community-resonance.js"></script>
+<script src="breath-glyph-linker.js"></script>
+<script src="matrix-resonance.js"></script>
+<script src="mirror-mode.js"></script>
+<script src="twentyfour-cell.js"></script>
+<script src="onehundred20-cell.js"></script>
+<script src="prime-axis-tracker.js"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
