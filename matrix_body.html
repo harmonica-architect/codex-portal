@@ -1,0 +1,88 @@
+﻿</head>
+<body>
+
+<div class="matrix-header">
+  <div class="matrix-title">Harmonic Glyph Matrix</div>
+  <div class="matrix-sub">12 Ã— 12 â€” Codex Universalis Â· Icositetragon Resonance Field</div>
+</div>
+
+<div class="matrix-layout">
+  <!-- LEFT: Matrix -->
+  <div>
+    <div class="matrix-scroll" id="matrixScroll">
+      <div class="harmonic-matrix" id="harmonicMatrix"></div>
+      <div class="drag-rect" id="dragRect"></div>
+    </div>
+    <div class="freq-ruler" id="freqRuler"></div>
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div class="sidebar">
+
+    <!-- Preview panel -->
+    <div class="preview-panel">
+      <div class="preview-title">âœ¦ Resonance Preview</div>
+      <div class="preview-sigil" id="previewSigil"><span class="preview-empty">â—‡</span></div>
+      <div class="resonance-bars" id="resonanceBars"></div>
+      <div class="combo-freq" id="comboFreq"></div>
+      <div class="combo-layers" id="comboLayers"></div>
+    </div>
+
+    <!-- Intensity controls -->
+    <div class="intensity-panel" id="intensityPanel">
+      <div class="intensity-title">âš™ Intensity</div>
+      <div id="intensityList"></div>
+    </div>
+
+    <!-- Saved combinations -->
+    <div class="saved-panel">
+      <div class="saved-title">â—Ž Saved Sigils</div>
+      <div class="saved-list" id="savedList">
+        <div class="no-saved">No saved combinations yet.</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-panel">
+      <button class="action-btn primary" id="btnSaveCombo">â—Ž Save Combination</button>
+      <button class="action-btn" id="btnRandomize">âŸ¡ Randomize (3â€“5)</button>
+      <button class="action-btn" id="btnSelectRow">â” Select Row</button>
+      <button class="action-btn" id="btnSelectCol">â”ƒ Select Column</button>
+      <button class="action-btn danger" id="btnClearAll">âŠ˜ Clear All</button>
+    </div>
+  </div>
+</div>
+
+<div class="close-hint">Click+drag to multi-select Â· ESC to clear Â· Hover for tooltips</div>
+
+<!-- Tooltip -->
+<div class="matrix-tooltip" id="tooltip">
+  <span class="tooltip-glyph" id="ttGlyph">â–³</span>
+  <span class="tooltip-name" id="ttName">Seed</span>
+  <span class="tooltip-arch" id="ttArch">Beginnings, potential.</span>
+</div>
+
+<!-- Tutorial -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-box">
+    <div class="tutorial-title">â—ˆ Matrix Guide</div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">1</div>
+      <div class="tutorial-text"><strong>Click or drag</strong> across cells to select multiple glyphs. Each cell is a unique harmonic frequency mapped to an angular position on the Icositetragon.</div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">2</div>
+      <div class="tutorial-text"><strong>Hover</strong> any cell to read its resonance archetype. Audio tones play as you select. Adjust per-glyph intensity in the sidebar.</div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">3</div>
+      <div class="tutorial-text"><strong>Save combinations</strong> with names to build your personal harmonic library. Use <strong>Randomize</strong> to explore unexpected alignments.</div>
+    </div>
+    <div class="tutorial-btns">
+      <button class="tutorial-btn begin" id="tutorialBegin">Begin</button>
+      <button class="tutorial-btn skip" id="tutorialSkip">Skip</button>
+    </div>
+  </div>
+</div>
+
+<script>

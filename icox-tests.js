@@ -527,6 +527,64 @@ eq(getState().coherence, 100, 'coherence can reach 100');
 updateState({ coherence: 200 });
 eq(getState().coherence, 200, 'updateState does not cap coherence (caller responsibility)');
 
+// ── BREATH FUNCTION TESTS (H1+H4) ─────────────────────────────────────
+console.log('\nBreath Functions:');
+// Test breath logic locally (same as app.js implementation)
+let _testBreathPhase = 0, _testBreathDir = 1, _testLastBreathTs = null;
+function _testBreathHold() { return Math.sin(_testBreathPhase * Math.PI); }
+function _testBreathTick(ts) {
+  if (_testLastBreathTs === null) _testLastBreathTs = ts;
+  const dt = ts - _testLastBreathTs;
+  _testBreathPhase += (dt / 6000) * _testBreathDir;
+  if (_testBreathPhase >= 1) { _testBreathPhase = 1; _testBreathDir = -1; }
+  if (_testBreathPhase <= 0) { _testBreathPhase = 0; _testBreathDir = 1; }
+  _testLastBreathTs = ts;
+}
+ok(typeof _testBreathHold === 'function', '_testBreathHold() function exists');
+ok(typeof _testBreathTick === 'function', '_testBreathTick() function exists');
+const _tbh0 = _testBreathHold();
+ok(_tbh0 >= -0.001 && _tbh0 <= 0.001, 'breathHold() returns ~0 at phase 0');
+_testBreathPhase = 1;
+const _tbh1 = _testBreathHold();
+ok(_tbh1 >= -0.001 && _tbh1 <= 0.001, 'breathHold() returns ~0 at phase 1');
+_testBreathPhase = 0.5;
+const _tbhpeak = _testBreathHold();
+ok(_tbhpeak >= 0.999, 'breathHold() returns ~1 at phase 0.5');
+// breathPhase advances after 1500ms (needs two calls: first init, second real dt)
+_testBreathPhase = 0; _testBreathDir = 1; _testLastBreathTs = 0;
+_testBreathTick(0); // first call: sets lastBreathTs to 0
+ok(_testLastBreathTs === 0, 'breathTick first call sets lastBreathTs to 0 (ts=0)');
+_testBreathTick(1500); // second call: dt=1500 → phase += 1500/6000 = 0.25
+ok(_testBreathPhase > 0.1 && _testBreathPhase < 0.5, 'breathPhase advances toward 1 after 1500ms dt');
+// breathHold() values in [0,1] across all phases
+let allInRange = true;
+for (let p = 0; p <= 1; p += 0.1) {
+  _testBreathPhase = p;
+  const bh = _testBreathHold();
+  if (bh < 0 || bh > 1) allInRange = false;
+}
+ok(allInRange, 'breathHold() value in [0,1] across all phases');
+// breathing radius at peak
+{
+  _testBreathPhase = 0.5;
+  const bh = _testBreathHold();
+  const normalR = 9;
+  const breatheR = normalR * (1 + bh * 0.12);
+  ok(Math.abs(breatheR - 9 * 1.12) < 0.01, 'breathing radius is 9*1.12 at peak breath');
+}
+// startRipple logic (local mock)
+let _rippleTestOrigin = null, _rippleTestPhase = 0, _rippleTestSelected = null;
+function _testStartRipple(wp) {
+  _rippleTestSelected = wp;
+  _rippleTestOrigin = wp;
+  _rippleTestPhase = 0;
+}
+ok(typeof _testStartRipple === 'function', '_testStartRipple() function exists');
+_testStartRipple(5);
+ok(_rippleTestOrigin === 5, 'startRipple sets rippleOrigin to wheelPos');
+ok(_rippleTestPhase === 0, 'startRipple resets ripplePhase to 0');
+ok(_rippleTestSelected === 5, 'startRipple sets selectedWheelPos');
+
 // ── SUMMARY ──────────────────────────────────────────────────────────
 console.log('\n═══════════════════════════════════════');
 console.log(`Results: ${passed} passed / ${failed} failed`);

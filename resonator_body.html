@@ -1,22 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Field Resonator — Monadic Spiral</title>
-<link rel="stylesheet" href="resonator.css">
+﻿</style>
 </head>
 <body>
 
-<!-- Resonator — guide is inline, no overlay -->
+<!-- Tutorial Overlay -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-glyph">âŠ™</div>
+  <div class="tutorial-title">Field Resonator</div>
+  <div class="tutorial-sub">The Monadic Spiral awaits your breath.<br>Three steps to harmonic alignment:</div>
 
-<!-- Inline Guide Banner (replaces tutorial overlay) -->
-<div class="inline-guide" id="inlineGuide">
-  <div class="guide-title">Field Resonator · How to Use</div>
-  <div class="guide-steps">
-    <span class="guide-step"><span class="guide-n">01</span> Click the wheel or tap <strong>Attune</strong> to begin</span>
-    <span class="guide-step"><span class="guide-n">02</span> Follow the breath cycle — inhale, hold, exhale</span>
-    <span class="guide-step"><span class="guide-n">03</span> Resonance tones activate automatically · swipe right for settings</span>
+  <div class="tutorial-steps">
+    <div class="tutorial-step">
+      <div class="tstep-num">01</div>
+      <div class="tstep-text">Click the wheel or swipe right to open settings</div>
+      <div class="tstep-icon">âŠ™</div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tstep-num">02</div>
+      <div class="tstep-text">Follow the breath cycle â€” inhale, hold, exhale</div>
+      <div class="tstep-icon">â–³ â†’ â—‡ â†’ â—â–·</div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tstep-num">03</div>
+      <div class="tstep-text">Resonance tones activate automatically</div>
+      <div class="tstep-icon">â™«</div>
+    </div>
+  </div>
+
+  <div class="tutorial-btns">
+    <button class="tutorial-btn-primary" id="tutorialBegin">Begin</button>
+    <button class="tutorial-btn-ghost" id="tutorialSkip">Skip</button>
   </div>
 </div>
 
@@ -28,7 +40,7 @@
 
     <div class="stage-header">
       <div class="stage-title">Field Resonator</div>
-      <div class="stage-subtitle" id="stageSubtitle">Monadic Spiral · 432Hz</div>
+      <div class="stage-subtitle" id="stageSubtitle">Monadic Spiral Â· 432Hz</div>
     </div>
 
     <!-- Step pips -->
@@ -60,7 +72,7 @@
         </svg>
       </div>
       <div class="wheel-center-info">
-        <span class="center-glyph" id="centerGlyph">⊙</span>
+        <span class="center-glyph" id="centerGlyph">âŠ™</span>
         <span class="center-freq" id="centerFreq">432 Hz</span>
         <span class="center-hint" id="centerHint">click to begin</span>
       </div>
@@ -78,11 +90,11 @@
       <div class="coh-pct" id="cohPct">0%</div>
     </div>
 
-    <!-- Tips -->
+    <!-- Tips (visible before first interaction) -->
     <div class="tips-row" id="tipsRow">
-      <div class="tip-chip" id="tipBreathe">△ click to breathe</div>
-      <div class="tip-chip" id="tipSettings">⚙ swipe right</div>
-      <div class="tip-chip active" id="tipSound">♫ sound active</div>
+      <div class="tip-chip" id="tipBreathe">â–³ click to breathe</div>
+      <div class="tip-chip" id="tipSettings">âš™ swipe right</div>
+      <div class="tip-chip active" id="tipSound">â™« sound active</div>
     </div>
 
     <!-- Entrainment strip -->
@@ -104,12 +116,13 @@
 
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
-    <button class="sidebar-close" id="sidebarClose">✕</button>
+    <button class="sidebar-close" id="sidebarClose">âœ•</button>
 
-    <!-- SOUND -->
+    <!-- SOUND â€” unified panel -->
     <div class="sidebar-section">
-      <div class="sidebar-title"><span class="icon">♫</span> Sound</div>
+      <div class="sidebar-title"><span class="icon">â™«</span> Sound</div>
 
+      <!-- Master audio toggle -->
       <div class="srow">
         <span class="srow-label">Resonance</span>
         <div class="audio-mini-pill on" id="audioMiniPill"></div>
@@ -119,36 +132,37 @@
         </div>
       </div>
 
+      <!-- Soundscape layers -->
       <div class="srow" style="margin-top:0.6rem; margin-bottom:0.2rem;">
         <span class="srow-label" style="font-size:0.55rem;">Layers</span>
       </div>
       <div id="soundscapeRows">
         <div class="srow">
-          <span class="snd-icon">△</span>
+          <span class="snd-icon">â–³</span>
           <span class="srow-label" style="min-width:38px;">432</span>
           <div class="snd-toggle-mini on" data-f="432" id="sndToggle432"></div>
           <input type="range" class="snd-vol-mini" id="sndVol432" min="0" max="100" value="30">
         </div>
         <div class="srow">
-          <span class="snd-icon">△</span>
+          <span class="snd-icon">â–³</span>
           <span class="srow-label" style="min-width:38px;">528</span>
           <div class="snd-toggle-mini" data-f="528" id="sndToggle528"></div>
           <input type="range" class="snd-vol-mini" id="sndVol528" min="0" max="100" value="20">
         </div>
         <div class="srow">
-          <span class="snd-icon">◁▷</span>
+          <span class="snd-icon">â—â–·</span>
           <span class="srow-label" style="min-width:38px;">639</span>
           <div class="snd-toggle-mini" data-f="639" id="sndToggle639"></div>
           <input type="range" class="snd-vol-mini" id="sndVol639" min="0" max="100" value="15">
         </div>
         <div class="srow">
-          <span class="snd-icon">◇</span>
+          <span class="snd-icon">â—‡</span>
           <span class="srow-label" style="min-width:38px;">741</span>
           <div class="snd-toggle-mini" data-f="741" id="sndToggle741"></div>
           <input type="range" class="snd-vol-mini" id="sndVol741" min="0" max="100" value="15">
         </div>
         <div class="srow">
-          <span class="snd-icon">◇</span>
+          <span class="snd-icon">â—‡</span>
           <span class="srow-label" style="min-width:38px;">852</span>
           <div class="snd-toggle-mini" data-f="852" id="sndToggle852"></div>
           <input type="range" class="snd-vol-mini" id="sndVol852" min="0" max="100" value="10">
@@ -158,14 +172,14 @@
 
     <!-- BREATH CYCLE -->
     <div class="sidebar-section">
-      <div class="sidebar-title"><span class="icon">◐</span> Breath Cycle</div>
+      <div class="sidebar-title"><span class="icon">â—</span> Breath Cycle</div>
       <div class="cycle-presets-mini" id="cyclePresetsMini">
-        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="5">5·5·5</button>
-        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6">6·0·6</button>
-        <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="8">4·4·8</button>
-        <button class="cycle-preset-mini" data-in="4" data-h="7" data-out="8">4·7·8</button>
-        <button class="cycle-preset-mini" data-in="5" data-h="5" data-out="10">5·5·10</button>
-        <button class="cycle-preset-mini" data-in="3" data-h="3" data-out="6">3·3·6</button>
+        <button class="cycle-preset-mini sel" data-in="5" data-h="5" data-out="5">5Â·5Â·5</button>
+        <button class="cycle-preset-mini" data-in="6" data-h="0" data-out="6">6Â·0Â·6</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="4" data-out="8">4Â·4Â·8</button>
+        <button class="cycle-preset-mini" data-in="4" data-h="7" data-out="8">4Â·7Â·8</button>
+        <button class="cycle-preset-mini" data-in="5" data-h="5" data-out="10">5Â·5Â·10</button>
+        <button class="cycle-preset-mini" data-in="3" data-h="3" data-out="6">3Â·3Â·6</button>
       </div>
       <div class="cycle-inputs-mini">
         <div class="cycle-input-mini"><label>In</label><input type="number" id="inhaleMini" value="5" min="1" max="30"></div>
@@ -173,8 +187,9 @@
         <div class="cycle-input-mini"><label>Out</label><input type="number" id="exhaleMini" value="5" min="1" max="60"></div>
       </div>
 
+      <!-- Breath Guidance -->
       <div style="margin-top:0.7rem; padding-top:0.5rem; border-top:1px solid var(--border);">
-        <div class="sidebar-title" style="margin-bottom:0.4rem;"><span class="icon">◉</span> Breath Guidance</div>
+        <div class="sidebar-title" style="margin-bottom:0.4rem;"><span class="icon">â—‰</span> Breath Guidance</div>
         <div class="srow" style="margin-bottom:0.35rem;">
           <span class="srow-label">Guidance</span>
           <div class="audio-mini-pill on" id="guidancePill" style="cursor:pointer;"></div>
@@ -199,14 +214,14 @@
 
     <!-- SIGIL -->
     <div class="sidebar-section">
-      <div class="sidebar-title"><span class="icon">◈</span> Codex Sigil</div>
+      <div class="sidebar-title"><span class="icon">â—ˆ</span> Codex Sigil</div>
       <div class="snap-row">
-        <button class="snap-gly sel" data-g="△">△</button>
-        <button class="snap-gly" data-g="◁△▷">◁△▷</button>
-        <button class="snap-gly" data-g="◇">◇</button>
-        <button class="snap-gly" data-g="⬟">⬟</button>
-        <button class="snap-gly" data-g="△̅">△̅</button>
-        <button class="snap-gly" data-g="⊕">⊕</button>
+        <button class="snap-gly sel" data-g="â–³">â–³</button>
+        <button class="snap-gly" data-g="â—â–³â–·">â—â–³â–·</button>
+        <button class="snap-gly" data-g="â—‡">â—‡</button>
+        <button class="snap-gly" data-g="â¬Ÿ">â¬Ÿ</button>
+        <button class="snap-gly" data-g="â–³Ì…">â–³Ì…</button>
+        <button class="snap-gly" data-g="âŠ•">âŠ•</button>
       </div>
       <div class="profile-btns">
         <button class="profile-btn" id="btnSealSigil">Seal</button>
@@ -216,7 +231,7 @@
 
     <!-- PROFILE -->
     <div class="sidebar-section">
-      <div class="sidebar-title"><span class="icon">◎</span> Profile</div>
+      <div class="sidebar-title"><span class="icon">â—Ž</span> Profile</div>
       <input type="text" class="profile-input" id="profileNameInput" placeholder="Profile name..." maxlength="20">
       <div class="profile-btns">
         <button class="profile-btn" id="btnSaveProfile">Save</button>
@@ -231,10 +246,5 @@
 </div>
 
 <!-- Sidebar toggle -->
-<button class="sidebar-toggle-btn active" id="sidebarToggleBtn">⚙</button>
+<button class="sidebar-toggle-btn active" id="sidebarToggleBtn">âš™</button>
 
-<script src="config.js"></script>
-<script src="state.js"></script>
-<script src="resonator.js"></script>
-</body>
-</html>

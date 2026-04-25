@@ -18,6 +18,42 @@ let nightMode = false;
 let glowP = 0, glowD = 1;
 let animId = null;
 let coherenceLevel = 0;
+
+// ── BREATH STATE (H1+H4) ──
+let breathPhase = 0;
+let breathDir = 1;
+let lastBreathTs = 0;
+let breathRafId = null;
+
+function breathHold() { return Math.sin(breathPhase * Math.PI); }
+
+function breathTick(ts) {
+  if (!lastBreathTs) lastBreathTs = ts;
+  const dt = ts - lastBreathTs;
+  breathPhase += (dt / 6000) * breathDir;
+  if (breathPhase >= 1) { breathPhase = 1; breathDir = -1; }
+  if (breathPhase <= 0) { breathPhase = 0; breathDir = 1; }
+  lastBreathTs = ts;
+  document.documentElement.style.setProperty('--breath-hold', breathHold());
+  // Modulate coherence bar glow (H4)
+  const cohBar = document.getElementById('cohBar');
+  const cohVal = document.getElementById('cohValue');
+  if (cohBar) cohBar.style.boxShadow = breathHold() > 0.5 ? `0 0 ${breathHold()*12}px rgba(232,200,106,${breathHold()*0.5})` : '';
+  if (cohVal) cohVal.style.opacity = 0.7 + breathHold() * 0.3;
+  // Night mode accent breath shift (H6)
+  const bh3 = breathHold();
+  if (bh3 > 0.6) {
+    const shift = (bh3 - 0.6) / 0.4;
+    const r = Math.round(232 - shift * 112);
+    const g = Math.round(200 - shift * 88);
+    const b = Math.round(106 + shift * 149);
+    document.documentElement.style.setProperty('--gold', `rgb(${r},${g},${b})`);
+  } else {
+    document.documentElement.style.setProperty('--gold', nightMode ? '#a090d0' : '#e8c86a');
+  }
+  drawWheel();
+  breathRafId = requestAnimationFrame(breathTick);
+}
 let virtualUsers = 0;
 let selectedJournalGlyph = '';
 let selectedCodexGlyph = '';
@@ -594,7 +630,11 @@ function enterPortal() {
   localStorage.setItem(STORAGE_KEYS.lastSigil, userSigil.join(''));
   // Sync sigil to shared state
   updateState({ sigil: [...userSigil] });
-  animateWheel();
+  // Start breath RAF loop (H1+H4) + keep glow animation (glowP drives spoke/arc glow)
+  if (breathRafId) cancelAnimationFrame(breathRafId);
+  if (animId) cancelAnimationFrame(animId);
+  breathRafId = requestAnimationFrame(breathTick);
+  animId = requestAnimationFrame(animateWheel);
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
   checkNight();
