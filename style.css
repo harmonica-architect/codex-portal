@@ -14,8 +14,15 @@
   --gold-dim: rgba(232,200,106,0.15);
   --axis: #c8a050;
   --dim: #2a2a3e;
+/* ── BREATH BACKGROUND ── */
+.breath-bg {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(232,200,106,0.05), transparent 60%);
+  opacity: calc(var(--breath-hold, 0) * 0.8);
 }
-body {
+
+
   background: var(--bg);
   color: var(--text);
   font-family: 'Segoe UI', system-ui, sans-serif;
@@ -38,6 +45,7 @@ body {
 .coh-bar-wrap { flex: 1; height: 6px; background: var(--dim); border-radius: 3px; overflow: hidden; }
 .coh-bar { height: 100%; background: linear-gradient(90deg, #6a8a6a, var(--gold)); border-radius: 3px; transition: width 1.5s cubic-bezier(0.4,0,0.2,1); }
 .coh-value { font-size: 0.7rem; color: var(--gold); min-width: 36px; text-align: right; font-weight: 500; }
+.coh-sub-label { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.1em; margin-left: 0.3rem; }
 .user-dots { display: flex; gap: 0.25rem; margin-left: 0.3rem; }
 .user-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 
@@ -300,6 +308,8 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 @keyframes spinIn { from { transform: rotate(-90deg); opacity: 0; } to { transform: rotate(0deg); opacity: 1; } }
 
 /* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 4px; }
+.breath-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 30%, rgba(232,200,106,0.06), transparent 60%); opacity: calc(var(--breath-hold, 0) * 0.7); }
+.portal > *:not(.breath-bg) { position: relative; z-index: 1; }
+.coh-sub-label { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.1em; margin-left: 0.4rem; min-width: 80px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

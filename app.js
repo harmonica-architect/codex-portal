@@ -90,6 +90,7 @@ function breathTick(ts) {
     document.documentElement.style.setProperty('--gold', nightMode ? '#a090d0' : '#e8c86a');
   }
   drawWheel();
+  updateCoherenceDisplay();
   breathRafId = requestAnimationFrame(breathTick);
 }
 let virtualUsers = 0;
@@ -192,6 +193,18 @@ function pAngle(i) {
   return (i / WHEEL_CONFIG.segments) * Math.PI * 2 - Math.PI / 2;
 }
 
+// R4.1 — Quasi-Prime detection helpers
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
+  return true;
+}
+function isQuasiPrime(n) {
+  if (WHEEL_CONFIG.primePositions.includes(n)) return false;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  return isPrime(n + 2) || isPrime(n - 2) || isPrime(n + 4);
+}
+
 function drawWheel() {
   ctx.clearRect(0, 0, WHEEL_CONFIG.canvasSize, WHEEL_CONFIG.canvasSize);
   const night = nightMode;
@@ -218,6 +231,42 @@ function drawWheel() {
       : (night ? 'rgba(40,40,70,0.5)' : 'rgba(50,50,75,0.4)');
     ctx.lineWidth = act ? 3 : (pp ? 1.8 : 1.2);
     ctx.stroke();
+  }
+
+  // R1.1 — Harmonic Fifth Lines (draw AFTER spokes, BEFORE nodes)
+  {
+    const fifthsCycle = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+    const bh = breathHold();
+    ctx.setLineDash([3, 5]);
+    ctx.strokeStyle = `rgba(232,200,106,${0.15 + bh * 0.2})`;
+    ctx.lineWidth = 0.8;
+    const r1 = ir + (or - ir) * 0.5;
+    for (let fi = 0; fi < fifthsCycle.length; fi++) {
+      const a1 = pAngle(fifthsCycle[fi]);
+      const a2 = pAngle(fifthsCycle[(fi + 1) % fifthsCycle.length]);
+      ctx.beginPath();
+      ctx.moveTo(cx + r1 * Math.cos(a1), cy + r1 * Math.sin(a1));
+      ctx.lineTo(cx + r1 * Math.cos(a2), cy + r1 * Math.sin(a2));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  // R4.2 — 4-Quadrant Charge Colors (draw BEFORE nodes)
+  {
+    const quadColors = [
+      'rgba(200,80,80,0.04)',
+      'rgba(200,180,60,0.04)',
+      'rgba(60,180,120,0.04)',
+      'rgba(80,100,220,0.04)'
+    ];
+    for (let q = 0; q < 4; q++) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, or, q * Math.PI / 2, (q + 1) * Math.PI / 2);
+      ctx.fillStyle = quadColors[q];
+      ctx.fill();
+    }
   }
 
   // Nodes + glyph overlay at prime positions
@@ -263,12 +312,39 @@ function drawWheel() {
       }
     } else {
       const bh = breathHold();
-      ctx.fillStyle = night
-        ? `rgba(30,30,56,${0.2 + bh * 0.25})`
-        : `rgba(40,40,64,${0.15 + bh * 0.2})`;
-      ctx.beginPath();
-      ctx.arc(nx, ny, 3.5 * (1 + bh * 0.2), 0, Math.PI * 2);
-      ctx.fill();
+      const isQP = isQuasiPrime(i);
+      if (isQP) {
+        const qpAlpha = 0.1 + bh * 0.35;
+        ctx.fillStyle = night ? `rgba(120,100,180,${qpAlpha})` : `rgba(100,80,160,${qpAlpha})`;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 4 * (1 + bh * 0.15), 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = night
+          ? `rgba(30,30,56,${0.2 + bh * 0.25})`
+          : `rgba(40,40,64,${0.15 + bh * 0.2})`;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 3.5 * (1 + bh * 0.2), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Frequency ratio labels (R2.1)
+  if (breathHold() > 0.65) {
+    const fifthsMap = { 0: '1/1', 7: '3/2', 2: '9/8', 9: '5/4', 4: '4/3', 11: '8/3', 6: '5/3', 1: '16/15', 8: '9/4', 3: '6/5', 10: '15/8', 5: '7/4' };
+    for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+      const pp = WHEEL_CONFIG.primePositions.includes(i);
+      if (pp) {
+        const ratio = fifthsMap[i];
+        if (ratio) {
+          ctx.fillStyle = 'rgba(232,200,106,0.75)';
+          ctx.font = '6.5px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ratio, cx + Math.cos(pAngle(i)) * (ir - 55), cy + Math.sin(pAngle(i)) * (ir - 55));
+        }
+      }
     }
   }
 
@@ -282,6 +358,27 @@ function drawWheel() {
       const a = pAngle(i);
       const labelIdx = WHEEL_CONFIG.primePositions.indexOf(i);
       ctx.fillText(WHEEL_CONFIG.primeLabels[labelIdx], cx + Math.cos(a) * (ir - 42), cy + Math.sin(a) * (ir - 42));
+    }
+  }
+
+  // R2.1 — Frequency Ratio Labels at prime nodes (when breathHold > 0.65)
+  if (breathHold() > 0.65) {
+    const noteRatios = [
+      { pos: 0, ratio: '1/1' },   // C
+      { pos: 4, ratio: '5/4' },   // E
+      { pos: 7, ratio: '3/2' },   // G
+      { pos: 9, ratio: '15/8' },  // B
+      { pos: 11, ratio: '5/3' }   // F#
+    ];
+    ctx.font = '7px sans-serif';
+    ctx.fillStyle = 'rgba(232,200,106,0.7)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const { pos, ratio } of noteRatios) {
+      if (WHEEL_CONFIG.primePositions.includes(pos)) {
+        const a = pAngle(pos);
+        ctx.fillText(ratio, cx + Math.cos(a) * (ir - 60), cy + Math.sin(a) * (ir - 60));
+      }
     }
   }
 
@@ -330,6 +427,44 @@ function drawWheel() {
   }
 
 
+  // Quasi-prime nodes (R4.1)
+  for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+    const pp = WHEEL_CONFIG.primePositions.includes(i);
+    const act = (i === PHASES[currentPhase]?.wheelPos && isRunning);
+    if (!pp && !act) {
+      const isQP = isQuasiPrime(i);
+      if (isQP) {
+        const nx = cx + Math.cos(pAngle(i)) * (ir - 22);
+        const ny = cy + Math.sin(pAngle(i)) * (ir - 22);
+        const qpAlpha = 0.08 + breathHold() * 0.32;
+        ctx.fillStyle = night ? `rgba(130,100,190,${qpAlpha})` : `rgba(110,85,170,${qpAlpha})`;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 3.8 * (1 + breathHold() * 0.18), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // φ-spiral overlay (R5.3)
+  {
+    const PHI = 1.6180339887;
+    ctx.save();
+    ctx.strokeStyle = `rgba(232,200,106,${0.08 + breathHold() * 0.18})`;
+    ctx.lineWidth = 0.4 + breathHold() * 0.9;
+    ctx.beginPath();
+    for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+      const t = i / WHEEL_CONFIG.segments;
+      const r = ir + (or - ir) * t;
+      const spiralAngle = pAngle(i) + t * 0.618 * Math.PI;
+      const sx = cx + r * Math.cos(spiralAngle);
+      const sy = cy + r * Math.sin(spiralAngle);
+      if (i === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // Selected wheel position highlight
   if (selectedWheelPos != null) {
     const angle = pAngle(selectedWheelPos);
@@ -340,6 +475,27 @@ function drawWheel() {
     ctx.strokeStyle = `rgba(255,255,255,${0.5 + breathHold() * 0.3})`;
     ctx.lineWidth = 2;
     ctx.stroke();
+  }
+
+  // R5.3 — φ-Spiral Overlay (draw last, on top)
+  {
+    const PHI = 1.6180339887;
+    const bh = breathHold();
+    ctx.save();
+    ctx.strokeStyle = `rgba(232,200,106,${0.1 + bh * 0.15})`;
+    ctx.lineWidth = 0.5 + bh * 0.8;
+    ctx.beginPath();
+    for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+      const t = i / WHEEL_CONFIG.segments;
+      const r = ir + (or - ir) * t;
+      const angle = pAngle(i) + t * 0.5 * Math.PI;
+      const sx = cx + r * Math.cos(angle);
+      const sy = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -500,6 +656,26 @@ function playPhase(n) {
 function playComplete() {
   const freqs = [528, 639, 741];
   freqs.forEach((f, i) => setTimeout(() => tone(f, 3.5 - i * 0.3, 0.10), i * 500));
+}
+
+// ── ENHANCED COHERENCE DISPLAY (R6.2) ──
+function updateCoherenceDisplay() {
+  const cohBar = document.getElementById('cohBar');
+  const cohVal = document.getElementById('cohValue');
+  const subLabel = document.getElementById('cohSubLabel');
+  if (!cohBar || !cohVal) return;
+  const pct = Math.round(coherenceLevel || 0);
+  cohBar.style.width = pct + '%';
+  cohVal.textContent = pct + '%';
+  if (subLabel) {
+    const bh = breathHold();
+    const bp = Math.round(bh * 100);
+    const sel = selectedWheelPos;
+    const primeStatus = sel !== null
+      ? (WHEEL_CONFIG.primePositions.includes(sel) ? 'prime' : isQuasiPrime(sel) ? 'quasi' : 'comp')
+      : '—';
+    subLabel.textContent = `br ${bp}% ${primeStatus}`;
+  }
 }
 
 // ── COHERENCE SIMULATION ──

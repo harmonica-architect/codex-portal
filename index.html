@@ -8,6 +8,9 @@
 </head>
 <body>
 
+<!-- Breath background layer -->
+<div class="breath-bg" id="breathBg"></div>
+
 <!-- ═══════════════ SYMBOLIC LOGIN ═══════════════ -->
 <div id="loginScreen">
   <div class="login-title">Codex Portal — Glyph Seal Access</div>
@@ -30,12 +33,14 @@
 
 <!-- ═══════════════ MAIN PORTAL ═══════════════ -->
 <div class="portal" id="portal" style="display:none">
+<div class="breath-bg"></div>
 
   <!-- Coherence + Field Status -->
   <div class="coherence-panel">
     <div class="coh-label">Coherence</div>
     <div class="coh-bar-wrap"><div class="coh-bar" id="cohBar" style="width:0%"></div></div>
     <div class="coh-value" id="cohValue">0%</div>
+    <div class="coh-sub-label" id="cohSubLabel">—</div>
     <div class="user-dots" id="userDots"></div>
   </div>
   <div class="field-status" id="fieldStatus"></div>
