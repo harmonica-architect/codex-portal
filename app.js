@@ -1901,9 +1901,21 @@ function applyToggle120(show120) {
     });
   }
 }
+
+function setWheelGeometry(mode) {
+  localStorage.setItem('wheelGeometry', mode);
+  isShowing120Cell = (mode === '120');
+  document.getElementById('btnGeo24').style.fontWeight = mode === '24' ? 'bold' : 'normal';
+  document.getElementById('btnGeo120').style.fontWeight = mode === '120' ? 'bold' : 'normal';
+  drawWheel();
+}
 // Apply saved preference on load
 if (isShowing120Cell) applyToggle120(true);
 document.getElementById('toggle120').onclick = () => applyToggle120(!isShowing120Cell);
+// T19: Restore geometry toggle button state
+const savedGeo = localStorage.getItem('wheelGeometry') || '24';
+document.getElementById('btnGeo24').style.fontWeight = savedGeo === '24' ? 'bold' : 'normal';
+document.getElementById('btnGeo120').style.fontWeight = savedGeo === '120' ? 'bold' : 'normal';
 
 // ── AUTO-LOGIN ──
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);
