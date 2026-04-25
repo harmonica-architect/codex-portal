@@ -19,6 +19,44 @@ let glowP = 0, glowD = 1;
 let animId = null;
 let coherenceLevel = 0;
 
+// ── RIPPLE STATE (H3) ──
+let rippleOrigin = null;
+let ripplePhase = 0;
+let rippleRafId = null;
+let selectedWheelPos = null;
+
+function startRipple(wp) {
+  selectedWheelPos = wp;
+  rippleOrigin = wp;
+  ripplePhase = 0;
+  if (rippleRafId) cancelAnimationFrame(rippleRafId);
+  rippleRafId = requestAnimationFrame(rippleTick);
+}
+
+function rippleTick() {
+  ripplePhase += 0.03;
+  if (ripplePhase >= 1) {
+    ripplePhase = 0;
+    rippleOrigin = null;
+    rippleRafId = null;
+    return;
+  }
+  drawWheel();
+  rippleRafId = requestAnimationFrame(rippleTick);
+}
+
+function onWheelClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const dx = e.clientX - rect.left - cx;
+  const dy = e.clientY - rect.top - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist < ir - 30 || dist > or + 30) return; // outside wheel
+  let angle = Math.atan2(dy, dx) + Math.PI / 2;
+  if (angle < 0) angle += Math.PI * 2;
+  const seg = Math.round((angle / (Math.PI * 2)) * WHEEL_CONFIG.segments) % WHEEL_CONFIG.segments;
+  startRipple(seg);
+}
+
 // ── BREATH STATE (H1+H4) ──
 let breathPhase = 0;
 let breathDir = 1;
@@ -276,6 +314,33 @@ function drawWheel() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('⊙', cx, cy);
+
+  // Selection ripple wave (H3)
+  if (rippleOrigin != null && ripplePhase > 0 && ripplePhase < 1) {
+    const angle = pAngle(rippleOrigin);
+    const rippleR = ripplePhase * (or - ir - 20);
+    const alpha = (1 - ripplePhase) * 0.6;
+    const rx = cx + (ir + 20 + rippleR / 2) * Math.cos(angle);
+    const ry = cy + (ir + 20 + rippleR / 2) * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(rx, ry, 10 + ripplePhase * 8, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(232,200,106,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+
+  // Selected wheel position highlight
+  if (selectedWheelPos != null) {
+    const angle = pAngle(selectedWheelPos);
+    const sx = cx + (ir - 22) * Math.cos(angle);
+    const sy = cy + (ir - 22) * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 16, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,255,255,${0.5 + breathHold() * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 }
 
 function animateWheel() {
