@@ -46,6 +46,101 @@ let glyphOverlay = { glyph: '△', show: true };
 let personalTone = 432;
 let toneFreq = 432;
 
+// ── BREATH LOOP STATE ──
+let breathPhase = 0;
+let breathDir = 1;
+let lastBreathTs = 0;
+let breathRafId = null;
+let rippleOrigin = null;
+let ripplePhase = 0;
+let rippleRafId = null;
+let selectedWheelPos = null;
+
+function breathHold() { return Math.sin(breathPhase * Math.PI); }
+
+function breathTick(ts) {
+  if (!lastBreathTs) lastBreathTs = ts;
+  const dt = ts - lastBreathTs;
+  breathPhase += (dt / 6000) * breathDir;
+  if (breathPhase >= 1) { breathPhase = 1; breathDir = -1; }
+  if (breathPhase <= 0) { breathPhase = 0; breathDir = 1; }
+  lastBreathTs = ts;
+  document.documentElement.style.setProperty('--breath-hold', breathHold());
+  // Night mode accent breath shift
+  const bh3 = breathHold();
+  if (bh3 > 0.6) {
+    const shift = (bh3 - 0.6) / 0.4;
+    const r = Math.round(232 - shift * 112);
+    const g = Math.round(200 - shift * 88);
+    const b = Math.round(106 + shift * 149);
+    document.documentElement.style.setProperty('--gold', `rgb(${r},${g},${b})`);
+  } else {
+    document.documentElement.style.setProperty('--gold', nightMode ? '#a090d0' : '#e8c86a');
+  }
+  updateCoherenceDisplay();
+  breathRafId = requestAnimationFrame(breathTick);
+}
+
+function updateCoherenceDisplay() {
+  const cohBar = document.getElementById('cohBar');
+  const cohVal = document.getElementById('cohValue');
+  const subLabel = document.getElementById('cohSubLabel');
+  if (!cohBar || !cohVal) return;
+  const pct = Math.round(coherenceLevel || 0);
+  cohBar.style.width = pct + '%';
+  cohVal.textContent = pct + '%';
+  if (subLabel) {
+    const bh = breathHold();
+    const bp = Math.round(bh * 100);
+    const sel = selectedWheelPos;
+    const primeStatus = sel !== null
+      ? (WHEEL_CONFIG.primePositions.includes(sel) ? 'prime' : isQuasiPrime(sel) ? 'quasi' : 'comp')
+      : '—';
+    subLabel.textContent = `br ${bp}% ${primeStatus}`;
+  }
+  // Coherence bar breath glow
+  if (cohBar) cohBar.style.boxShadow = breathHold() > 0.5 ? `0 0 ${breathHold()*12}px rgba(232,200,106,${breathHold()*0.5})` : '';
+  if (cohVal) cohVal.style.opacity = 0.7 + breathHold() * 0.3;
+}
+
+// ── PRIME / QUASI-PRIME HELPERS ──
+function isPrime(n) {
+  if (n < 2) return false;
+  for (let i = 2; i <= Math.sqrt(n); i++) if (n % i === 0) return false;
+  return true;
+}
+function isQuasiPrime(n) {
+  if (WHEEL_CONFIG.primePositions.includes(n)) return false;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  return isPrime(n + 2) || isPrime(n - 2) || isPrime(n + 4);
+}
+
+// ── RIPPLE SELECTION ──
+function startRipple(wp) {
+  selectedWheelPos = wp;
+  rippleOrigin = wp;
+  ripplePhase = 0;
+  if (rippleRafId) cancelAnimationFrame(rippleRafId);
+  rippleRafId = requestAnimationFrame(rippleTick);
+}
+function rippleTick() {
+  ripplePhase += 0.03;
+  if (ripplePhase >= 1) { ripplePhase = 0; rippleOrigin = null; rippleRafId = null; return; }
+  drawWheel();
+  rippleRafId = requestAnimationFrame(rippleTick);
+}
+function onWheelClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const dx = e.clientX - rect.left - cx;
+  const dy = e.clientY - rect.top - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist < ir - 30 || dist > or + 30) return;
+  let angle = Math.atan2(dy, dx) + Math.PI / 2;
+  if (angle < 0) angle += Math.PI * 2;
+  const seg = Math.round((angle / (Math.PI * 2)) * WHEEL_CONFIG.segments) % WHEEL_CONFIG.segments;
+  startRipple(seg);
+}
+
 // ── PRIME AXIS TRACKER RAF ──
 let primeTrackerAnimId = null;
 
@@ -324,6 +419,21 @@ function drawWheel() {
   ctx.clearRect(0, 0, WHEEL_CONFIG.canvasSize, WHEEL_CONFIG.canvasSize);
   const night = nightMode;
 
+  // 4-Quadrant charge color sectors (QUATERNION SYMMETRY)
+  const quadColors = [
+    'rgba(200,70,70,0.05)',
+    'rgba(210,185,50,0.04)',
+    'rgba(50,185,115,0.04)',
+    'rgba(75,95,225,0.05)'
+  ];
+  for (let q = 0; q < 4; q++) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, or * 1.02, q * Math.PI / 2, (q + 1) * Math.PI / 2);
+    ctx.fillStyle = quadColors[q];
+    ctx.fill();
+  }
+
   // ── 120-CELL GEOMETRY PROJECTION (rendered on top of 24-cell) ──
   if (isShowing120Cell && typeof壱百弐拾 !== 'undefined') {
     const scale120 = or * 0.95;
@@ -365,49 +475,94 @@ function drawWheel() {
     ctx.stroke();
   }
 
+  // Harmonic fifths connections (0→7→2→9→4→11→6→1→8→3→10→5→0)
+  const fifthsCycle = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+  ctx.setLineDash([3, 5]);
+  ctx.strokeStyle = `rgba(232,200,106,${0.15 + breathHold() * 0.2})`;
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < fifthsCycle.length; i++) {
+    const a1 = pAngle(fifthsCycle[i]);
+    const a2 = pAngle(fifthsCycle[(i + 1) % fifthsCycle.length]);
+    const r1 = ir + (or - ir) * 0.5;
+    const r2 = ir + (or - ir) * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + r1 * Math.cos(a1), cy + r1 * Math.sin(a1));
+    ctx.lineTo(cx + r2 * Math.cos(a2), cy + r2 * Math.sin(a2));
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
   // Nodes + glyph overlay at prime positions
   for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
     const a = pAngle(i);
     const pp = WHEEL_CONFIG.primePositions.includes(i);
     const act = (i === PHASES[currentPhase]?.wheelPos && isRunning);
-    const r = pp ? 9 : 5.5;
+    const bh = breathHold();
     const nx = cx + Math.cos(a) * (ir - 22);
     const ny = cy + Math.sin(a) * (ir - 22);
 
     if (act) {
-      const grd = ctx.createRadialGradient(nx, ny, 0, nx, ny, r * 3);
-      grd.addColorStop(0, `rgba(245,210,130,${0.85 + glowP * 0.15})`);
-      grd.addColorStop(0.4, `rgba(200,160,70,${0.4 * glowP})`);
+      // Active node — breathing glow
+      const breatheR = 9 * (1 + bh * 0.12);
+      const grd = ctx.createRadialGradient(nx, ny, 0, nx, ny, breatheR * 3);
+      grd.addColorStop(0, `rgba(245,210,130,${0.85 + bh * 0.15})`);
+      grd.addColorStop(0.4, `rgba(200,160,70,${0.4 * (0.5 + bh * 0.5)})`);
       grd.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(nx, ny, r * 3, 0, Math.PI * 2);
+      ctx.arc(nx, ny, breatheR * 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#f8f0e0';
       ctx.beginPath();
-      ctx.arc(nx, ny, r, 0, Math.PI * 2);
+      ctx.arc(nx, ny, breatheR, 0, Math.PI * 2);
       ctx.fill();
     } else if (pp) {
-      // Draw glyph at this prime node
+      // Prime node — breathing dot + glyph overlay
+      const breatheR = 9 * (1 + bh * 0.12);
+      const breatheAlpha = 0.7 + bh * 0.3;
       if (glyphOverlay.show && glyphOverlay.glyph) {
         ctx.font = '10px sans-serif';
-        ctx.fillStyle = night ? '#a090d0' : '#e8c86a';
+        ctx.fillStyle = `rgba(${night ? '160,144,208' : '232,200,106'},${breatheAlpha})`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(glyphOverlay.glyph, nx, ny);
       } else {
-        ctx.fillStyle = night ? '#9688b0' : '#e8c86a';
-        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = `rgba(${night ? '150,136,176' : '232,200,106'},${breatheAlpha})`;
         ctx.beginPath();
-        ctx.arc(nx, ny, r, 0, Math.PI * 2);
+        ctx.arc(nx, ny, breatheR, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
+      }
+      // Frequency ratio label at peak breath
+      if (breathHold() > 0.65) {
+        const fifthsMap = {0:'1/1',7:'3/2',2:'9/8',9:'5/4',4:'4/3',11:'8/3',6:'5/3',1:'16/15',8:'9/4',3:'6/5',10:'15/8',5:'7/4'};
+        const ratio = fifthsMap[i];
+        if (ratio) {
+          ctx.fillStyle = 'rgba(232,200,106,0.75)';
+          ctx.font = '6.5px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ratio, cx + Math.cos(pAngle(i)) * (ir - 55), cy + Math.sin(pAngle(i)) * (ir - 55));
+        }
       }
     } else {
-      ctx.fillStyle = night ? '#1e1e38' : '#252538';
-      ctx.beginPath();
-      ctx.arc(nx, ny, r * 0.65, 0, Math.PI * 2);
-      ctx.fill();
+      // Non-prime — check quasi-prime or ghost
+      const isQP = isQuasiPrime(i);
+      if (isQP) {
+        // Quasi-prime — subtle breathing presence
+        const qpAlpha = 0.08 + bh * 0.32;
+        ctx.fillStyle = night ? `rgba(130,100,190,${qpAlpha})` : `rgba(110,85,170,${qpAlpha})`;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 3.8 * (1 + bh * 0.18), 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Ghost harmonic — subtle breathing presence
+        ctx.fillStyle = night
+          ? `rgba(30,30,56,${0.2 + bh * 0.25})`
+          : `rgba(40,40,64,${0.15 + bh * 0.2})`;
+        ctx.beginPath();
+        ctx.arc(nx, ny, 3.5 * (1 + bh * 0.2), 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -429,8 +584,8 @@ function drawWheel() {
     const a = pAngle(PHASES[currentPhase].wheelPos);
     ctx.beginPath();
     ctx.arc(cx, cy, ir + 12, a - 0.18, a + 0.18);
-    ctx.strokeStyle = `rgba(232,200,106,${0.65 + glowP * 0.35})`;
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = `rgba(232,200,106,${0.65 + breathHold() * 0.35})`;
+    ctx.lineWidth = 4 + breathHold() * 1.5;
     ctx.lineCap = 'round';
     ctx.stroke();
   }
@@ -452,9 +607,54 @@ function drawWheel() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('⊙', cx, cy);
+
+  // Golden ratio spiral overlay
+  const PHI = 1.6180339887;
+  ctx.save();
+  ctx.strokeStyle = `rgba(232,200,106,${0.08 + breathHold() * 0.18})`;
+  ctx.lineWidth = 0.4 + breathHold() * 0.9;
+  ctx.beginPath();
+  for (let i = 0; i < WHEEL_CONFIG.segments; i++) {
+    const t = i / WHEEL_CONFIG.segments;
+    const r = ir + (or - ir) * t;
+    const spiralAngle = pAngle(i) + t * 0.618 * Math.PI;
+    const sx = cx + r * Math.cos(spiralAngle);
+    const sy = cy + r * Math.sin(spiralAngle);
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Selection ripple wave
+  if (rippleOrigin != null && ripplePhase > 0 && ripplePhase < 1) {
+    const angle = pAngle(rippleOrigin);
+    const rippleR = ripplePhase * (or - ir - 20);
+    const alpha = (1 - ripplePhase) * 0.6;
+    const rx = cx + (ir + 20 + rippleR / 2) * Math.cos(angle);
+    const ry = cy + (ir + 20 + rippleR / 2) * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(rx, ry, 10 + ripplePhase * 8, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(232,200,106,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Selected wheel position breathing highlight
+  if (selectedWheelPos != null) {
+    const angle = pAngle(selectedWheelPos);
+    const sx = cx + (ir - 22) * Math.cos(angle);
+    const sy = cy + (ir - 22) * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 16, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,255,255,${0.5 + breathHold() * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 }
 
 function animateWheel() {
+  breathTick(performance.now()); // advance breath phase
   glowP += WHEEL_CONFIG.glowSpeed * glowD;
   if (glowP >= 1) { glowP = 1; glowD = -1; }
   if (glowP <= 0) { glowP = 0; glowD = 1; }
@@ -462,6 +662,8 @@ function animateWheel() {
   wheel24Rot += ROTATION_PER_FRAME * 0.6;
   drawWheel();
   animId = requestAnimationFrame(animateWheel);
+  if (breathRafId) cancelAnimationFrame(breathRafId);
+  breathRafId = requestAnimationFrame(breathTick);
 }
 
 // ── WEBSOCKET — MULTI-USER COHERENCE ──

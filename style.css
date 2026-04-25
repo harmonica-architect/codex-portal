@@ -332,16 +332,10 @@ body {
 }
 
 /* ── PORTAL SHELL ── */
-.portal { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 0.75rem; position: relative; }
+.breath-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 30%, rgba(232,200,106,0.06), transparent 60%); opacity: calc(var(--breath-hold, 0) * 0.7); }
 
 /* ── COHERENCE METER ── */
-.coherence-panel {
-  display: flex; align-items: center; gap: 0.6rem;
-  margin-bottom: 0.5rem;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 24px; padding: 0.4rem 1rem;
-  width: 100%; max-width: 420px;
-}
+.coh-sub-label { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.1em; margin-left: 0.4rem; min-width: 80px; }
 .coh-label { font-size: 0.58rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
 .coh-bar-wrap { flex: 1; height: 6px; background: var(--dim); border-radius: 3px; overflow: hidden; }
 .coh-bar { height: 100%; background: linear-gradient(90deg, #6a8a6a, var(--gold)); border-radius: 3px; transition: width 1.5s cubic-bezier(0.4,0,0.2,1); }
@@ -476,10 +470,10 @@ canvas { position: absolute; top: 0; left: 0; }
 .axis-band {
   position: absolute; top: 0; bottom: 0; left: 50%; width: 4px;
   background: linear-gradient(180deg, transparent, rgba(232,200,106,0.6), transparent);
-  transform: translateX(-50%); filter: blur(2px);
-  animation: axisPulse 4s ease-in-out infinite;
+  transform: translateX(-50%);
+  opacity: calc(0.35 + var(--breath-hold, 0) * 0.55);
+  filter: blur(calc(1.5px + (1 - var(--breath-hold, 0)) * 1px));
 }
-@keyframes axisPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.9; } }
 .axis-label { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 0.52rem; letter-spacing: 0.2em; color: var(--axis); white-space: nowrap; }
 .axis-whisper { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.52rem; color: var(--axis); opacity: 0.7; white-space: nowrap; text-align: center; max-width: 120px; }
 .axis-message {
@@ -1848,12 +1842,11 @@ html {
 /* -- Sigil nav label show on mobile -- */
 .sigil-nav-wrap .sn-hub-label { display: block; }
 
+.breath-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse at 50% 30%, rgba(232,200,106,0.06), transparent 60%); opacity: calc(var(--breath-hold, 0) * 0.7); }
+
 /* -- Portal body -- */
 .portal {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 0.5rem 0.6rem 6rem;
-  overscroll-behavior: none;
+  display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 0.75rem; position: relative; z-index: 1; max-width: 480px; margin: 0 auto; overscroll-behavior: none;
 }
 
 /* -- Desktop: sigil nav floats top-right -- */
@@ -1965,6 +1958,7 @@ html {
 .coherence-panel {
   padding: 0.3rem 0.7rem;
   border-radius: 20px;
+  position: relative; z-index: 1;
 }
 .coh-label { display: none; } /* hide label, keep space */
 .coh-value { font-size: 0.65rem; min-width: 30px; }
