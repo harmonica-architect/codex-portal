@@ -1,4 +1,4 @@
-// ══════════════════════════════════════════════
+﻿// ══════════════════════════════════════════════
 // CODEX PORTAL — APP.JS
 // ══════════════════════════════════════════════
 
@@ -496,7 +496,7 @@ function drawWheel() {
   }
 
   // ── 120-CELL GEOMETRY PROJECTION (rendered on top of 24-cell) ──
-  if (isShowing120Cell && typeof壱百弐拾 !== 'undefined') {
+  if (isShowing120Cell && typeof 壱百弐拾 !== 'undefined') {
     const scale120 = or * 0.95;
     const breathPhase = isRunning ? (Date.now() / 1000) : 0;
     壱百弐拾.draw(ctx, cx, cy, scale120, breathPhase);
@@ -505,7 +505,7 @@ function drawWheel() {
   // ── 24-CELL GEOMETRY WIREFRAME (rendered first, as background) ──
   const activeWheelPos = (isRunning && PHASES[currentPhase]) ? PHASES[currentPhase].wheelPos : -1;
   const night24 = night ? 0.6 : 0.4; // night mode slightly brighter
-  if (typeof二十四 !== 'undefined') {
+  if (typeof 二十四 !== 'undefined') {
     const scale24 = or * 0.92;
     const breathPhase = isRunning ? (Date.now() / 1000) : 0;
     const activeVert = _wheelPosTo24Vert(activeWheelPos);
@@ -1209,7 +1209,7 @@ function initMobileNavDrawer() {
   drawer.classList.add('visible');
 
   // Breath-phase-aware animation: exhale opens fast (receptive), inhale closes fast (contracting)
-  if (typeof breathCtrl !== 'undefined') {
+  if (typeof 二十四 !== 'undefined') {
     breathCtrl.onPhaseChange((phase, phaseIdx) => {
       if (phase.name === 'exhale' || phase.name === 'hold') {
         drawer.style.transition = 'opacity 0.15s ease-out, transform 0.2s ease-out';
@@ -1314,7 +1314,7 @@ function enterPortal() {
   }, { once: true });
 
   // Sync mute button state from localStorage on load
-  if (typeof breathCtrl !== 'undefined') {
+  if (typeof 二十四 !== 'undefined') {
     const btn = document.getElementById('audioMuteBtn');
     if (btn) {
       btn.classList.toggle('muted', breathCtrl.audioMuted);
@@ -1593,7 +1593,8 @@ function updateCommunityStatus() {
   if (fieldIntentionEl && state.fieldIntention) {
     const fi = state.fieldIntention;
     const age = Math.round((Date.now() - fi.ts) / 60000);
-    fieldIntentionEl.innerHTML = `<span style="font-size:0.52rem;color:var(--muted);">Field intention:</span> "${escapeHtml(fi.text)}" <span style="font-size:0.48rem;color:var(--muted);opacity:0.6;">— ${escapeHtml(fi.author)} · ${age}m ago</span>`;
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+    fieldIntentionEl.innerHTML = `<span style="font-size:0.52rem;color:var(--muted);">Field intention:</span> "${esc(fi.text)}" <span style="font-size:0.48rem;color:var(--muted);opacity:0.6;">— ${esc(fi.author)} · ${age}m ago</span>`;
   }
 }
 

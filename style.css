@@ -560,7 +560,7 @@ canvas { position: absolute; top: 0; left: 0; }
 .anon-user { font-size: 0.58rem; color: var(--muted); padding: 0.15rem 0.4rem; border: 1px solid var(--border); border-radius: 10px; opacity: 0.7; }
 
 /* ── NAV TABS ── */
-.nav-tabs { display: flex; gap: 0; width: 100%; max-width: 420px; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.nav-tabs { display: none !important; gap: 0; width: 100%; max-width: 420px; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
 .nav-tab { flex: 1; padding: 0.5rem; text-align: center; font-size: 0.62rem; letter-spacing: 0.15em; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s; text-transform: uppercase; }
 .nav-tab:hover { color: var(--text); }
 .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
@@ -2257,7 +2257,7 @@ canvas#wheel {
   .glyph-ring { grid-column: 1 / -1; }
   .dash-nav { grid-column: 1 / -1; }
 
-  .mobile-nav-drawer { display: none !important; }
+  .mobile-nav-drawer:not(.visible) { display: none !important; }
 }
 
 /* ----------------------------------------------
@@ -2282,5 +2282,5 @@ canvas#wheel {
   .community-section { grid-column: 2 / 3; grid-row: span 2; }
   .journey-section { grid-column: 1 / 2; }
   .dash-nav { grid-column: 1 / -1; }
-  .mobile-nav-drawer { display: none !important; }
+  .mobile-nav-drawer:not(.visible) { display: none !important; }
 }
