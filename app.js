@@ -192,17 +192,19 @@ function drawWheel() {
     const ny = cy + Math.sin(a) * (ir - 22);
 
     if (act) {
-      const grd = ctx.createRadialGradient(nx, ny, 0, nx, ny, r * 3);
-      grd.addColorStop(0, `rgba(245,210,130,${0.85 + glowP * 0.15})`);
-      grd.addColorStop(0.4, `rgba(200,160,70,${0.4 * glowP})`);
+      const bh = breathHold();
+      const breatheR = 9 * (1 + bh * 0.12);
+      const grd = ctx.createRadialGradient(nx, ny, 0, nx, ny, breatheR * 3);
+      grd.addColorStop(0, `rgba(245,210,130,${0.85 + bh * 0.15})`);
+      grd.addColorStop(0.4, `rgba(200,160,70,${0.4 * (0.5 + bh * 0.5)})`);
       grd.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(nx, ny, r * 3, 0, Math.PI * 2);
+      ctx.arc(nx, ny, breatheR * 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#f8f0e0';
       ctx.beginPath();
-      ctx.arc(nx, ny, r, 0, Math.PI * 2);
+      ctx.arc(nx, ny, breatheR, 0, Math.PI * 2);
       ctx.fill();
     } else if (pp) {
       // Draw glyph at this prime node
@@ -213,17 +215,21 @@ function drawWheel() {
         ctx.textBaseline = 'middle';
         ctx.fillText(glyphOverlay.glyph, nx, ny);
       } else {
-        ctx.fillStyle = night ? '#9688b0' : '#e8c86a';
-        ctx.globalAlpha = 0.75;
+        const bh = breathHold();
+        const breatheR = 9 * (1 + bh * 0.12);
+        const breatheAlpha = 0.7 + bh * 0.3;
+        ctx.fillStyle = night ? `rgba(150,136,176,${breatheAlpha})` : `rgba(232,200,106,${breatheAlpha})`;
         ctx.beginPath();
-        ctx.arc(nx, ny, r, 0, Math.PI * 2);
+        ctx.arc(nx, ny, breatheR, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
       }
     } else {
-      ctx.fillStyle = night ? '#1e1e38' : '#252538';
+      const bh = breathHold();
+      ctx.fillStyle = night
+        ? `rgba(30,30,56,${0.2 + bh * 0.25})`
+        : `rgba(40,40,64,${0.15 + bh * 0.2})`;
       ctx.beginPath();
-      ctx.arc(nx, ny, r * 0.65, 0, Math.PI * 2);
+      ctx.arc(nx, ny, 3.5 * (1 + bh * 0.2), 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -244,10 +250,11 @@ function drawWheel() {
   // Active arc
   if (isRunning && PHASES[currentPhase]) {
     const a = pAngle(PHASES[currentPhase].wheelPos);
+    const arcBh = breathHold();
     ctx.beginPath();
     ctx.arc(cx, cy, ir + 12, a - 0.18, a + 0.18);
-    ctx.strokeStyle = `rgba(232,200,106,${0.65 + glowP * 0.35})`;
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = `rgba(232,200,106,${0.65 + arcBh * 0.35})`;
+    ctx.lineWidth = 4 + arcBh * 1.5;
     ctx.lineCap = 'round';
     ctx.stroke();
   }
