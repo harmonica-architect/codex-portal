@@ -561,6 +561,7 @@ function initLogin() {
         userSigil.push(b.dataset.g);
       }
       gs.forEach(g => g.classList.toggle('selected', userSigil.includes(g.dataset.g)));
+      document.getElementById('loginBtn').disabled = userSigil.length !== 3;
     });
   });
 
