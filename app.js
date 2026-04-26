@@ -2827,6 +2827,28 @@ function refreshProfile() {
               totalInteractions < 50 ? 'Axis' :
               totalInteractions < 100 ? 'Star' :
               totalInteractions < 200 ? 'Convergence' : 'Return';
+  // Phase 5: Evolution timeline
+  var STAGES = ['Seed', 'Bridge', 'Axis', 'Star', 'Convergence', 'Return'];
+  var stageIdx = STAGES.indexOf(stage);
+  var evolutionTimeline = '<div class="pet-wrap">';
+  STAGES.forEach(function(s, i) {
+    var isActive = i <= stageIdx;
+    var isCurrent = s === stage;
+    var isPast = i < stageIdx;
+    var cls = isCurrent ? 'pet-node pet-current' : isPast ? 'pet-node pet-past' : 'pet-node';
+    var arrows = i < STAGES.length - 1 ? '<span class="pet-arrow">\u27a1</span>' : '';
+    evolutionTimeline += '<span class="' + cls + '">' + s + '</span>' + arrows;
+  });
+  evolutionTimeline += '</div>';
+  // Next milestone hint
+  var nextInter = STAGES[Math.min(stageIdx + 1, STAGES.length - 1)];
+  var thresholds = [10, 25, 50, 100, 200];
+  var nextThresh = thresholds[Math.min(stageIdx, thresholds.length - 1)];
+  var toGo = Math.max(0, nextThresh - totalInteractions);
+  var milestoneHint = '';
+  if (stage !== 'Return') {
+    milestoneHint = '<div class="pet-hint">' + toGo + ' more interaction' + (toGo !== 1 ? 's' : '') + ' to unlock \u25cf ' + nextInter + '</div>';
+  }
   var glyphsHtml = Object.keys(sigilEvolution.glyphs).map(function(g) {
     var gd = sigilEvolution.glyphs[g];
     var pct = Math.round(gd.weight * 100);
@@ -2872,6 +2894,8 @@ function refreshProfile() {
     '<div class="pss-label">Your Sigil</div>' +
     '<div class="pss-glyphs">' + userSigil.join('') + '</div>' +
     '<div class="pss-stage">\u25c8 ' + stage + ' Stage</div>' +
+    evolutionTimeline +
+    milestoneHint +
   '</div>' +
   '<div class="profile-evolution-section">' +
     '<div class="pes-label">Sigil Resonance</div>' +

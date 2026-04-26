@@ -3090,3 +3090,39 @@ canvas#wheel {
 .bhr-breaths {
   color: var(--muted);
 }
+
+/* ── PHASE 5: SIGIL EVOLUTION TIMELINE ── */
+.pet-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  margin: 0.4rem 0 0.2rem;
+}
+.pet-node {
+  font-size: 0.55rem;
+  color: var(--muted);
+  opacity: 0.45;
+  letter-spacing: 0.05em;
+}
+.pet-node.pet-past {
+  color: rgba(200,180,140,0.7);
+  opacity: 1;
+}
+.pet-node.pet-current {
+  color: rgba(232,200,106,0.9);
+  opacity: 1;
+  font-weight: 600;
+}
+.pet-arrow {
+  font-size: 0.5rem;
+  color: var(--muted);
+  opacity: 0.3;
+}
+.pet-hint {
+  font-size: 0.55rem;
+  color: var(--muted);
+  opacity: 0.5;
+  font-style: italic;
+  margin-bottom: 0.3rem;
+}
