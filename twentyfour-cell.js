@@ -3,7 +3,7 @@
 // Stereographic projection from 4D → 3D → 2D canvas
 // The breath phase's wheelPos (0–23) maps to 4D vertex index
 
-const二十四 = (() => {
+const_24cell = (() => {
   // ── Generate 24-cell 4D vertices ──
   function genVerts() {
     const vs = [];
@@ -153,6 +153,6 @@ const二十四 = (() => {
 
 // Expose draw method for use by other modules (e.g. Mirror mode)
 window.draw24CellProjection = function(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos) {
- 二十四.draw(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos);
+ _24cell.draw(ctx, cx, cy, scale, rx, ry, rz, breathPhase, activeWheelPos);
 };
 
