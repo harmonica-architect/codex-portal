@@ -1693,31 +1693,21 @@ function enterPortal() {
   initGlyphRing();
   initDashboard();
 
-  // ── COMMUNITY FIELD TOKEN INIT + AUTO-WRITE SETUP ──
-  // Load stored GitHub token if present
-  const storedToken = (() => {
-    try { return localStorage.getItem('codex_gh_token'); } catch { return null; }
-  })();
-  if (storedToken && typeof COMMUNITY_FIELD !== 'undefined') {
-    COMMUNITY_FIELD.TOKEN = storedToken;
-  }
-
-  // Setup token input UI
+  // Token is held in memory by COMMUNITY_FIELD.TOKEN (set on click above).
   const tokenInput = document.getElementById('csTokenInput');
   const tokenBtn = document.getElementById('csTokenBtn');
   if (tokenInput && tokenBtn && typeof COMMUNITY_FIELD !== 'undefined') {
-    // Pre-fill if token already stored
-    if (storedToken) tokenInput.value = '••••••••';
+    // Clear any token that was previously saved to localStorage (security hygiene)
+    try { localStorage.removeItem('codex_gh_token'); } catch {}
 
     tokenBtn.addEventListener('click', () => {
       const raw = tokenInput.value.trim();
       if (!raw || raw === '••••••••') return;
       COMMUNITY_FIELD.TOKEN = raw;
-      // ⚠️ SECURITY NOTE: Token stored in plain localStorage — accessible to any script on this origin.
-      // For production, use a backend proxy to hold the token server-side.
-      try { localStorage.setItem('codex_gh_token', raw); } catch {}
+      // Token is held in memory only — not persisted to localStorage.
+      // The community-field proxy (Render) will be the write path going forward.
       tokenInput.value = '••••••••';
-      tokenInput.title = 'Token saved in localStorage (your own token — not shared)'
+      tokenInput.title = 'Token held in memory for this session';
       // Trigger a fresh field read with the token
       COMMUNITY_FIELD._readField();
     });
