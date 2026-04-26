@@ -867,10 +867,10 @@ function connectWebSocket() {
 function handleWSMessage(msg) {
   switch (msg.type) {
     case 'field_state':
-      serverPhase = msg.phase;
-      globalCoherence = msg.globalCoherence || 0;
-      totalUsers = msg.userCount || 0;
-      inSyncCount = msg.inSyncCount || 0;
+      serverPhase = Math.max(0, Math.min(5, msg.phase ?? 0));
+      globalCoherence = Math.max(0, Math.min(100, msg.globalCoherence ?? 0));
+      totalUsers = Math.max(0, Math.min(10000, msg.userCount ?? 0));
+      inSyncCount = Math.max(0, Math.min(totalUsers, msg.inSyncCount ?? 0));
       updateFieldStatus(
         totalUsers > 0
           ? `${totalUsers} breather${totalUsers !== 1 ? 's' : ''} in field | ${inSyncCount} in phase | field coherence ${Math.round(globalCoherence)}%`
@@ -1437,6 +1437,8 @@ function enterPortal() {
       const raw = tokenInput.value.trim();
       if (!raw || raw === '••••••••') return;
       COMMUNITY_FIELD.TOKEN = raw;
+      // ⚠️ SECURITY NOTE: Token stored in plain localStorage — accessible to any script on this origin.
+      // For production, use a backend proxy to hold the token server-side.
       try { localStorage.setItem('codex_gh_token', raw); } catch {}
       tokenInput.value = '••••••••';
       tokenInput.title = 'Token saved in localStorage (your own token — not shared)'
@@ -1846,7 +1848,7 @@ function refreshJournal() {
     const d = new Date(e.ts).toLocaleString().slice(0, -3);
     const div = document.createElement('div');
     div.style.cssText = 'padding:0.4rem;border-bottom:1px solid var(--border);font-size:0.72rem;color:var(--muted);';
-    div.innerHTML = `<span style="color:var(--gold);margin-right:0.4rem;">${e.glyph}</span>${d}<br>${e.text}`;
+    div.innerHTML = `<span style="color:var(--gold);margin-right:0.4rem;">${escapeHtml(e.glyph)}</span>${d}<br>${escapeHtml(e.text)}`;
     el.appendChild(div);
   });
 }

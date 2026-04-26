@@ -353,10 +353,10 @@ class MirrorMode {
     // Mirror Mode text response
     if (this.outputEl) {
       this.outputEl.innerHTML = `
-        <div class="mirror-response">${result.mirrorSays}</div>
+        <div class="mirror-response">${this._escapeHtml(result.mirrorSays || '')}</div>
         <div class="mirror-meta">
-          <span class="mirror-glyph-display">${result.reflectionGlyph}</span>
-          <span class="mirror-archetype">${result.archetype}</span>
+          <span class="mirror-glyph-display">${this._escapeHtml(result.reflectionGlyph || '')}</span>
+          <span class="mirror-archetype">${this._escapeHtml(result.archetype || '')}</span>
           <span class="mirror-strength">${Math.round(result.strength * 100)}% resonance</span>
         </div>
       `;
