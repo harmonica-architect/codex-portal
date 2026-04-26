@@ -28,7 +28,6 @@ let animId = null;
 let wheel24Rot = 0; // 24-cell rotation angle
 let isShowing120Cell = localStorage.getItem('wheelGeometry') === '120'; // 120-cell toggle
 let coherenceLevel = 0;
-window.coherenceLevel = 0; // expose to breath-controller
 let virtualUsers = 0;
 let selectedJournalGlyph = '';
 let selectedCodexGlyph = '';
