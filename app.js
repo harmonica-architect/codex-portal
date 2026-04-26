@@ -3019,6 +3019,50 @@ function updateBreathProfileUI() {
     }
     if (cohEl) cohEl.textContent = avg !== null ? avg + '' : '—';
   }
+
+  // Phase 4: Show ratio + quality score when available
+  var bpBody = document.getElementById('breathProfileBody');
+  if (bpBody) {
+    var extraRow = bpBody.querySelector('.bp-extra-row');
+    if (!extraRow) {
+      extraRow = document.createElement('div');
+      extraRow.className = 'bp-extra-row';
+      extraRow.style.cssText = 'display:flex;gap:1rem;margin-top:0.4rem;font-size:0.6rem;color:rgba(200,180,140,0.6);';
+      bpBody.appendChild(extraRow);
+    }
+    var parts = [];
+    // Preferred phase ratio (after 5+ sessions)
+    if (bp.adapted && bp.preferredRatio) {
+      parts.push('<span>\u223f ' + bp.preferredRatio + '</span>');
+    }
+    // Breath quality score: session avg / global avg
+    if (bp.globalAvgCoherence !== null) {
+      var sessionAvg = bp.phaseCoherenceAvg.filter(function(v) { return v !== null; })
+        .reduce(function(a, b) { return a + b; }, 0) / Math.max(1, bp.phaseCoherenceAvg.filter(function(v) { return v !== null; }).length);
+      var qualityRatio = bp.globalAvgCoherence > 0 ? (sessionAvg / bp.globalAvgCoherence).toFixed(2) : null;
+      if (qualityRatio !== null) {
+        var qColor = sessionAvg >= bp.globalAvgCoherence ? 'rgba(140,200,140,0.8)' : 'rgba(200,160,100,0.8)';
+        parts.push('<span style="color:' + qColor + ';">' + qualityRatio + '\u00d7</span>');
+      }
+    }
+    extraRow.innerHTML = parts.join('');
+  }
+}
+
+// Phase 4: Wire adaptation glow pulse — listen to breathCtrl's _onBreathAdapted
+if (typeof breathCtrl !== 'undefined') {
+  breathCtrl._onBreathAdapted = function(profile) {
+    var cohBar = document.getElementById('cohBar');
+    if (cohBar) {
+      cohBar.style.transition = 'box-shadow 0.3s ease';
+      cohBar.style.boxShadow = '0 0 12px rgba(232,200,106,0.8)';
+      setTimeout(function() {
+        cohBar.style.boxShadow = '';
+      }, 1200);
+    }
+    // Refresh breath profile UI to show updated values
+    updateBreathProfileUI();
+  };
 }
 // Restore soundscape preference (must be after soundscape init at top of file)
 if (localStorage.getItem('codex_soundscape') === 'on') {

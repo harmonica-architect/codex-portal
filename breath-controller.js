@@ -330,12 +330,29 @@ class BreathController {
 
   // Returns current breath profile for UI display
   getBreathProfile() {
+    var ratio = null;
+    // Compute inhale/exhale ratio from adapted durations
+    if (this.breathProfile.adapted && this.phases[2].duration > 0) {
+      ratio = (this.breathProfile.phaseDurations[0] / this.phases[2].duration).toFixed(2);
+    }
+    // Compute global avg coherence across all recorded samples
+    var allSamples = [];
+    this.breathProfile.phaseCoherence.forEach(function(p) {
+      if (p.count > 0) {
+        for (var j = 0; j < p.count; j++) allSamples.push(p.sum / p.count);
+      }
+    });
+    var globalAvg = allSamples.length > 0
+      ? Math.round(allSamples.reduce(function(a, b) { return a + b; }, 0) / allSamples.length)
+      : null;
     return {
       sessions: this.breathProfile.sessions,
       adapted: this.breathProfile.adapted,
       dominantPhase: this.breathProfile.dominantPhase,
-      phaseCoherenceAvg: this.breathProfile.phaseCoherence.map(p => p.count > 0 ? Math.round(p.sum) : null),
+      phaseCoherenceAvg: this.breathProfile.phaseCoherence.map(function(p) { return p.count > 0 ? Math.round(p.sum) : null; }),
       phaseDurations: this.breathProfile.phaseDurations.slice(),
+      preferredRatio: ratio,
+      globalAvgCoherence: globalAvg,
       isLearning: this.breathProfile.sessions < BreathController.LEARN_SESSIONS,
       learningProgress: Math.min(1, this.breathProfile.sessions / BreathController.LEARN_SESSIONS)
     };
