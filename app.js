@@ -2842,7 +2842,7 @@ document.getElementById('btnGeo120').style.fontWeight = savedGeo === '120' ? 'bo
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);
 // Load glyph intelligence early — before any tracking happens
 loadGlyphIntelligence();
-// Init adaptive breath profile UI
+// Init adaptive breath profile UI (uses PHASE_GLYPHS defined below)
 initBreathProfileUI();
 
 // ── Adaptive Breath Profile UI ──
