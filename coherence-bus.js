@@ -198,6 +198,69 @@ const COHERENCE_BUS = {
   _syncFromBreath(ctrl) {
     this.breathCount = ctrl.breathCount || this.breathCount;
     this.totalInteractions = ctrl.totalInteractions || this.totalInteractions;
+  },
+
+  // ── Session History (Phase 1: Breath History) ──
+  // Saves current session stats to rolling 30-day localStorage record
+  saveSessionHistory() {
+    try {
+      const now = Date.now();
+      const avgCoh = this.coherenceHistory.length
+        ? Math.round(this.coherenceHistory.reduce((a, b) => a + b, 0) / this.coherenceHistory.length)
+        : 0;
+      const peaks = this.coherenceHistory.filter(v => v >= 80).length;
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+      let history = [];
+      try {
+        const stored = localStorage.getItem('codex_coh_history');
+        if (stored) history = JSON.parse(stored);
+      } catch(e) {}
+
+      // Find or create today's entry
+      const todayIdx = history.findIndex(e => e.date === today);
+      if (todayIdx >= 0) {
+        history[todayIdx].sessions++;
+        history[todayIdx].totalBreaths += this.breathCount;
+        history[todayIdx].avgCoh = Math.round(
+          (history[todayIdx].avgCoh * (history[todayIdx].sessions - 1) + avgCoh) / history[todayIdx].sessions
+        );
+        history[todayIdx].peaks += peaks;
+      } else {
+        history.push({ date: today, sessions: 1, avgCoh, peaks, totalBreaths: this.breathCount });
+      }
+
+      // Keep rolling 30-day window
+      const cutoff = new Date(now - 30 * 86400000).toISOString().split('T')[0];
+      history = history.filter(e => e.date >= cutoff);
+
+      localStorage.setItem('codex_coh_history', JSON.stringify(history));
+    } catch(e) {}
+  },
+
+  // Get session history for display
+  getSessionHistory() {
+    try {
+      const stored = localStorage.getItem('codex_coh_history');
+      if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    return [];
+  },
+
+  // Get last saved session summary (for post-login toast)
+  getLastSession() {
+    try {
+      const stored = localStorage.getItem('codex_last_session');
+      if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    return null;
+  },
+
+  // Save end-of-session summary
+  saveSessionSummary(sessionSummary) {
+    try {
+      localStorage.setItem('codex_last_session', JSON.stringify(sessionSummary));
+    } catch(e) {}
   }
 };
 

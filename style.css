@@ -2945,7 +2945,7 @@ canvas#wheel {
 }
 
 /* ------------------------------------------
-   BREATH PROFILE � Adaptive Breath UI
+   BREATH PROFILE � Adaptive Breath UI
    ------------------------------------------ */
 .bp-header-row {
   display: flex;
@@ -3019,4 +3019,56 @@ canvas#wheel {
   color: var(--muted);
   text-align: center;
   font-style: italic;
+}
+
+/* ── PHASE 1: BREATH HISTORY ── */
+.profile-breath-history {
+  margin: 0.75rem 0;
+  border-top: 1px solid rgba(200,180,140,0.15);
+  padding-top: 0.6rem;
+}
+.pbh-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.pbh-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: rgba(200,180,140,0.7);
+}
+.pbh-trend {
+  font-size: 0.65rem;
+  color: rgba(232,200,106,0.7);
+}
+.bhr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.bhr-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  padding: 0.15rem 0;
+}
+.bhr-date {
+  color: var(--muted);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+.bhr-sessions {
+  color: rgba(200,180,140,0.5);
+  width: 2rem;
+  flex-shrink: 0;
+}
+.bhr-coh {
+  color: rgba(232,200,106,0.85);
+  width: 2.5rem;
+  flex-shrink: 0;
+}
+.bhr-breaths {
+  color: var(--muted);
 }

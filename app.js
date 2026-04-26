@@ -433,6 +433,21 @@ function stopMiniWheelAnimation() {
 window.addEventListener('beforeunload', () => {
   stopWheelAnimation();
   stopMiniWheelAnimation();
+  // Phase 1+2: Save session history and summary before closing
+  if (typeof COHERENCE_BUS !== 'undefined') {
+    COHERENCE_BUS.saveSessionHistory();
+    // Build session summary
+    const journey = COHERENCE_BUS.getJourney();
+    const lastSession = {
+      ts: Date.now(),
+      breaths: COHERENCE_BUS.breathCount,
+      avgCoh: journey.avgCoherence,
+      archetype: COHERENCE_BUS.activeArchetype,
+      interactions: COHERENCE_BUS.totalInteractions,
+      duration: Math.round((Date.now() - COHERENCE_BUS.sessionStart) / 1000)
+    };
+    COHERENCE_BUS.saveSessionSummary(lastSession);
+  }
 });
 
 // ── DASHBOARD ──
@@ -1710,6 +1725,25 @@ function enterPortal() {
   animateWheel();
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
+
+  // Phase 2: Show previous session summary toast
+  if (typeof COHERENCE_BUS !== 'undefined') {
+    var lastSess = COHERENCE_BUS.getLastSession();
+    if (lastSess) {
+      var durMin = Math.round(lastSess.duration / 60);
+      var durStr = durMin < 1 ? lastSess.duration + 's' : durMin + 'm';
+      var toastEl = document.createElement('div');
+      toastEl.id = 'sessionToast';
+      toastEl.style.cssText = 'position:fixed;bottom:1.5rem;left:1.5rem;z-index:9999;background:rgba(20,18,30,0.95);border:1px solid rgba(200,180,140,0.3);border-radius:8px;padding:0.75rem 1rem;max-width:260px;font-size:0.72rem;color:rgba(220,210,190,0.9);line-height:1.4;';
+      toastEl.innerHTML = '<div style="margin-bottom:0.3rem;font-size:0.6rem;opacity:0.5;letter-spacing:0.08em;">PREVIOUS SESSION</div>' +
+        '<div style="margin-bottom:0.25rem;">' + lastSess.breaths + ' breaths · ' + lastSess.avgCoh + '% avg · ' + durStr + '</div>' +
+        '<div style="opacity:0.6;">Archetype: ' + (lastSess.archetype || 'Seed') + '</div>';
+      document.body.appendChild(toastEl);
+      setTimeout(function() {
+        if (toastEl.parentNode) toastEl.parentNode.removeChild(toastEl);
+      }, 4500);
+    }
+  }
   // Auto-coherence journal logging (opt-in via setting)
   let lastCohLog = null;
   window.cohLogInterval = setInterval(() => {
@@ -2775,23 +2809,53 @@ function refreshProfile() {
            '<span class="pgr-pct">' + pct + '%</span>' +
            '<span class="pgr-count">' + gd.interactions + '\u21ba</span></div>';
   }).join('');
-  el.innerHTML = `
-    <div class="profile-sigil-section">
-      <div class="pss-label">Your Sigil</div>
-      <div class="pss-glyphs">${userSigil.join('')}</div>
-      <div class="pss-stage">\u25c8 ${stage} Stage</div>
-    </div>
-    <div class="profile-evolution-section">
-      <div class="pes-label">Sigil Resonance</div>
-      ${glyphsHtml}
-    </div>
-    <div class="profile-row"><span>Cycles completed</span><span>${profile.cycles || 0}</span></div>
-    <div class="profile-row"><span>Journal entries</span><span>${profile.journal?.length || 0}</span></div>
-    <div class="profile-row"><span>Total interactions</span><span>${totalInteractions}</span></div>
-    <div class="profile-row"><span>Milestones</span><span>${sigilEvolution.milestones?.length || 0}</span></div>
-    <div class="profile-row"><span>Personal tone</span><span>${toneFreq} Hz</span></div>
-    <button class="logout-btn" id="btnLogout">\u2298 Exit Portal</button>
-  `;
+
+  // Phase 1: Breath History section
+  var breathHistoryHtml = '';
+  if (typeof COHERENCE_BUS !== 'undefined') {
+    var history = COHERENCE_BUS.getSessionHistory();
+    if (history.length > 0) {
+      var recent7 = history.slice(-7);
+      var older7 = history.slice(-14, -7);
+      var recentAvg = recent7.length > 0 ? recent7.reduce(function(s, e) { return s + e.avgCoh; }, 0) / recent7.length : 0;
+      var olderAvg = older7.length > 0 ? older7.reduce(function(s, e) { return s + e.avgCoh; }, 0) / older7.length : 0;
+      var trend = recentAvg > olderAvg + 3 ? '\u2191' : recentAvg < olderAvg - 3 ? '\u2193' : '\u2192';
+      var historyRows = history.slice().reverse().map(function(e) {
+        var d = new Date(e.date + 'T00:00:00');
+        var dayStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return '<div class="bhr-row">' +
+          '<span class="bhr-date">' + dayStr + '</span>' +
+          '<span class="bhr-sessions">' + e.sessions + 'x</span>' +
+          '<span class="bhr-coh">' + e.avgCoh + '%</span>' +
+          '<span class="bhr-breaths">' + e.totalBreaths + '\u2022</span>' +
+        '</div>';
+      }).join('');
+      breathHistoryHtml = '<div class="profile-breath-history">' +
+        '<div class="pbh-header">' +
+          '<span class="pbh-title">\u25cf Breath History</span>' +
+          '<span class="pbh-trend">' + trend + ' ' + Math.round(recentAvg) + '%</span>' +
+        '</div>' +
+        '<div class="bhr-list">' + historyRows + '</div>' +
+      '</div>';
+    }
+  }
+
+  el.innerHTML = '<div class="profile-sigil-section">' +
+    '<div class="pss-label">Your Sigil</div>' +
+    '<div class="pss-glyphs">' + userSigil.join('') + '</div>' +
+    '<div class="pss-stage">\u25c8 ' + stage + ' Stage</div>' +
+  '</div>' +
+  '<div class="profile-evolution-section">' +
+    '<div class="pes-label">Sigil Resonance</div>' +
+    glyphsHtml +
+  '</div>' +
+  breathHistoryHtml +
+  '<div class="profile-row"><span>Cycles completed</span><span>' + (profile.cycles || 0) + '</span></div>' +
+  '<div class="profile-row"><span>Journal entries</span><span>' + (profile.journal?.length || 0) + '</span></div>' +
+  '<div class="profile-row"><span>Total interactions</span><span>' + totalInteractions + '</span></div>' +
+  '<div class="profile-row"><span>Milestones</span><span>' + (sigilEvolution.milestones?.length || 0) + '</span></div>' +
+  '<div class="profile-row"><span>Personal tone</span><span>' + toneFreq + ' Hz</span></div>' +
+  '<button class="logout-btn" id="btnLogout">\u2298 Exit Portal</button>';
   var logoutBtn = document.getElementById('btnLogout');
   if (logoutBtn) logoutBtn.onclick = function() {
     localStorage.removeItem(STORAGE_KEYS.lastSigil);
