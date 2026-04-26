@@ -2282,5 +2282,5 @@ canvas#wheel {
   .community-section { grid-column: 2 / 3; grid-row: span 2; }
   .journey-section { grid-column: 1 / 2; }
   .dash-nav { grid-column: 1 / -1; }
-  .mobile-nav-drawer:not(.visible) { display: none !important; }
+  .mobile-nav-drawer { display: none !important; }
 }

@@ -102,7 +102,7 @@ function navigateToSigil(idx, skipBreathGate = false) {
     stopMirror24CellRAF();
   }
 
-  performSigilTransition(idx, sn);
+  performSigilTransition(idx, sn, target);
 }
 
 // ── ANIMATION CLEANUP ──
@@ -117,7 +117,8 @@ window.addEventListener('beforeunload', () => {
   stopOrbitAnimation();
 });
 
-function performSigilTransition(idx, sn) {
+function performSigilTransition(idx, sn, target) {
+  if (!target) { target = SIGIL_TABS[idx]; if (!target) return; }
   stopOrbitAnimation();  // cancel orbit RAF before tab switch
   sn.isTransitioning = true;
 
