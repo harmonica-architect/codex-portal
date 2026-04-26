@@ -93,10 +93,19 @@ function updateCoherenceDisplay() {
     const bh = breathHold();
     const bp = Math.round(bh * 100);
     const sel = selectedWheelPos;
+    // Breath phase + prime marker from BreathController
+    let breathType = '—';
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.phases && breathCtrl.phases[breathCtrl.currentPhase]) {
+      const phaseName = breathCtrl.phases[breathCtrl.currentPhase].name;
+      const wheelPos = breathCtrl.phases[breathCtrl.currentPhase].wheelPos;
+      const isPrime = WHEEL_CONFIG.primePositions.includes(wheelPos);
+      const primeMarker = isPrime ? '✦' : '—';
+      breathType = primeMarker + ' ' + phaseName;
+    }
     const primeStatus = sel !== null
       ? (WHEEL_CONFIG.primePositions.includes(sel) ? 'prime' : isQuasiPrime(sel) ? 'quasi' : 'comp')
       : '—';
-    subLabel.textContent = `br ${bp}% ${primeStatus}`;
+    subLabel.textContent = `br ${bp}% ${breathType}`;
   }
   // Coherence bar breath glow
   if (cohBar) cohBar.style.boxShadow = breathHold() > 0.5 ? `0 0 ${breathHold()*12}px rgba(232,200,106,${breathHold()*0.5})` : '';

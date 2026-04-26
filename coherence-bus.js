@@ -78,9 +78,9 @@ const COHERENCE_BUS = {
   },
 
   // ── Log a user interaction ──
-  logInteraction(action, detail = {}) {
+  logInteraction(action, detail) {
     this.totalInteractions++;
-    this._log({ action, ...detail });
+    this._log({ action: action, ...detail });
   },
 
   _log(entry) {
@@ -99,7 +99,7 @@ const COHERENCE_BUS = {
     r.style.setProperty('--breath-panel-fade', t.panelFade);
     r.style.setProperty('--breath-glyph-pulse', t.glyphPulse);
     r.style.setProperty('--breath-color-shift', t.colorShift);
-    r.style.setProperty('--breath-glyph', `"${phase.glyph}"`);
+    r.style.setProperty('--breath-glyph', '"' + phase.glyph + '"');
 
     // Inhale = expand, Exhale = contract, Hold = locked, Still = neutral
     if (ctrl.isInhale()) r.classList.add('breath-inhaling');
@@ -118,7 +118,6 @@ const COHERENCE_BUS = {
     if (typeof window !== 'undefined') window.coherenceLevel = val;
     this.coherenceHistory.push(val);
     if (this.coherenceHistory.length > 30) this.coherenceHistory.shift();
-    // Push coherence into CSS vars — drives sigil nav, ring, visual feedback
     this._updateCoherenceCSS(val);
   },
 
@@ -126,17 +125,13 @@ const COHERENCE_BUS = {
     if (typeof document === 'undefined') return;
     const r = document.documentElement;
     r.style.setProperty('--coh', val.toFixed(1));
-    // Glow intensity: 0-100 → 4-40px spread
     const glowSpread = 4 + (val / 100) * 36;
     r.style.setProperty('--coh-glow-spread', glowSpread.toFixed(1));
-    // Glow opacity: 0.15-0.7
     const glowOpacity = 0.15 + (val / 100) * 0.55;
     r.style.setProperty('--coh-glow-opacity', glowOpacity.toFixed(2));
-    // Pulse speed: 3s at 0% coherence → 1s at 100% (faster when more coherent)
     const pulseSpeed = Math.max(1, 3 - (val / 100) * 2).toFixed(2);
     r.style.setProperty('--coh-pulse-speed', pulseSpeed);
-    // Ring glow bonus: adds to phase transition ring scale when coherence is high
-    const ringBonus = (val / 100) * 0.08; // up to +8% scale at 100%
+    const ringBonus = (val / 100) * 0.08;
     r.style.setProperty('--coh-ring-bonus', ringBonus.toFixed(3));
   },
 
@@ -171,14 +166,11 @@ const COHERENCE_BUS = {
         archetypes[e.archetype] = (archetypes[e.archetype] || 0) + 1;
       }
     });
-
-    // Average coherence
     const avgCoh = this.coherenceHistory.length
-      ? Math.round(this.coherenceHistory.reduce((a, b) => a + b, 0) / this.coherenceHistory.length)
+      ? Math.round(this.coherenceHistory.reduce(function(a, b) { return a + b; }, 0) / this.coherenceHistory.length)
       : 0;
-
     return {
-      archetypes,
+      archetypes: archetypes,
       breathCount: this.breathCount,
       interactions: this.totalInteractions,
       avgCoherence: avgCoh,
@@ -188,43 +180,28 @@ const COHERENCE_BUS = {
 
   // ── Get the archetype ring for display ──
   getArchetypeRing() {
-    // 8 positions on the sigil ring = 8 archetype phases
     const ring = [];
     const archs = ['Seed', 'Seed', 'Bridge', 'Axis', 'Star', 'Star', 'Convergence', 'Return'];
-    const glyphs = ['△', '◎', '◁△▷', '◇', '◈', '◉', '⊕', '◇'];
+    const glyphs = ['\u25b3', '\u25ce', '\u25c1\u25b3\u25c2', '\u25c7', '\u25c8', '\u25c9', '\u2295', '\u25c7'];
     const colors = ['#e8c86a', '#d4a840', '#b8a0d0', '#c8d0e0', '#e8c86a', '#d0c0a0', '#a0c0c0', '#c0a0b0'];
-    archs.forEach((a, i) => {
+    archs.forEach(function(a, i) {
       ring.push({ archetype: a, glyph: glyphs[i], color: colors[i] });
     });
     return ring;
+  },
+
+  // ── Sync from BreathController — keeps breathCount/interactions fresh ──
+  _syncFromBreath(ctrl) {
+    this.breathCount = ctrl.breathCount || this.breathCount;
+    this.totalInteractions = ctrl.totalInteractions || this.totalInteractions;
   }
 };
-
-_syncFromBreath(ctrl) {
-  this.breathCount = ctrl.breathCount || this.breathCount;
-  this.totalInteractions = ctrl.totalInteractions || this.totalInteractions;
-}
 
 // ── Subscriber registry ──
 const BREATH_SUBSCRIBERS = [];
 
-// ── Extend BreathController to also emit to the bus ──
-const _origTick = BreathController.prototype._tick;
-BreathController.prototype._tick = function() {
-  const p = this.phases[this.currentPhase];
-  this.listeners.forEach(fn => { try { fn(p, this.currentPhase, this); } catch(e) { } });
-  // Also emit to the coherence bus
-  if (typeof COHERENCE_BUS !== 'undefined') {
-    COHERENCE_BUS.emit(p, this.currentPhase, this);
-  }
-  this.currentPhase = (this.currentPhase + 1) % this.phases.length;
-  clearTimeout(this.timer);
-  const next = this.phases[this.currentPhase];
-  this.timer = setTimeout(this._tick.bind(this), next.duration);
-};
-
 // ── Subscribe to breath phases ──
 function onBreathPhase(fn) {
   BREATH_SUBSCRIBERS.push(fn);
-  return () => { BREATH_SUBSCRIBERS.splice(BREATH_SUBSCRIBERS.indexOf(fn), 1); };
+  return function() { BREATH_SUBSCRIBERS.splice(BREATH_SUBSCRIBERS.indexOf(fn), 1); };
 }
