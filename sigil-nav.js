@@ -240,7 +240,8 @@ function updateSigilNavBreath(phase, phaseIdx, ctrl) {
     if (ctrl.isExhale()) breathScale = 1.0 - 0.08;
     if (ctrl.isStill()) breathScale = 1.0;
 
-    dot.style.setProperty('--breath-scale', breathScale.toFixed(2));
+    // Direct inline transform — more reliable in Edge than CSS custom property
+    dot.style.transform = `translate(-50%,-50%) scale(${breathScale.toFixed(2)})`;
 
     // Active tab gets extra glow during inhale
     if (i === sigilNav.activeIndex) {
