@@ -2842,6 +2842,92 @@ document.getElementById('btnGeo120').style.fontWeight = savedGeo === '120' ? 'bo
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);
 // Load glyph intelligence early — before any tracking happens
 loadGlyphIntelligence();
+// Init adaptive breath profile UI
+initBreathProfileUI();
+
+// ── Adaptive Breath Profile UI ──
+const PHASE_NAMES = ['Inhale','Hold-In','Exhale','Still','Inhale-2','Hold-Peak','Exhale-Release','Rest'];
+const PHASE_GLYPHS = ['◎','◉','○','·','◎','◉','○','◇'];
+
+function initBreathProfileUI() {
+  const wrap = document.getElementById('bpPhases');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const row = document.createElement('div');
+    row.className = 'bp-phase-row';
+    row.innerHTML = `
+      <span class="bp-phase-glyph">${PHASE_GLYPHS[i]}</span>
+      <span class="bp-phase-name">${PHASE_NAMES[i]}</span>
+      <div class="bp-bar-wrap"><div class="bp-bar" id="bpBar${i}" style="width:0%"></div></div>
+      <span class="bp-coh-val" id="bpCoh${i}">—</span>
+    `;
+    wrap.appendChild(row);
+  }
+  // Reset button
+  const resetBtn = document.getElementById('btnResetBreath');
+  if (resetBtn) resetBtn.onclick = function() {
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.resetBreathProfile) {
+      breathCtrl.resetBreathProfile();
+      initBreathProfileUI();
+    }
+  };
+  // Subscribe to breath phase changes to update bars in real time
+  if (typeof breathCtrl !== 'undefined') {
+    breathCtrl.onPhaseChange(function(phase, phaseIdx) {
+      // Highlight the current phase row
+      document.querySelectorAll('.bp-phase-row').forEach(function(row, ri) {
+        row.style.opacity = ri === phaseIdx ? '1' : '0.5';
+      });
+    });
+    breathCtrl.onCycleComplete(function() {
+      updateBreathProfileUI();
+    });
+  }
+  updateBreathProfileUI();
+}
+
+function updateBreathProfileUI() {
+  if (typeof breathCtrl === 'undefined') return;
+  var bp = breathCtrl.getBreathProfile();
+  var sessionsEl = document.getElementById('bpSessions');
+  var statusEl = document.getElementById('bpStatus');
+  var barEl = document.getElementById('bpLearningBar');
+  var hintEl = document.getElementById('bpHint');
+  if (sessionsEl) sessionsEl.textContent = bp.sessions + ' session' + (bp.sessions !== 1 ? 's' : '');
+  if (statusEl) {
+    if (bp.isLearning) {
+      statusEl.textContent = 'Learning… ' + Math.round(bp.learningProgress * 100) + '%';
+    } else if (bp.adapted) {
+      statusEl.textContent = '● Adapted';
+    } else {
+      statusEl.textContent = '○ Stable';
+    }
+  }
+  if (barEl) barEl.style.width = (bp.learningProgress * 100) + '%';
+  if (hintEl) {
+    if (bp.isLearning) {
+      hintEl.textContent = 'Keep breathing — the field is learning your rhythm.';
+    } else if (bp.adapted) {
+      var dom = bp.dominantPhase;
+      hintEl.textContent = 'You resonate most with ' + PHASE_NAMES[dom] + '.';
+    }
+  }
+  for (var i = 0; i < 8; i++) {
+    var barEl2 = document.getElementById('bpBar' + i);
+    var cohEl = document.getElementById('bpCoh' + i);
+    var avg = bp.phaseCoherenceAvg[i];
+    if (barEl2) {
+      var pct = avg !== null ? avg : 0;
+      var hue = 40 + (pct / 100) * 30;
+      barEl2.style.width = pct + '%';
+      barEl2.style.background = avg !== null
+        ? 'hsl(' + hue + ', 70%, ' + (40 + pct * 0.3) + '%)'
+        : 'rgba(232,200,106,0.2)';
+    }
+    if (cohEl) cohEl.textContent = avg !== null ? avg + '' : '—';
+  }
+}
 // Restore soundscape preference (must be after soundscape init at top of file)
 if (localStorage.getItem('codex_soundscape') === 'on') {
   initSoundscape();

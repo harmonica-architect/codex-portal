@@ -119,6 +119,10 @@ const COHERENCE_BUS = {
     this.coherenceHistory.push(val);
     if (this.coherenceHistory.length > 30) this.coherenceHistory.shift();
     this._updateCoherenceCSS(val);
+    // Feed coherence sample into adaptive breath profile
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.recordCoherence) {
+      breathCtrl.recordCoherence(val);
+    }
   },
 
   _updateCoherenceCSS(val) {

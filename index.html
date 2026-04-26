@@ -637,6 +637,25 @@
         <div class="gi-placeholder">Select glyphs across the portal to build your intelligence map.</div>
       </div>
     </div>
+
+    <div class="collapse-section" id="breathProfileCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('breathProfileCollapse')">
+        <span class="collapse-title">◎ Adaptive Breath</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body" id="breathProfileBody">
+        <div class="bp-header-row">
+          <div class="bp-sessions" id="bpSessions">— sessions</div>
+          <div class="bp-status" id="bpStatus">Learning…</div>
+        </div>
+        <div class="bp-phases" id="bpPhases"></div>
+        <div class="bp-learning-bar-wrap">
+          <div class="bp-learning-bar" id="bpLearningBar"></div>
+        </div>
+        <div class="bp-hint" id="bpHint">Keep breathing — the field is learning your rhythm.</div>
+        <button class="btn" id="btnResetBreath" style="margin-top:0.5rem;width:100%;font-size:0.6rem;opacity:0.6;">Reset Breath Profile</button>
+      </div>
+    </div>
   </div>
 
   <!-- Hidden canvas for temporary glyphic echo generation (off-screen) -->

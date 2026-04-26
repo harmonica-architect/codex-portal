@@ -118,6 +118,14 @@ class BreathController {
     // Cycle-complete listeners — fire after 1 full 8-phase breath cycle
     this._cycleCompleteListeners = [];
 
+    // ── ADAPTIVE BREATH STATE ──
+    // Tracks per-phase coherence to learn the user's breathing pattern
+    this.breathProfile = this._loadBreathProfile();
+    // Rolling window: coherence samples per phase for current session
+    this._sessionCohSamples = Array.from({ length: this.phases.length }, () => []);
+    // Number of completed cycles in this session
+    this._sessionCycles = 0;
+
     // Bind
     this._tick = this._tick.bind(this);
   }
@@ -197,6 +205,10 @@ class BreathController {
     }
 
     const next = this.phases[this.currentPhase];
+    // Use adapted duration if profile has been adapted, otherwise base duration
+    const nextDuration = this.breathProfile.adapted
+      ? this.breathProfile.phaseDurations[this.currentPhase]
+      : next.duration;
 
     // Play breath phase tone — Pythagorean 24-tone series keyed to wheelPos
     // The phase's wheelPos maps directly to PYTHAGOREAN_FREQS[wheelPos]
@@ -205,6 +217,150 @@ class BreathController {
     // Schedule next
     clearTimeout(this.timer);
     this.timer = setTimeout(this._tick, next.duration);
+  }
+
+  // ── Adaptive Breath Profile ──
+  // Learns user's coherence patterns per phase and adapts durations accordingly.
+  // Min/max duration bounds prevent runaway adaptation.
+  static MIN_DURATION = 3000;
+  static MAX_DURATION = 9000;
+  // How much a phase can shift per cycle (10% max of its current value)
+  static ADAPT_RATE = 0.10;
+  // Number of sessions before adaptation becomes active
+  static LEARN_SESSIONS = 2;
+
+  _loadBreathProfile() {
+    try {
+      const s = localStorage.getItem('codex_breath_profile');
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return {
+      sessions: 0,           // total sessions with breath data
+      totalBreaths: 0,       // total breaths across all sessions
+      phaseCoherence: Array.from({ length: this.phases.length }, () => ({ sum: 0, count: 0 })),
+      phaseDurations: this.phases.map(p => p.duration),
+      preferredRatio: null,   // inhale:exhale ratio when known
+      dominantPhase: 0,       // phase with highest avg coherence
+      lastSessionCoh: [],     // coherence samples from last session
+      coherenceTrend: 0,      // +1 improving, 0 stable, -1 declining
+      adapted: false,         // whether phase durations have been adapted
+      updatedAt: Date.now()
+    };
+  }
+
+  _saveBreathProfile() {
+    this.breathProfile.updatedAt = Date.now();
+    try { localStorage.setItem('codex_breath_profile', JSON.stringify(this.breathProfile)); } catch(e) {}
+  }
+
+  // Called from the coherence bus when coherence updates — samples current phase coherence
+  _sampleCoherence(coh) {
+    if (!this.isActive || coh === undefined || coh === null) return;
+    this._sessionCohSamples[this.currentPhase].push(coh);
+  }
+
+  // Called when a full breath cycle completes — update profile and adapt durations
+  _adaptCycleDurations() {
+    this._sessionCycles++;
+
+    // After each cycle, integrate session samples into the rolling profile
+    for (let i = 0; i < this.phases.length; i++) {
+      const samples = this._sessionCohSamples[i];
+      if (!samples || samples.length === 0) continue;
+
+      const sessionAvg = samples.reduce((a, b) => a + b, 0) / samples.length;
+      const p = this.breathProfile.phaseCoherence[i];
+      const prevGlobal = p.count > 0 ? p.sum / p.count : 50;
+
+      // Exponential moving average: new avg = 0.7 * old + 0.3 * new
+      if (p.count > 0) {
+        p.sum = prevGlobal * 0.7 + sessionAvg * 0.3;
+      } else {
+        p.sum = sessionAvg;
+      }
+      p.count++;
+    }
+
+    // Clear session samples for next cycle
+    this._sessionCohSamples = Array.from({ length: this.phases.length }, () => []);
+
+    // Only adapt after LEARN_SESSIONS cycles across sessions
+    if (this.breathProfile.sessions < BreathController.LEARN_SESSIONS) return;
+
+    // Find the phase with highest avg coherence (the user's "best" phase)
+    let bestPhase = 0, bestCoh = 0;
+    for (let i = 0; i < this.phases.length; i++) {
+      const avg = this.breathProfile.phaseCoherence[i].sum;
+      if (avg > bestCoh) { bestCoh = avg; bestPhase = i; }
+    }
+    this.breathProfile.dominantPhase = bestPhase;
+
+    // Adapt: shift duration toward phases the user resonates with
+    // Phases with coherence > global avg get +ADAPT_RATE, below get -ADAPT_RATE
+    const globalAvg = this.breathProfile.phaseCoherence.reduce((a, b) => a + b.sum, 0) / this.phases.length;
+
+    for (let i = 0; i < this.phases.length; i++) {
+      const phaseAvg = this.breathProfile.phaseCoherence[i].sum;
+      const deviation = phaseAvg - globalAvg;
+      const shift = this.breathProfile.phaseDurations[i] * BreathController.ADAPT_RATE * (deviation / 100);
+
+      let newDur = this.breathProfile.phaseDurations[i] + shift;
+      // Clamp to bounds
+      newDur = Math.max(BreathController.MIN_DURATION, Math.min(BreathController.MAX_DURATION, newDur));
+      // Round to nearest 50ms for cleanliness
+      this.breathProfile.phaseDurations[i] = Math.round(newDur / 50) * 50;
+    }
+
+    this.breathProfile.adapted = true;
+    this._saveBreathProfile();
+
+    // Notify UI that breath cycle has adapted
+    if (typeof this._onBreathAdapted === 'function') {
+      this._onBreathAdapted(this.breathProfile);
+    }
+  }
+
+  // Called at session start — increments session count
+  _openBreathSession() {
+    this.breathProfile.sessions++;
+    this._sessionCycles = 0;
+    this._sessionCohSamples = Array.from({ length: this.phases.length }, () => []);
+    this._saveBreathProfile();
+  }
+
+  // Returns current breath profile for UI display
+  getBreathProfile() {
+    return {
+      sessions: this.breathProfile.sessions,
+      adapted: this.breathProfile.adapted,
+      dominantPhase: this.breathProfile.dominantPhase,
+      phaseCoherenceAvg: this.breathProfile.phaseCoherence.map(p => p.count > 0 ? Math.round(p.sum) : null),
+      phaseDurations: this.breathProfile.phaseDurations.slice(),
+      isLearning: this.breathProfile.sessions < BreathController.LEARN_SESSIONS,
+      learningProgress: Math.min(1, this.breathProfile.sessions / BreathController.LEARN_SESSIONS)
+    };
+  }
+
+  // Reset breath profile to defaults
+  resetBreathProfile() {
+    this.breathProfile = {
+      sessions: 0,
+      totalBreaths: 0,
+      phaseCoherence: Array.from({ length: this.phases.length }, () => ({ sum: 0, count: 0 })),
+      phaseDurations: this.phases.map(p => p.duration),
+      preferredRatio: null,
+      dominantPhase: 0,
+      lastSessionCoh: [],
+      coherenceTrend: 0,
+      adapted: false,
+      updatedAt: Date.now()
+    };
+    this._saveBreathProfile();
+  }
+
+  // Called by coherence bus to feed coherence samples into breath profile
+  recordCoherence(coh) {
+    this._sampleCoherence(coh);
   }
 
   // ── Fire cascade event every 24 breaths (3 full ring rotations) ──
@@ -226,6 +382,8 @@ class BreathController {
 
   _fireCycleComplete() {
     this._cycleCompleteListeners.forEach(fn => { try { fn(this.breathCount); } catch(e) { } });
+    // Adapt breath durations based on accumulated coherence data
+    this._adaptCycleDurations();
   }
 
   // ── Public API ──
@@ -233,6 +391,7 @@ class BreathController {
     if (this.isActive) return;
     this.isActive = true;
     this.element = el;
+    this._openBreathSession(); // Track this as a new breath session
     this._tick(); // Fire immediately
   }
 

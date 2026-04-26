@@ -2943,3 +2943,80 @@ canvas#wheel {
 .icox-teach-body strong {
   color: var(--axis);
 }
+
+/* ------------------------------------------
+   BREATH PROFILE — Adaptive Breath UI
+   ------------------------------------------ */
+.bp-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.bp-sessions {
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+.bp-status {
+  font-size: 0.58rem;
+  color: var(--gold);
+  font-style: italic;
+}
+.bp-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+.bp-phase-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bp-phase-glyph {
+  font-size: 0.8rem;
+  min-width: 1.2rem;
+  text-align: center;
+}
+.bp-phase-name {
+  font-size: 0.58rem;
+  color: var(--muted);
+  min-width: 4.5rem;
+}
+.bp-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: rgba(232,200,106,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bp-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.bp-coh-val {
+  font-size: 0.55rem;
+  color: var(--axis);
+  min-width: 2rem;
+  text-align: right;
+}
+.bp-learning-bar-wrap {
+  height: 3px;
+  background: rgba(232,200,106,0.1);
+  border-radius: 2px;
+  margin-bottom: 0.4rem;
+  overflow: hidden;
+}
+.bp-learning-bar {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(232,200,106,0.4), rgba(232,200,106,0.8));
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+.bp-hint {
+  font-size: 0.58rem;
+  color: var(--muted);
+  text-align: center;
+  font-style: italic;
+}
