@@ -151,6 +151,9 @@
         var next = sn.pendingTarget;
         sn.pendingTarget = null;
         navigateToSigil(next);
+      } else {
+        // Clear even if no flush was needed
+        sn.pendingTarget = null;
       }
     });
   }
