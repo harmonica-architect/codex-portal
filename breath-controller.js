@@ -206,6 +206,7 @@ class BreathController {
 
   _fireCascade() {
     this.cascadeListeners.forEach(fn => { try { fn(this.breathCount, this); } catch(e) { } });
+  if (typeof COHERENCE_BUS !== "undefined") COHERENCE_BUS._syncFromBreath(this);
   }
 
   // ── Public API ──

@@ -200,6 +200,11 @@ const COHERENCE_BUS = {
   }
 };
 
+_syncFromBreath(ctrl) {
+  this.breathCount = ctrl.breathCount || this.breathCount;
+  this.totalInteractions = ctrl.totalInteractions || this.totalInteractions;
+}
+
 // ── Subscriber registry ──
 const BREATH_SUBSCRIBERS = [];
 

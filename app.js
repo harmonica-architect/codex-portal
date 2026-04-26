@@ -100,7 +100,7 @@ function updateCoherenceDisplay() {
   }
   // Coherence bar breath glow
   if (cohBar) cohBar.style.boxShadow = breathHold() > 0.5 ? `0 0 ${breathHold()*12}px rgba(232,200,106,${breathHold()*0.5})` : '';
-  if (cohVal) cohVal.style.opacity = 0.7 + breathHold() * 0.3;
+  if (cohVal) { cohVal.style.opacity = 0.7 + breathHold() * 0.3; cohVal.style.transform = breathHold() > 0.5 ? `scale(${1 + breathHold() * 0.08})` : 'scale(1)'; cohVal.style.transition = 'opacity 0.15s, transform 0.15s'; }
   drawCoherenceRadar();
 }
 
@@ -244,6 +244,23 @@ function drawCohSparkline(samples) {
     ctx.fillStyle = 'rgba(232,200,106,0.45)';
     ctx.font = '9px sans-serif';
     ctx.fillText('\u2191', W - 10, 8);
+  }
+
+  // ── Archetype color bands from phaseLog ──
+  if (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.phaseLog) {
+    const recent = COHERENCE_BUS.phaseLog.slice(0, 30).reverse();
+    const aW = W / 30;
+    const colorMap = {
+      Seed: '#e8c86a', Bridge: '#b8a0d0', Axis: '#c8d0e0',
+      Star: '#d0c040', Convergence: '#a0c0c0', Return: '#c0a0b0'
+    };
+    recent.forEach((entry, i) => {
+      const arch = entry.archetype || 'Seed';
+      ctx.fillStyle = colorMap[arch] || '#e8c86a';
+      ctx.globalAlpha = 0.4;
+      ctx.fillRect(i * aW, H - 4, aW - 1, 4);
+      ctx.globalAlpha = 1;
+    });
   }
 }
 
@@ -617,12 +634,21 @@ function drawWheel() {
         ctx.fill();
       } else {
         // Ghost harmonic — subtle breathing presence
+        const cohBoost = (coherenceLevel || 0) / 100;
         ctx.fillStyle = night
           ? `rgba(30,30,56,${0.2 + bh * 0.25})`
           : `rgba(40,40,64,${0.15 + bh * 0.2})`;
         ctx.beginPath();
         ctx.arc(nx, ny, 3.5 * (1 + bh * 0.2), 0, Math.PI * 2);
         ctx.fill();
+        // Low-coherence field noise
+        if (cohBoost < 0.3) {
+          const noiseAlpha = (0.3 - cohBoost) * 0.12;
+          ctx.fillStyle = night ? `rgba(80,60,120,${noiseAlpha})` : `rgba(200,160,80,${noiseAlpha})`;
+          ctx.beginPath();
+          ctx.arc(nx + (Math.random() - 0.5) * 8, ny + (Math.random() - 0.5) * 8, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
   }
@@ -755,6 +781,15 @@ function drawWheel() {
           const y2 = cy + r2 * Math.sin(ang2);
           const freq = (a1 + a2) / 2;
           const interferenceAlpha = 0.06 + Math.abs(Math.sin(breathPhase * Math.PI * 2 * freq / 15)) * 0.12;
+  const coherenceBoost = (coherenceLevel || 0) / 100;
+  if (coherenceBoost > 0.6) {
+    const waveR = or * 0.85 + Math.sin(breathPhase * Math.PI * 4) * 12 * coherenceBoost;
+    ctx.beginPath();
+    ctx.arc(cx, cy, waveR, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(232,200,106,${0.08 * coherenceBoost})`;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
@@ -1610,6 +1645,10 @@ function updateCommunityStatus() {
 function refreshJourneyDisplay() {
   if (typeof COHERENCE_BUS === 'undefined') return;
   const j = COHERENCE_BUS.getJourney();
+  if (typeof breathCtrl !== 'undefined' && breathCtrl.breathCount) {
+    j.breathCount = breathCtrl.breathCount;
+    j.interactions = breathCtrl.totalInteractions || j.interactions;
+  }
   const je = document.getElementById('jsBreaths');
   const jie = document.getElementById('jsInteractions');
   const jace = document.getElementById('jsAvgCoh');
@@ -1629,7 +1668,8 @@ function refreshJourneyDisplay() {
       const color = archColors[arch] || 'var(--gold)';
       barHtml += `<div class="abb-segment" style="width:${pct}%;background:${color};" title="${arch}: ${count}"></div>`;
     }
-    jabb.innerHTML = `<div class="abb-bar">${barHtml}</div><div class="abb-legend">${Object.entries(j.archetypes).map(([a,c]) => `<span style="color:${archColors[a]||'var(--gold)'};font-size:0.52rem;">${a} ${c}</span>`).join(' · ')}</div>`;
+    const glyphMap = { Seed: '△', Bridge: '◁△▷', Axis: '◇', Star: '◎', Convergence: '⊕', Return: '◇' };
+jabb.innerHTML = `<div class="abb-bar">${barHtml}</div><div class="abb-legend">${Object.entries(j.archetypes).map(([a,c]) => `<span style="color:${archColors[a]||'var(--gold)'};font-size:0.52rem;">${glyphMap[a]||'·'} ${a} ${c}</span>`).join(' · ')}</div>`;
   }
 }
 
