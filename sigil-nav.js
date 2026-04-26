@@ -3,14 +3,14 @@
   'use strict';
 
   var SIGIL_TABS = [
-    { sigil: '⊙', glyph: '⊙', label: 'Home',      tab: 'home',     freq: 432, desc: 'Dashboard · Field breath · Coherence pulse' },
-    { sigil: '◎', glyph: '◎', label: 'Wheel',     tab: 'wheel',    freq: 528, desc: '24-cell · Prime wheel · Harmonic mapping' },
-    { sigil: '◇', glyph: '◇', label: 'Codex',     tab: 'codex',    freq: 444, desc: 'Matrix explorer · Domain resonance · Entry mode' },
-    { sigil: '◉', glyph: '◉', label: 'Dream',     tab: 'dream',    freq: 639, desc: '24-cell mirror · Standing wave · Monadic field' },
-    { sigil: '○', glyph: '○', label: 'Journal',   tab: 'journal',  freq: 741, desc: 'Wave function · Collapse history · Harmonic log' },
-    { sigil: '◈', glyph: '◈', label: 'Matrix',    tab: 'matrix',   freq: 852, desc: 'Domain explorer · matAddr index · Frequency map' },
-    { sigil: '◇', glyph: '◇', label: 'Resonator', tab: 'resonator', freq: 963, desc: 'Field tuning · Monadic spiral · Harmonic resonance' },
-    { sigil: '·', glyph: '·', label: 'Profile',   tab: 'profile',  freq: 174, desc: 'Personal field · Breath history · Coherence history' },
+    { sigil: '⊙', glyph: '⊙', label: 'Home',      tab: 'home',     freq: 432, desc: 'Dashboard · Field breath · Coherence pulse', locked: false },
+    { sigil: '◎', glyph: '◎', label: 'Wheel',     tab: 'wheel',    freq: 528, desc: '24-cell · Prime wheel · Harmonic mapping', locked: false },
+    { sigil: '⬡', glyph: '⬡', label: 'Codex',     tab: 'codex',    freq: 444, desc: 'Glyph library · Sigils · 24-fold structure', locked: false },
+    { sigil: '◉', glyph: '◉', label: 'Dream',     tab: 'dream',    freq: 639, desc: 'Mirror · Standing wave · Monadic reflection', locked: false },
+    { sigil: '○', glyph: '○', label: 'Journal',   tab: 'journal',  freq: 741, desc: 'Wave collapse · Harmonic log · Breath journal', locked: false },
+    { sigil: '◈', glyph: '◈', label: 'Matrix',    tab: 'matrix',   freq: 852, desc: 'Domain explorer · matAddr · Frequency map', locked: true },
+    { sigil: '⟁', glyph: '⟁', label: 'Resonator', tab: 'resonator', freq: 963, desc: 'Field tuning · Harmonic spiral · Coherence tool', locked: true },
+    { sigil: '·', glyph: '·', label: 'Profile',   tab: 'profile',  freq: 174, desc: 'Sigil evolution · Breath history · Personal field', locked: false },
   ];
 
   var sn = {
@@ -29,6 +29,9 @@
   function getHub()    { return document.getElementById('snHub'); }
   function getHubGlyph() { return document.getElementById('snHubGlyph'); }
   function getHubLabel() { return document.getElementById('snHubLabel'); }
+  function getLockBadge()  { return document.getElementById('snLockBadge'); }
+  function getHubDesc()    { return document.getElementById('snHubDesc'); }
+  function getTransRing()  { return document.getElementById('snTransitionRing'); }
   function getOrbitOuter() { return document.getElementById('snOrbitOuter'); }
 
   // Init
@@ -168,6 +171,13 @@
 
   // Breath-phase transition
   function breathPhaseTransition(tabEl, callback) {
+    var ring = getTransRing();
+    if (ring) {
+      ring.classList.remove('active');
+      void ring.offsetWidth;
+      ring.classList.add('active');
+      setTimeout(function() { ring.classList.remove('active'); }, 900);
+    }
     tabEl.classList.add('breath-transitioning');
     var dur = 4000;
     if (typeof breathCtrl !== 'undefined' && breathCtrl.getPhase) {
@@ -182,9 +192,15 @@
   }
 
   // Update hub glyph + label
+  function isBreathLocked(tab) {
+    return ['matrix', 'resonator'].indexOf(tab) !== -1;
+  }
+
   function updateSigilHub(idx, animate) {
     var hg = getHubGlyph();
     var hl = getHubLabel();
+    var hd = getHubDesc();
+    var lb = getLockBadge();
     if (!hg || !hl) return;
     var e = SIGIL_TABS[idx];
     if (!e) return;
@@ -198,6 +214,14 @@
       hg.textContent = e.glyph;
     }
     hl.textContent = e.label;
+    if (hd) {
+      hd.textContent = e.desc || '';
+      hd.style.opacity = e.desc ? '1' : '0';
+    }
+    if (lb) {
+      var locked = e.locked || isBreathLocked(e.tab);
+      lb.style.display = locked ? 'flex' : 'none';
+    }
   }
 
   // Activate dot

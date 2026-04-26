@@ -53,19 +53,22 @@
   <div class="sigil-nav-wrap" id="sigilNavWrap">
     <div class="sigil-nav-ring">
       <div class="sn-orbit sn-orbit-outer" id="snOrbitOuter">
-        <div class="sn-dot sn-dot-0" data-idx="0">△<span class="sn-dot-label">Home</span></div>
-        <div class="sn-dot sn-dot-1" data-idx="1">◎<span class="sn-dot-label">Wheel</span></div>
-        <div class="sn-dot sn-dot-2" data-idx="2">◇<span class="sn-dot-label">Codex</span></div>
-        <div class="sn-dot sn-dot-3" data-idx="3">◉<span class="sn-dot-label">Dream</span></div>
-        <div class="sn-dot sn-dot-4" data-idx="4">○<span class="sn-dot-label">Journal</span></div>
-        <div class="sn-dot sn-dot-5" data-idx="5">◈<span class="sn-dot-label">Matrix</span></div>
-        <div class="sn-dot sn-dot-6" data-idx="6">◇<span class="sn-dot-label">Resonator</span></div>
-        <div class="sn-dot sn-dot-7" data-idx="7">·<span class="sn-dot-label">Profile</span></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-0" data-idx="0">⊙</div><span class="sn-dot-label">Home</span><div class="sn-tooltip">Dashboard<div class="sn-tooltip-desc">Field breath · Coherence pulse</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-1" data-idx="1">◎</div><span class="sn-dot-label">Wheel</span><div class="sn-tooltip">24-Cell<div class="sn-tooltip-desc">Prime wheel · Harmonic mapping</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-2" data-idx="2">⬡</div><span class="sn-dot-label">Codex</span><div class="sn-tooltip">Glyph Library<div class="sn-tooltip-desc">Sigil library · 24-fold structure</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-3" data-idx="3">◉</div><span class="sn-dot-label">Dream</span><div class="sn-tooltip">Mirror<div class="sn-tooltip-desc">Standing wave · Monadic reflection</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-4" data-idx="4">○</div><span class="sn-dot-label">Journal</span><div class="sn-tooltip">Wave Collapse<div class="sn-tooltip-desc">Harmonic log · Breath journal</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-5 locked-dot" data-idx="5">◈<span class="sn-dot-lock">🔒</span></div><span class="sn-dot-label">Matrix</span><div class="sn-tooltip">Domain Explorer<div class="sn-tooltip-desc">matAddr · Frequency map</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-6 locked-dot" data-idx="6">⟁<span class="sn-dot-lock">🔒</span></div><span class="sn-dot-label">Resonator</span><div class="sn-tooltip">Field Tuning<div class="sn-tooltip-desc">Harmonic spiral · Breath gate</div></div></div>
+        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-7" data-idx="7">·</div><span class="sn-dot-label">Profile</span><div class="sn-tooltip">Personal Field<div class="sn-tooltip-desc">Sigil evolution · Breath history</div></div></div>
       </div>
       <!-- Center hub — current tab glyph -->
       <div class="sn-hub" id="snHub">
+        <div class="sn-transition-ring" id="snTransitionRing"></div>
         <div class="sn-hub-glyph" id="snHubGlyph">⊙</div>
         <div class="sn-hub-label" id="snHubLabel">Home</div>
+        <div class="sn-hub-desc" id="snHubDesc">Dashboard · Field breath · Coherence pulse</div>
+        <div class="sn-lock-badge" id="snLockBadge" style="display:none">🔒</div>
       </div>
     </div>
   </div>
