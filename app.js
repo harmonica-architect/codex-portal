@@ -1163,6 +1163,11 @@ function startCycle() {
   // Start BreathController for phase-change animations (sigil nav, cascade)
   const el = document.getElementById('snHub');
   if (typeof breathCtrl !== 'undefined') breathCtrl.start(el);
+  // Restart the RAF animation loop if it was cancelled or never started
+  if (animId) cancelAnimationFrame(animId);
+  if (breathRafId) cancelAnimationFrame(breathRafId);
+  // animateWheel self-schedules via RAF — start it to drive drawWheel() and wheel24Rot
+  animId = requestAnimationFrame(animateWheel);
 }
 
 function endCycle() {
@@ -1188,6 +1193,12 @@ function repeatCycle() {
   playPhase(0);
   schedulePhase();
   startCoherenceUpdates();
+  const el = document.getElementById('snHub');
+  if (typeof breathCtrl !== 'undefined') breathCtrl.start(el);
+  // Restart the RAF animation loop
+  if (animId) cancelAnimationFrame(animId);
+  if (breathRafId) cancelAnimationFrame(breathRafId);
+  animId = requestAnimationFrame(animateWheel);
 }
 
 // ── NIGHT MODE ──
