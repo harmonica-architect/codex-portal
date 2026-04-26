@@ -556,6 +556,13 @@
       </div>
       <div class="collapse-body">
         <div id="profileContent"></div>
+        <div class="profile-auto-log">
+          <label class="auto-log-toggle">
+            <input type="checkbox" id="autoLogToggle" onchange="window.TOGGLE_AUTO_LOG && window.TOGGLE_AUTO_LOG(this.checked)">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">Auto-log coherence peaks</span>
+          </label>
+        </div>
         <button class="logout-btn" id="btnLogout">⊘ Exit Portal</button>
       </div>
     </div>

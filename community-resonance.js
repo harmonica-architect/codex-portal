@@ -392,7 +392,7 @@ const COMMUNITY_FIELD = {
 
   _getLocalSigil() {
     try {
-      const stored = localStorage.getItem('codex:lastSigil');
+      const stored = localStorage.getItem(STORAGE_KEYS.lastSigil);
       return stored || 'Portal';
     } catch { return 'Portal'; }
   },

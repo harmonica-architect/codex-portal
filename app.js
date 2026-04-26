@@ -1489,32 +1489,39 @@ function enterPortal() {
   animateWheel();
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
-  // Auto-coherence journal logging
+  // Auto-coherence journal logging (opt-in via setting)
   let lastCohLog = null;
-  const cohLogInterval = setInterval(() => {
+  window.cohLogInterval = setInterval(() => {
+    // Respect opt-in: only auto-log if the user has enabled it
+    var autoLogEnabled = false;
+    try { autoLogEnabled = localStorage.getItem('codex_auto_log') === 'true'; } catch(e) {}
+    if (!autoLogEnabled) return;
     if (typeof COHERENCE_BUS === 'undefined' || !profile) return;
-    const coh = COHERENCE_BUS.coherenceLevel || 0;
+    var coh = COHERENCE_BUS.coherenceLevel || 0;
     // Log high-coherence moment (>80, not already logged)
     if (coh > 80 && lastCohLog !== 'high') {
       if (!profile.journal) profile.journal = [];
       profile.journal.push({ glyph: '✦', text: '↑ Field coherence peak: ' + coh + '%', ts: Date.now(), matAddr: journalGlyphToMatAddr('✦') });
-      saveProfile();
+      try { saveProfile(); } catch(e) { /* localStorage quota may be exceeded */ }
       lastCohLog = 'high';
       // P9 — flash Journal drawer item on peak
-      const journalBtn = document.querySelector('.mnd-item[data-tab="journal"]');
+      var journalBtn = document.querySelector('.mnd-item[data-tab="journal"]');
       if (journalBtn) {
         journalBtn.classList.add('peak-glow');
-        setTimeout(() => journalBtn.classList.remove('peak-glow'), 2000);
+        setTimeout(function() { journalBtn.classList.remove('peak-glow'); }, 2000);
       }
     } else if (coh < 30 && lastCohLog !== 'low') {
       if (!profile.journal) profile.journal = [];
       profile.journal.push({ glyph: '·', text: '↓ Field friction: ' + coh + '%', ts: Date.now(), matAddr: journalGlyphToMatAddr('·') });
-      saveProfile();
+      try { saveProfile(); } catch(e) { /* localStorage quota may be exceeded */ }
       lastCohLog = 'low';
     } else if (coh >= 30 && coh <= 80) {
       lastCohLog = null; // Reset when back in neutral zone
     }
   }, 8000); // Check every 8 seconds
+  window.addEventListener('beforeunload', function() {
+    if (window.cohLogInterval) { clearInterval(window.cohLogInterval); window.cohLogInterval = null; }
+  });
   checkNight();
   initNavTabs();
   initCodex();
@@ -2225,6 +2232,8 @@ function initJournal() {
     }
     var text = document.getElementById('journalText').value.trim();
     if (!text) return;
+    // Cap at 5000 chars to prevent localStorage quota exhaustion
+    if (text.length > 5000) text = text.substring(0, 5000);
 
     // ── Capture breath context at moment of writing ──
     var breathCtx = { phase: 'unknown', phaseIdx: -1, wheelPos: 0, coherence: 0 };
@@ -2499,9 +2508,21 @@ function initProfile() {
     localStorage.removeItem(STORAGE_KEYS.lastSigil);
     location.reload();
   };
+  // Sync auto-log toggle to current preference
+  var autoLogEnabled = false;
+  try { autoLogEnabled = localStorage.getItem('codex_auto_log') === 'true'; } catch(e) {}
+  var toggle = document.getElementById('autoLogToggle');
+  if (toggle) toggle.checked = autoLogEnabled;
   refreshProfile();
   renderFractalTimeline();
 }
+
+// Expose toggle handler globally for the checkbox onclick
+window.TOGGLE_AUTO_LOG = function(checked) {
+  try {
+    localStorage.setItem('codex_auto_log', checked ? 'true' : 'false');
+  } catch(e) {}
+};
 
 function refreshProfile() {
   const el = document.getElementById('profileContent');

@@ -693,6 +693,54 @@ canvas { position: absolute; top: 0; left: 0; }
 }
 .logout-btn:hover { border-color: #c86a6a; color: #c86a6a; }
 
+/* ── AUTO-LOG TOGGLE ── */
+.profile-auto-log {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+}
+.auto-log-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+.auto-log-toggle input { display: none; }
+.toggle-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: rgba(232,200,106,0.15);
+  border: 1px solid rgba(232,200,106,0.3);
+  border-radius: 9px;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+.auto-log-toggle input:checked + .toggle-track {
+  background: rgba(232,200,106,0.4);
+  border-color: var(--gold);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: left 0.3s, background 0.3s;
+}
+.auto-log-toggle input:checked + .toggle-track .toggle-thumb {
+  left: 16px;
+  background: var(--gold);
+}
+.toggle-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
 /* ── HELP FAB ── */
 .help-fab { position: fixed; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); right: 1rem; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; touch-action: manipulation; z-index: 200; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .help-fab:hover { border-color: var(--gold); color: var(--gold); transform: scale(1.08); }
