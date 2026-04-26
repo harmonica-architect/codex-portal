@@ -9,7 +9,7 @@
 //   Rotation is slower than 24-cell to reflect deeper 4D recursion depth.
 //   breathPhase drives a slow 4D precession rotation.
 
-const 壱百弐拾 = (() => {
+const cell120Instance = (() => {
   const PHI = (1 + Math.sqrt(5)) / 2;       // Golden ratio ≈ 1.618
   const PHI_INV = 1 / PHI;                    // ≈ 0.618
   const PHI_SQ  = PHI * PHI;                  // ≈ 2.618

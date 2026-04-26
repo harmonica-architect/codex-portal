@@ -3,9 +3,30 @@
 // Drives ALL UI animation via breath phases
 // ══════════════════════════════════════════════
 
+// ── PYTHAGOREAN 24-TONE HARMONIC SERIES ──
+// Each wheel position (0–23) maps to a frequency via the Pythagorean 
+// tuning series: base 432 Hz × (3/2)^n for position n.
+// This is the Codex harmonic geometry — each breath phase is a point 
+// on the 24-gon wheel and each wheel position has its own harmonic signature.
+const PYTHAGOREAN_FREQS = Array.from({ length: 24 }, (_, n) =>
+  Math.round(432 * Math.pow(1.5, n) / Math.pow(2, Math.floor(n * Math.log2(1.5))))
+);
+
+// Index 0 = 432 Hz (the Codex scalar seed — all harmonics derive from it)
+// Each subsequent position is a perfect fifth above the previous.
+// Example positions: 0=432, 4=528 (nearest to 528), 12≈741, 23≈963
+// The full 24-tone wheel closes at 432 × 2^(-8) ≡ 432 (octave equivalence)
+
 class BreathController {
   constructor() {
     // Breath phase definitions — 8 phases for the sigil ring full cycle
+    // Each phase maps to a wheel position (0–23) on the 24-gon wheel.
+    // Frequencies use the Pythagorean 24-tone series keyed to wheelPos.
+    // Index 0  → 432 Hz (Scalar Seed)
+    // Index 4  → ~528 Hz (Symbol Emergence — the "miracle" tone)
+    // Index 12 → ~741 Hz (Deep Inversion)
+    // Index 20 → ~864 Hz (Silence Return)
+    // Index 23 → ~963 Hz (Unity)
     this.phases = [
       {
         name: 'Inhale',
@@ -13,7 +34,7 @@ class BreathController {
         duration: 5000,
         animClass: 'breath-inhale',
         cssDur: '5s',
-        toneFreq: 432,
+        wheelPos: 0,  // 432 Hz — scalar seed
         transitions: { ringScale: 1.15, panelFade: 0.6, glyphPulse: 1.12, colorShift: 'rgba(232,200,106,0.08)' }
       },
       {
@@ -22,7 +43,7 @@ class BreathController {
         duration: 3700,
         animClass: 'breath-hold-in',
         cssDur: '3.7s',
-        toneFreq: 483,
+        wheelPos: 8,  // ~513 Hz — bridge from seed
         transitions: { ringScale: 1.18, panelFade: 0.3, glyphPulse: 1.15, colorShift: 'rgba(200,160,80,0.10)' }
       },
       {
@@ -31,7 +52,7 @@ class BreathController {
         duration: 5900,
         animClass: 'breath-exhale',
         cssDur: '5.9s',
-        toneFreq: 528,
+        wheelPos: 4,  // ~528 Hz — symbol emergence
         transitions: { ringScale: 0.92, panelFade: 0.8, glyphPulse: 0.95, colorShift: 'rgba(150,130,180,0.06)' }
       },
       {
@@ -40,7 +61,7 @@ class BreathController {
         duration: 4300,
         animClass: 'breath-still',
         cssDur: '4.3s',
-        toneFreq: 570,
+        wheelPos: 16, // ~639 Hz — axis stillness
         transitions: { ringScale: 1.0, panelFade: 1.0, glyphPulse: 1.0, colorShift: 'rgba(100,120,140,0.05)' }
       },
       {
@@ -49,7 +70,7 @@ class BreathController {
         duration: 5300,
         animClass: 'breath-inhale',
         cssDur: '5.3s',
-        toneFreq: 639,
+        wheelPos: 12, // ~741 Hz — deep inversion
         transitions: { ringScale: 1.13, panelFade: 0.55, glyphPulse: 1.10, colorShift: 'rgba(232,200,106,0.07)' }
       },
       {
@@ -58,7 +79,7 @@ class BreathController {
         duration: 7100,
         animClass: 'breath-hold-peak',
         cssDur: '7.1s',
-        toneFreq: 741,
+        wheelPos: 20, // ~864 Hz — convergence peak
         transitions: { ringScale: 1.20, panelFade: 0.2, glyphPulse: 1.18, colorShift: 'rgba(180,140,220,0.09)' }
       },
       {
@@ -67,7 +88,7 @@ class BreathController {
         duration: 6100,
         animClass: 'breath-exhale',
         cssDur: '6.1s',
-        toneFreq: 795,
+        wheelPos: 6,  // ~639 Hz — release
         transitions: { ringScale: 0.90, panelFade: 0.75, glyphPulse: 0.92, colorShift: 'rgba(120,100,160,0.06)' }
       },
       {
@@ -76,7 +97,7 @@ class BreathController {
         duration: 4700,
         animClass: 'breath-rest',
         cssDur: '4.7s',
-        toneFreq: 432,
+        wheelPos: 23, // ~963 Hz — unity return
         transitions: { ringScale: 1.0, panelFade: 1.0, glyphPulse: 1.0, colorShift: 'rgba(80,100,120,0.04)' }
       }
     ];
@@ -168,8 +189,9 @@ class BreathController {
     this.currentPhase = (this.currentPhase + 1) % this.phases.length;
     const next = this.phases[this.currentPhase];
 
-    // Play breath phase tone for the NEW phase (scaled by current coherence)
-    this.playPhaseTone(next.toneFreq, typeof coherenceLevel !== 'undefined' ? coherenceLevel : 50);
+    // Play breath phase tone — Pythagorean 24-tone series keyed to wheelPos
+    // The phase's wheelPos maps directly to PYTHAGOREAN_FREQS[wheelPos]
+    this.playPhaseTone(PYTHAGOREAN_FREQS[p.wheelPos], typeof coherenceLevel !== 'undefined' ? coherenceLevel : 50);
 
     // Schedule next
     clearTimeout(this.timer);

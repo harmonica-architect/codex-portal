@@ -496,20 +496,20 @@ function drawWheel() {
   }
 
   // ── 120-CELL GEOMETRY PROJECTION (rendered on top of 24-cell) ──
-  if (isShowing120Cell && typeof 壱百弐拾 !== 'undefined') {
+  if (isShowing120Cell && typeof cell120Instance !== 'undefined') {
     const scale120 = or * 0.95;
     const breathPhase = isRunning ? (Date.now() / 1000) : 0;
-    壱百弐拾.draw(ctx, cx, cy, scale120, breathPhase);
+    cell120Instance.draw(ctx, cx, cy, scale120, breathPhase);
   }
 
   // ── 24-CELL GEOMETRY WIREFRAME (rendered first, as background) ──
   const activeWheelPos = (isRunning && PHASES[currentPhase]) ? PHASES[currentPhase].wheelPos : -1;
   const night24 = night ? 0.6 : 0.4; // night mode slightly brighter
-  if (typeof 二十四 !== 'undefined') {
+  if (typeof cell24Instance !== 'undefined') {
     const scale24 = or * 0.92;
     const breathPhase = isRunning ? (Date.now() / 1000) : 0;
     const activeVert = _wheelPosTo24Vert(activeWheelPos);
-    二十四.draw(ctx, cx, cy, scale24, wheel24Rot * 0.4, wheel24Rot * 0.7, wheel24Rot * 0.25, breathPhase, activeVert);
+    cell24Instance.draw(ctx, cx, cy, scale24, wheel24Rot * 0.4, wheel24Rot * 0.7, wheel24Rot * 0.25, breathPhase, activeVert);
   }
 
   // Outer glow
@@ -821,7 +821,13 @@ function animateWheel() {
   if (glowP >= 1) { glowP = 1; glowD = -1; }
   if (glowP <= 0) { glowP = 0; glowD = 1; }
   // Advance 24-cell rotation continuously
-  wheel24Rot += ROTATION_PER_FRAME * 0.6;
+  // 24-cell rotation driven by coherence — Codex harmonic principle:
+  // Low coherence = turbulent fast rotation (n=2.0)
+  // High coherence = stable slow precession (n=0.2)
+  // Rotation speed = ROTATION_PER_FRAME × (2.0 − 1.8 × coh/100)
+  const cohNorm = Math.max(0, Math.min(100, coherenceLevel || 0)) / 100;
+  const rotationSpeedMult = 2.0 - cohNorm * 1.8;
+  wheel24Rot += ROTATION_PER_FRAME * 0.6 * rotationSpeedMult;
   drawWheel();
   animId = requestAnimationFrame(animateWheel);
   if (breathRafId) cancelAnimationFrame(breathRafId);
@@ -1209,7 +1215,7 @@ function initMobileNavDrawer() {
   drawer.classList.add('visible');
 
   // Breath-phase-aware animation: exhale opens fast (receptive), inhale closes fast (contracting)
-  if (typeof 二十四 !== 'undefined') {
+  if (typeof cell24Instance !== 'undefined') {
     breathCtrl.onPhaseChange((phase, phaseIdx) => {
       if (phase.name === 'exhale' || phase.name === 'hold') {
         drawer.style.transition = 'opacity 0.15s ease-out, transform 0.2s ease-out';
@@ -1262,7 +1268,7 @@ function enterPortal() {
     // Log high-coherence moment (>80, not already logged)
     if (coh > 80 && lastCohLog !== 'high') {
       if (!profile.journal) profile.journal = [];
-      profile.journal.push({ glyph: '✦', text: '↑ Field coherence peak: ' + coh + '%', ts: Date.now() });
+      profile.journal.push({ glyph: '✦', text: '↑ Field coherence peak: ' + coh + '%', ts: Date.now(), matAddr: journalGlyphToMatAddr('✦') });
       saveProfile();
       lastCohLog = 'high';
       // P9 — flash Journal drawer item on peak
@@ -1273,7 +1279,7 @@ function enterPortal() {
       }
     } else if (coh < 30 && lastCohLog !== 'low') {
       if (!profile.journal) profile.journal = [];
-      profile.journal.push({ glyph: '·', text: '↓ Field friction: ' + coh + '%', ts: Date.now() });
+      profile.journal.push({ glyph: '·', text: '↓ Field friction: ' + coh + '%', ts: Date.now(), matAddr: journalGlyphToMatAddr('·') });
       saveProfile();
       lastCohLog = 'low';
     } else if (coh >= 30 && coh <= 80) {
@@ -1314,7 +1320,7 @@ function enterPortal() {
   }, { once: true });
 
   // Sync mute button state from localStorage on load
-  if (typeof 二十四 !== 'undefined') {
+  if (typeof cell24Instance !== 'undefined') {
     const btn = document.getElementById('audioMuteBtn');
     if (btn) {
       btn.classList.toggle('muted', breathCtrl.audioMuted);
@@ -1819,7 +1825,7 @@ function initJournal() {
     const text = document.getElementById('journalText').value.trim();
     if (!text) return;
     if (!profile.journal) profile.journal = [];
-    profile.journal.push({ glyph: selectedJournalGlyph || '△', text, ts: Date.now() });
+    profile.journal.push({ glyph: selectedJournalGlyph || '△', text, ts: Date.now(), matAddr: journalGlyphToMatAddr(selectedJournalGlyph || '△') });
     saveProfile();
     document.getElementById('journalText').value = '';
     const el = document.getElementById('journalMsg');
@@ -1833,7 +1839,8 @@ function initJournal() {
     const lines = ['Codex Journal — ' + profile.sigil.join(''), ''];
     profile.journal.forEach(e => {
       const d = new Date(e.ts).toLocaleString();
-      lines.push(`[${d}] ${e.glyph} ${e.text}`);
+      const mat = (e.matAddr != null) ? ` [M${e.matAddr}]` : '';
+      lines.push(`[${d}] ${e.glyph}${mat} ${e.text}`);
     });
     downloadText(lines.join('\n'), 'codex-journal.txt');
   };
@@ -1841,14 +1848,35 @@ function initJournal() {
   refreshJournal();
 }
 
+// ── JOURNAL GEOMETRIC ANCHOR ──
+// Maps a glyph to its matAddr (V,F coordinate on the Codex 12×12 matrix).
+// This anchors each journal entry to a point in harmonic space —
+// enabling the field coherence history to be visualized in Codex geometry.
+//
+// Glyph → char code sum mod 12 → V_row; Codex primes on 24-gon → F_col
+function journalGlyphToMatAddr(glyph) {
+  if (!glyph) return null;
+  const code = glyph.charCodeAt(0) || 0;
+  const V = Math.abs(code) % 12;
+  // Glyphs near prime positions on the 24-gon get higher F values
+  const glyphPos = code % 24;
+  const primePositions = [0, 4, 6, 10, 12, 16, 18, 22];
+  const nearPrime = primePositions.some(p => Math.abs(glyphPos - p) <= 1 || Math.abs(glyphPos - p) >= 23);
+  const F = nearPrime ? Math.abs((code * 7) % 12) : Math.abs((code * 3) % 12);
+  return V * 12 + F;
+}
+
 function refreshJournal() {
   const el = document.getElementById('journalEntries');
   el.innerHTML = '';
   (profile?.journal || []).slice(-10).reverse().forEach(e => {
     const d = new Date(e.ts).toLocaleString().slice(0, -3);
+    const matTag = (e.matAddr != null)
+      ? `<span style="background:rgba(232,200,106,0.1);color:var(--gold);padding:0 0.3rem;border-radius:3px;font-size:0.62rem;margin-left:0.3rem;">M${e.matAddr}</span>`
+      : '';
     const div = document.createElement('div');
-    div.style.cssText = 'padding:0.4rem;border-bottom:1px solid var(--border);font-size:0.72rem;color:var(--muted);';
-    div.innerHTML = `<span style="color:var(--gold);margin-right:0.4rem;">${escapeHtml(e.glyph)}</span>${d}<br>${escapeHtml(e.text)}`;
+    div.style.cssText = 'padding:0.4rem;border-bottom:1px solid var(--border);font-size:0.72rem;color:var(--muted);display:flex;align-items:center;';
+    div.innerHTML = `<span style="color:var(--gold);margin-right:0.4rem;">${escapeHtml(e.glyph)}</span>${d}${matTag}<br>${escapeHtml(e.text)}`;
     el.appendChild(div);
   });
 }
