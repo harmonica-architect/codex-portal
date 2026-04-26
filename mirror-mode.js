@@ -403,13 +403,14 @@ class MirrorMode {
     }
   }
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+
+  _escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
   _updateHistory(result) {
     if (!this.historyEl) return;
@@ -419,9 +420,9 @@ function escapeHtml(str) {
         ? `<span class="mhi-mataddr">#${r.matAddr} ${r.matAddrFrequency}Hz</span>`
         : '';
       html += `<div class="mirror-history-item">
-        <span class="mhi-glyph">${escapeHtml(r.reflectionGlyph)}</span>
-        <span class="mhi-archetype">${escapeHtml(r.archetype)}</span>
-        <span class="mhi-input">${escapeHtml(r.inputLabel)}</span>
+        <span class="mhi-glyph">${this._escapeHtml(r.reflectionGlyph)}</span>
+        <span class="mhi-archetype">${this._escapeHtml(r.archetype)}</span>
+        <span class="mhi-input">${this._escapeHtml(r.inputLabel)}</span>
         ${matAddrInfo}
       </div>`;
     }
