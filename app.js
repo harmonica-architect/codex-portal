@@ -261,6 +261,34 @@ if (typeof breathCtrl !== 'undefined' && breathCtrl.onPhaseChange) {
   });
 }
 
+// ── Phase 3: Breath Phase History Indicator ──
+// Tracks phase completions this session to show 8-dot pattern on coherence bar
+let sessionPhaseCounts = Array(8).fill(0);
+
+function updatePhaseDots() {
+  const wrap = document.getElementById('cohPhaseDots');
+  if (!wrap) return;
+  const total = Math.max(1, sessionPhaseCounts.reduce(function(a, b) { return a + b; }, 0));
+  wrap.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const dot = document.createElement('div');
+    const ratio = sessionPhaseCounts[i] / total;
+    dot.className = 'cpd-dot';
+    if (sessionPhaseCounts[i] > 0) dot.className += ' filled';
+    if (ratio > 0.25) dot.className += ' heavy';
+    wrap.appendChild(dot);
+  }
+}
+
+if (typeof breathCtrl !== 'undefined' && breathCtrl.onPhaseChange) {
+  breathCtrl.onPhaseChange(function(phase, phaseIdx) {
+    if (sessionPhaseCounts[phaseIdx] !== undefined) {
+      sessionPhaseCounts[phaseIdx]++;
+      updatePhaseDots();
+    }
+  });
+}
+
 // ── WebSocket state
 let ws = null;
 let wsConnected = false;

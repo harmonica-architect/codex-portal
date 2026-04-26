@@ -337,7 +337,25 @@ body {
 /* ── COHERENCE METER ── */
 .coh-sub-label { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.1em; margin-left: 0.4rem; min-width: 80px; }
 .coh-label { font-size: 0.58rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
-.coh-bar-wrap { flex: 1; height: 6px; background: var(--dim); border-radius: 3px; overflow: hidden; }
+.coh-bar-wrap { flex: 1; height: 6px; background: var(--dim); border-radius: 3px; overflow: hidden; position: relative; }
+.coh-phase-dots {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.cpd-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(232,200,106,0.2);
+  transition: background 0.4s ease, transform 0.2s ease;
+}
+.cpd-dot.filled { background: rgba(232,200,106,0.75); transform: scale(1.2); }
+.cpd-dot.heavy { background: rgba(232,200,106,1); transform: scale(1.4); }
 
 
 /* Coherence-driven ring glow — CSS var driven */
