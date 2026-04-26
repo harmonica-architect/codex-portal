@@ -84,6 +84,12 @@
     var target = SIGIL_TABS[idx];
     if (!target) return;
 
+    // Breath gate check for locked tabs
+    if (typeof window.checkBreathGate === 'function') {
+      var canPass = window.checkBreathGate(target.tab);
+      if (!canPass) return;
+    }
+
     if (typeof stopWheelAnimation === 'function') stopWheelAnimation();
     if (typeof stopMiniWheelAnimation === 'function') stopMiniWheelAnimation();
     if (typeof stopPrimeTracker === 'function') stopPrimeTracker();
@@ -114,6 +120,9 @@
       sn.isTransitioning = false;
       if (target.tab === 'dream' && typeof startMirror24CellRAF === 'function') {
         startMirror24CellRAF();
+      }
+      if (target.tab === 'profile' && typeof renderFractalTimeline === 'function') {
+        setTimeout(renderFractalTimeline, 80);
       }
       sn.breathLocked = false;
       sn.pendingTab = null;

@@ -1,4 +1,4 @@
-// Sync coherenceLevel to window for cross-module access
+﻿// Sync coherenceLevel to window for cross-module access
 setInterval(() => { if (typeof coherenceLevel !== 'undefined') window.coherenceLevel = coherenceLevel; }, 250);
 ﻿// ══════════════════════════════════════════════
 // CODEX PORTAL — APP.JS
@@ -17,6 +17,13 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+// ── SIGIL EVOLUTION STATE ──
+let sigilEvolution = {
+  glyphs: {},     // glyph char → { weight, interactions, lastSeen, unlocked }
+  milestones: [], // { ts, type, glyph, weight }
+  totalInteractions: 0
+};
 
 // ── STATE ──
 let userSigil = [];
@@ -57,6 +64,10 @@ let rippleOrigin = null;
 let ripplePhase = 0;
 let rippleRafId = null;
 let selectedWheelPos = null;
+
+// ── BREATH GATE STATE ──
+let breathCycleUnlocked = false;  // becomes true after 1 full cycle
+let breathCyclesCompleted = 0;     // increments each time a cycle completes
 
 function breathHold() { return Math.sin(breathPhase * Math.PI); }
 
@@ -421,6 +432,77 @@ function navToMatrix() {
 
 function navToResonator() {
   window.location.href = 'resonator.html';
+}
+
+// ── SIGIL EVOLUTION ──
+function initSigilEvolution() {
+  var stored = null;
+  try { stored = localStorage.getItem('codex_sigil_evolution'); } catch(e) {}
+  if (stored) {
+    try { sigilEvolution = JSON.parse(stored); } catch(e) {}
+  } else {
+    sigilEvolution = { glyphs: {}, milestones: [], totalInteractions: 0 };
+    userSigil.forEach(function(g) {
+      sigilEvolution.glyphs[g] = { weight: 0.5, interactions: 1, lastSeen: Date.now(), unlocked: true };
+    });
+  }
+  // Prune stale glyphs (no interaction in 30 days → decay)
+  var now = Date.now();
+  var thirtyDays = 30 * 24 * 60 * 60 * 1000;
+  Object.keys(sigilEvolution.glyphs).forEach(function(g) {
+    var gdata = sigilEvolution.glyphs[g];
+    var daysSince = (now - gdata.lastSeen) / (24 * 60 * 60 * 1000);
+    if (daysSince > 30) {
+      gdata.weight = Math.max(0.1, gdata.weight - (daysSince - 30) * 0.02);
+    }
+  });
+  saveSigilEvolution();
+}
+
+function saveSigilEvolution() {
+  try { localStorage.setItem('codex_sigil_evolution', JSON.stringify(sigilEvolution)); } catch(e) {}
+}
+
+function evolveSigil(interactionType, glyph, coherence) {
+  if (!glyph) return;
+  if (!sigilEvolution.glyphs[glyph]) {
+    sigilEvolution.glyphs[glyph] = { weight: 0.3, interactions: 0, lastSeen: Date.now(), unlocked: false };
+  }
+  var gdata = sigilEvolution.glyphs[glyph];
+  var now = Date.now();
+  var significance = interactionType === 'cycle-complete' ? 2 :
+                     interactionType === 'journal-save' ? 1.5 :
+                     interactionType === 'mirror-reflection' ? 1.2 : 0.5;
+  var coherenceBonus = (coherence / 100) * 0.1 * significance;
+  gdata.weight = Math.min(1.0, gdata.weight + coherenceBonus);
+  gdata.interactions++;
+  gdata.lastSeen = now;
+  sigilEvolution.totalInteractions++;
+  // Milestone: weight threshold crossings
+  var thresholds = [0.6, 0.7, 0.8, 0.9, 1.0];
+  thresholds.forEach(function(th) {
+    if (gdata.weight >= th && !gdata['crossed_' + th]) {
+      gdata['crossed_' + th] = true;
+      sigilEvolution.milestones.push({ ts: now, type: 'weight_' + th, glyph: glyph, weight: gdata.weight });
+    }
+  });
+  // Progressive unlock: every 10 interactions unlock a new glyph
+  if (sigilEvolution.totalInteractions % 10 === 0) {
+    var allGlyphs = ['△','◁△▷','◇','⬟','△̅','⊕','⊗','◈','⊙'];
+    var unlockedCount = Object.values(sigilEvolution.glyphs).filter(function(gd) { return gd.unlocked; }).length;
+    if (unlockedCount < 5) {
+      var unsel = allGlyphs.filter(function(g) {
+        return !sigilEvolution.glyphs[g] && !userSigil.includes(g);
+      });
+      if (unsel.length > 0) {
+        var newG = unsel[Math.floor(Math.random() * unsel.length)];
+        sigilEvolution.glyphs[newG] = { weight: 0.3, interactions: 0, lastSeen: now, unlocked: true };
+        sigilEvolution.milestones.push({ ts: now, type: 'glyph_unlock', glyph: newG, weight: 0.3 });
+      }
+    }
+  }
+  saveSigilEvolution();
+  refreshProfile();
 }
 
 // ── GLYPH TONE RING ──
@@ -1229,6 +1311,54 @@ function applyNight() {
   }
 }
 
+// ── BREATH GATE — lock deeper features behind breath-cycle completion ──
+function checkBreathGate(tab) {
+  const lockedTabs = ['matrix', 'resonator'];
+  if (!lockedTabs.includes(tab)) return true; // not locked
+  if (breathCycleUnlocked) return true;
+  showBreathGate(tab);
+  return false;
+}
+
+function showBreathGate(targetTab) {
+  const overlay = document.getElementById('breathGateOverlay');
+  const icon = document.getElementById('bgoIcon');
+  const text = document.getElementById('bgoText');
+  if (!overlay) return;
+  icon.textContent = '◎';
+  text.textContent = 'Sync with the breath to unlock ' + targetTab + '…';
+  overlay.style.display = 'flex';
+  if (typeof breathCtrl !== 'undefined' && !breathCtrl.isActive) {
+    const btn = document.getElementById('btnStart');
+    if (btn) btn.click();
+  }
+  updateBreathGateDots(0);
+}
+
+function updateBreathGateDots(phaseIdx) {
+  for (let i = 0; i < 8; i++) {
+    const dot = document.getElementById('bgd' + i);
+    if (!dot) continue;
+    dot.classList.toggle('active', i <= phaseIdx);
+  }
+}
+
+function hideBreathGate() {
+  const overlay = document.getElementById('breathGateOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// ── GLYPH RESONANCE FEEDBACK (login) ──
+// Hash a glyph string to a wheel position 0–23
+function hashGlyphToWheelPos(glyph) {
+  let h = 0;
+  for (let i = 0; i < glyph.length; i++) {
+    h = ((h << 5) - h) + glyph.charCodeAt(i);
+    h = h & 0xffffffff;
+  }
+  return Math.abs(h) % 24;
+}
+
 // ── LOGIN ──
 function initLogin() {
   const gs = document.querySelectorAll('.login-g');
@@ -1238,9 +1368,38 @@ function initLogin() {
       if (b.classList.contains('chosen')) {
         b.classList.remove('chosen');
         userSigil = userSigil.filter(g => g !== b.dataset.g);
+        // Play deselect tone
+        const wp = hashGlyphToWheelPos(b.dataset.g);
+        if (typeof breathCtrl !== 'undefined') breathCtrl.playTone(PYTHAGOREAN_FREQS[wp], 0.08, 0.5);
       } else if (userSigil.length < 3) {
         b.classList.add('chosen');
         userSigil.push(b.dataset.g);
+        // ── Glyph resonance feedback ──
+        const glyph = b.dataset.g;
+        const wp = hashGlyphToWheelPos(glyph);
+        const freq = PYTHAGOREAN_FREQS[wp];
+        // 1. Play Pythagorean tone
+        if (typeof breathCtrl !== 'undefined') breathCtrl.playTone(freq, 0.15, 1.2);
+        // 2. Golden flash animation on the button
+        b.classList.remove('glyph-resonance-flash');
+        void b.offsetWidth; // force reflow to restart animation
+        b.classList.add('glyph-resonance-flash');
+        setTimeout(() => b.classList.remove('glyph-resonance-flash'), 400);
+        // 3. Ring pulse on login screen
+        const loginScreen = document.getElementById('loginScreen');
+        if (loginScreen) {
+          loginScreen.classList.remove('login-ring-pulse');
+          void loginScreen.offsetWidth;
+          loginScreen.classList.add('login-ring-pulse');
+          setTimeout(() => loginScreen.classList.remove('login-ring-pulse'), 750);
+        }
+        // 4. Triad chord when 3rd glyph is selected
+        if (userSigil.length === 3) {
+          const freqs = userSigil.map(g => PYTHAGOREAN_FREQS[hashGlyphToWheelPos(g) % 24]);
+          if (typeof breathCtrl !== 'undefined') {
+            freqs.forEach((f, i) => breathCtrl.playTone(f, 0.12, 2.0));
+          }
+        }
       }
       gs.forEach(g => g.classList.toggle('selected', userSigil.includes(g.dataset.g)));
     });
@@ -1320,6 +1479,13 @@ function enterPortal() {
   updateState({ sigil: [...userSigil] });
   // Navigate to Wheel tab as the primary entry point
   navigateToSigil(1);
+  // Auto-start the breath cycle to guide user toward unlocking
+  setTimeout(() => {
+    const btn = document.getElementById('btnStart');
+    if (btn && typeof breathCtrl !== 'undefined' && !breathCtrl.isActive) {
+      btn.click();
+    }
+  }, 800);
   animateWheel();
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
@@ -1356,6 +1522,40 @@ function enterPortal() {
   initProfile();
   initGlyphOverlay();
   initTonePanel();
+
+  // Initialize sigil evolution after profile is loaded
+  initSigilEvolution();
+
+  // ── Breath Gate — register cycle-complete listener after breathCtrl is available ──
+  if (typeof breathCtrl !== 'undefined' && breathCtrl.onCycleComplete) {
+    breathCtrl.onCycleComplete(function(count) {
+      breathCyclesCompleted = count;
+      if (!breathCycleUnlocked && breathCyclesCompleted >= 1) {
+        breathCycleUnlocked = true;
+        hideBreathGate();
+        // Flash the hub to celebrate
+        const hub = document.getElementById('snHub');
+        if (hub) {
+          hub.style.transition = 'box-shadow 0.5s ease';
+          hub.style.boxShadow = '0 0 30px 10px rgba(232,200,106,0.8)';
+          setTimeout(() => { hub.style.boxShadow = ''; }, 2000);
+        }
+        // Notify coherence bus
+        if (typeof COHERENCE_BUS !== 'undefined') {
+          COHERENCE_BUS.phaseLog.push({ ts: Date.now(), phase: 'Cycle Unlocked', glyph: '◎', action: 'Breath gate passed', coh: 100 });
+        }
+      }
+    });
+
+    // Also update breath gate dots when phase changes while overlay is visible
+    breathCtrl.onPhaseChange(function(phase, phaseIdx) {
+      var overlay = document.getElementById('breathGateOverlay');
+      if (overlay && overlay.style.display !== 'none') {
+        updateBreathGateDots(phaseIdx);
+      }
+    });
+  }
+
   // Restore active tab from sigil nav navigation (profile, codex, dream, journal)
   const pendingTab = localStorage.getItem('pendingTab');
   if (pendingTab) {
@@ -1577,7 +1777,58 @@ function enterPortal() {
     });
   }
 
-  // ── MIRROR MODE ──
+  // ── Render the calibration arc gauge for mirror coherence ──
+function renderCalibrationArc(strength) {
+  const canvas = document.getElementById('mirrorCalibCanvas');
+  const label = document.getElementById('mirrorCalibLabel');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cx = W / 2;
+  const cy = H;
+  const r = H - 4;
+
+  // Background arc (dim)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, 0);
+  ctx.strokeStyle = 'rgba(232,200,106,0.12)';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Filled arc — strength 0..1 maps to 0°..180°
+  const endAngle = Math.PI + strength * Math.PI;
+  if (strength > 0.01) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, endAngle);
+    // Color shifts gold at high strength, muted at low
+    const alpha = 0.5 + strength * 0.5;
+    ctx.strokeStyle = `rgba(232,200,106,${alpha})`;
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Glow at high strength
+    if (strength > 0.5) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, Math.PI, endAngle);
+      ctx.strokeStyle = `rgba(232,200,106,${(strength - 0.5) * 0.4})`;
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+  }
+
+  // Label
+  if (label) {
+    const pct = Math.round(strength * 100);
+    label.textContent = `Field: ${pct}%`;
+  }
+}
+
+// ── MIRROR MODE ──
   function initMirrorMode() {
     const inputEl = document.getElementById('mirrorInput');
     const outputEl = document.getElementById('mirrorOutput');
@@ -1595,6 +1846,14 @@ function enterPortal() {
     // Start the 24-cell projection RAF loop + tab watcher
     initMirror24CellTabWatcher();
 
+    // Task 5: Register breath phase change → refresh mirror overlay on phase change
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.onPhaseChange) {
+      breathCtrl.onPhaseChange(function(phase, phaseIdx) {
+        // Force the next RAF frame to pick up the new breath scale
+        _mirror24cellAngle += 0.001;
+      });
+    }
+
     // Submit on button click
     document.getElementById('mirrorSubmit').addEventListener('click', () => {
       const val = inputEl.value.trim();
@@ -1609,8 +1868,11 @@ function enterPortal() {
       if (typeof COHERENCE_BUS !== 'undefined' && result) {
         COHERENCE_BUS.logMirror(result);
       }
-      // Update 24-cell highlight vertex to match mirror wheelPos
       updateMirror24CellHighlight(result?.wheelPos ?? -1);
+      if (result && result.glyph) evolveSigil('mirror-reflection', result.glyph, (result.strength || 0.5) * 100);
+      // Task 5: flash the mirror overlay and update calibration arc
+      flashMirrorOverlay();
+      renderCalibrationArc(result?.strength ?? 0);
       inputEl.value = '';
     });
 
@@ -1775,6 +2037,10 @@ function initNavTabs() {
       tab.classList.add('active');
       document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
       updateMobileNavState();
+      // Re-render fractal timeline when navigating to profile tab
+      if (tab.dataset.tab === 'profile') {
+        setTimeout(renderFractalTimeline, 50);
+      }
     });
   });
 }
@@ -1879,6 +2145,61 @@ function updateCircadian() {
   document.getElementById('circadianTime').textContent = phase + ' — ' + (checkNight() ? 'Night mode' : 'Day mode');
 }
 
+// ── JOURNAL GLYPHIC ECHO ──
+// Draws a small 80×80 canvas showing an icositetragon (24-gon) with
+// the entry's wheel position marked, a center glyph, and a breath-phase arc.
+function generateGlyphicEcho(canvasId, entryGlyph, wheelPos, phase) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  var ctx = canvas.getContext('2d');
+  var cx = 40, cy = 40, r = 32;
+
+  // Clear
+  ctx.clearRect(0, 0, 80, 80);
+
+  // Draw icositetragon (24-gon) ring
+  ctx.beginPath();
+  for (var i = 0; i < 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(232,200,106,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Mark the wheel position of the entry
+  var posAngle = (wheelPos / 24) * Math.PI * 2 - Math.PI / 2;
+  var px = cx + r * Math.cos(posAngle);
+  var py = cy + r * Math.sin(posAngle);
+
+  // Glow dot at position
+  ctx.beginPath();
+  ctx.arc(px, py, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(232,200,106,0.9)';
+  ctx.fill();
+
+  // Center glyph
+  ctx.font = '16px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(entryGlyph || '△', cx, cy);
+
+  // Phase arc (small arc showing which breath phase)
+  var phaseArc = { inhale: 0.5, 'hold-in': 1.0, exhale: 2.0, still: 2.5, 'inhale-2': 3.0, 'hold-peak': 3.5, 'exhale-release': 4.0, rest: 4.5 };
+  var phaseNorm = phaseArc[phase] || 0;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 6, -Math.PI / 2, -Math.PI / 2 + phaseNorm * (Math.PI / 4));
+  ctx.strokeStyle = 'rgba(180,140,220,0.6)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  return canvas.toDataURL();
+}
+
 // ── JOURNAL ──
 function initJournal() {
   document.querySelectorAll('#tab-journal .glyph-grid .gly').forEach(b => {
@@ -1890,25 +2211,69 @@ function initJournal() {
   });
 
   document.getElementById('btnJournalSave').onclick = () => {
-    const text = document.getElementById('journalText').value.trim();
+    if (!breathCycleUnlocked) {
+      var el = document.getElementById('journalMsg');
+      el.textContent = '◎ Sync with breath first — complete one full cycle';
+      el.style.color = 'var(--muted)';
+      el.style.display = 'block';
+      setTimeout(function() {
+        el.textContent = 'Entry sealed — the Codex remembers.';
+        el.style.color = '';
+        el.style.display = 'none';
+      }, 2000);
+      return;
+    }
+    var text = document.getElementById('journalText').value.trim();
     if (!text) return;
+
+    // ── Capture breath context at moment of writing ──
+    var breathCtx = { phase: 'unknown', phaseIdx: -1, wheelPos: 0, coherence: 0 };
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.phases) {
+      var ph = breathCtrl.phases[breathCtrl.currentPhase];
+      breathCtx.phase = ph ? ph.name : 'unknown';
+      breathCtx.phaseIdx = breathCtrl.currentPhase;
+      breathCtx.wheelPos = ph ? ph.wheelPos : 0;
+    }
+    if (typeof window.coherenceLevel !== 'undefined') {
+      breathCtx.coherence = window.coherenceLevel;
+    } else if (typeof COHERENCE_BUS !== 'undefined') {
+      breathCtx.coherence = COHERENCE_BUS.coherenceLevel || 0;
+    }
+
+    var entryGlyph = selectedJournalGlyph || '△';
+    var echoCanvasId = 'jecEchoTmp';
+
+    // Generate glyphic echo and store as dataURL
+    var echoDataUrl = generateGlyphicEcho(echoCanvasId, entryGlyph, breathCtx.wheelPos, breathCtx.phase);
+
     if (!profile.journal) profile.journal = [];
-    profile.journal.push({ glyph: selectedJournalGlyph || '△', text, ts: Date.now(), matAddr: journalGlyphToMatAddr(selectedJournalGlyph || '△') });
+    profile.journal.push({
+      glyph: entryGlyph,
+      text: text,
+      ts: Date.now(),
+      matAddr: journalGlyphToMatAddr(entryGlyph),
+      breathCtx: breathCtx,
+      echo: echoDataUrl
+    });
     saveProfile();
+    // Evolve sigil on journal save
+    evolveSigil('journal-save', selectedJournalGlyph || userSigil[0], breathCtx.coherence || 0);
     document.getElementById('journalText').value = '';
-    const el = document.getElementById('journalMsg');
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 2000);
+    var el2 = document.getElementById('journalMsg');
+    el2.style.display = 'block';
+    setTimeout(function() { el2.style.display = 'none'; }, 2000);
     refreshJournal();
+    // Re-render fractal timeline if on profile tab
+    renderFractalTimeline();
   };
 
   document.getElementById('btnJournalDL').onclick = () => {
     if (!profile?.journal?.length) return;
-    const lines = ['Codex Journal — ' + profile.sigil.join(''), ''];
-    profile.journal.forEach(e => {
-      const d = new Date(e.ts).toLocaleString();
-      const mat = (e.matAddr != null) ? ` [M${e.matAddr}]` : '';
-      lines.push(`[${d}] ${e.glyph}${mat} ${e.text}`);
+    var lines = ['Codex Journal — ' + profile.sigil.join(''), ''];
+    profile.journal.forEach(function(e) {
+      var d = new Date(e.ts).toLocaleString();
+      var mat = (e.matAddr != null) ? ' [M' + e.matAddr + ']' : '';
+      lines.push('[' + d + '] ' + e.glyph + mat + ' ' + e.text);
     });
     downloadText(lines.join('\n'), 'codex-journal.txt');
   };
@@ -1935,17 +2300,54 @@ function journalGlyphToMatAddr(glyph) {
 }
 
 function refreshJournal() {
-  const el = document.getElementById('journalEntries');
+  var el = document.getElementById('journalEntries');
+  if (!el) return;
   el.innerHTML = '';
-  (profile?.journal || []).slice(-10).reverse().forEach(e => {
-    const d = new Date(e.ts).toLocaleString().slice(0, -3);
-    const matTag = (e.matAddr != null)
-      ? `<span style="background:rgba(232,200,106,0.1);color:var(--gold);padding:0 0.3rem;border-radius:3px;font-size:0.62rem;margin-left:0.3rem;">M${e.matAddr}</span>`
+  var entries = (profile?.journal || []).slice(-10).reverse();
+  if (entries.length === 0) {
+    el.innerHTML = '<div style="font-size:0.65rem;color:var(--muted);padding:0.5rem 0;text-align:center;">No entries yet. Complete a breath cycle to begin.</div>';
+    return;
+  }
+  entries.forEach(function(e, idx) {
+    var d = new Date(e.ts);
+    var timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var phaseLabel = (e.breathCtx && e.breathCtx.phase) ? e.breathCtx.phase : '';
+    var cohPct = (e.breathCtx && e.breathCtx.coherence != null) ? Math.round(e.breathCtx.coherence) : null;
+    var metaParts = [];
+    if (e.glyph) metaParts.push(e.glyph);
+    if (phaseLabel) metaParts.push(phaseLabel);
+    if (cohPct != null) metaParts.push(cohPct + '%');
+    if (timeStr) metaParts.push(timeStr);
+    var metaLabel = metaParts.join(' · ');
+
+    var matTag = (e.matAddr != null)
+      ? '<span style="background:rgba(232,200,106,0.1);color:var(--gold);padding:0 0.3rem;border-radius:3px;font-size:0.62rem;margin-left:0.3rem;">M' + e.matAddr + '</span>'
       : '';
-    const div = document.createElement('div');
-    div.style.cssText = 'padding:0.4rem;border-bottom:1px solid var(--border);font-size:0.72rem;color:var(--muted);display:flex;align-items:center;';
-    div.innerHTML = `<span style="color:var(--gold);margin-right:0.4rem;">${escapeHtml(e.glyph)}</span>${d}${matTag}<br>${escapeHtml(e.text)}`;
+
+    var echoImg = '';
+    if (e.echo) {
+      echoImg = '<canvas class="jec-echo" width="80" height="80" style="flex-shrink:0;border-radius:50%;border:1px solid rgba(232,200,106,0.3);"></canvas>';
+    } else {
+      echoImg = '<canvas class="jec-echo" width="80" height="80" style="flex-shrink:0;border-radius:50%;border:1px solid rgba(232,200,106,0.3);"></canvas>';
+    }
+
+    var div = document.createElement('div');
+    div.className = 'journal-entry-card';
+    div.innerHTML = echoImg +
+      '<div class="jec-text">' + escapeHtml(e.text) + '<br>' + matTag + '</div>' +
+      '<div class="jec-meta">' + metaLabel + '</div>';
     el.appendChild(div);
+
+    // Restore echo image after appending to DOM
+    if (e.echo) {
+      var cvs = div.querySelectorAll('canvas.jec-echo');
+      if (cvs.length > 0 && cvs[0]) {
+        var ictx = cvs[0].getContext('2d');
+        var img = new Image();
+        img.onload = function() { ictx.drawImage(img, 0, 0, 80, 80); };
+        img.src = e.echo;
+      }
+    }
   });
 }
 
@@ -1956,6 +2358,141 @@ function downloadText(content, filename) {
   b.click();
 }
 
+// ── FRACTAL TIMELINE ──
+// Renders journal entries + coherence events as a horizontal fractal timeline
+// on #fractalTimelineCanvas, colored by archetype and sized by coherence.
+function renderFractalTimeline() {
+  var canvas = document.getElementById('fractalTimelineCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var entries = profile?.journal || [];
+  var legendEl = document.getElementById('fractalTimelineLegend');
+
+  var archColors = {
+    Seed: '#e8c86a', Bridge: '#b8a0d0', Axis: '#c8d0e0',
+    Star: '#e8c86a', Convergence: '#a0c0c0', Return: '#c0a0b0'
+  };
+  var allArchetypes = ['Seed', 'Bridge', 'Axis', 'Star', 'Convergence', 'Return'];
+
+  // Helper: derive archetype from glyph
+  function glyphToArch(glyph) {
+    if (!glyph) return 'Seed';
+    var map = { '△': 'Seed', '◎': 'Star', '◁△▷': 'Bridge', '◇': 'Axis', '◉': 'Star', '○': 'Convergence', '·': 'Return', '⊕': 'Convergence', '⊗': 'Axis' };
+    return map[glyph] || 'Seed';
+  }
+
+  // Placeholder if no entries
+  if (entries.length === 0) {
+    ctx.fillStyle = 'rgba(232,200,106,0.15)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Complete journal entries to build your fractal timeline.', W / 2, H / 2);
+    if (legendEl) legendEl.innerHTML = '';
+    return;
+  }
+
+  // Compute time range
+  var firstTs = entries[0]?.ts || Date.now();
+  var lastTs = entries[entries.length - 1]?.ts || Date.now();
+  var range = Math.max(lastTs - firstTs, 1);
+
+  // Archetype zone bands (horizontal strips)
+  var bandH = Math.floor(H / 6);
+  var archBand = {};
+  allArchetypes.forEach(function(a, i) {
+    archBand[a] = { y: i * bandH, h: bandH, color: archColors[a] || '#e8c86a' };
+  });
+
+  // Draw archetype zone bands
+  allArchetypes.forEach(function(a) {
+    var band = archBand[a];
+    ctx.fillStyle = band.color.replace(')', ', 0.06)').replace('rgb', 'rgba').replace('#', 'rgba(');
+    // Convert hex to rgba fill
+    var hex = band.color;
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.06)';
+    ctx.fillRect(0, band.y, W, band.h);
+    // Zone label
+    ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.4)';
+    ctx.font = '8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(a, 4, band.y + 2);
+  });
+
+  // Draw connecting arcs between sequential entries
+  for (var i = 0; i < entries.length - 1; i++) {
+    var e1 = entries[i], e2 = entries[i + 1];
+    var x1 = ((e1.ts - firstTs) / range) * (W - 20) + 10;
+    var x2 = ((e2.ts - firstTs) / range) * (W - 20) + 10;
+    var arch1 = glyphToArch(e1.glyph);
+    var arch2 = glyphToArch(e2.glyph);
+    var y1 = (archBand[arch1]?.y ?? 0) + archBand[arch1]?.h / 2 ?? H / 2;
+    var y2 = (archBand[arch2]?.y ?? 0) + archBand[arch2]?.h / 2 ?? H / 2;
+    // Draw bezier arc
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.bezierCurveTo(x1 + (x2 - x1) / 2, y1, x1 + (x2 - x1) / 2, y2, x2, y2);
+    var hex1 = archBand[arch1]?.color || '#e8c86a';
+    var rc = parseInt(hex1.slice(1, 3), 16);
+    var gc = parseInt(hex1.slice(3, 5), 16);
+    var bc = parseInt(hex1.slice(5, 7), 16);
+    ctx.strokeStyle = 'rgba(' + rc + ',' + gc + ',' + bc + ',0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Draw entry nodes
+  entries.forEach(function(e) {
+    var x = ((e.ts - firstTs) / range) * (W - 20) + 10;
+    var arch = glyphToArch(e.glyph);
+    var band = archBand[arch] || { y: 0, h: bandH };
+    var cy2 = band.y + band.h / 2;
+    var coh = (e.breathCtx?.coherence != null) ? e.breathCtx.coherence : 50;
+    var nodeR = 3 + (coh / 100) * 6; // 3–9px based on coherence
+
+    // Glow
+    var hex = archColors[arch] || '#e8c86a';
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    var grad = ctx.createRadialGradient(x, cy2, 0, x, cy2, nodeR * 2.5);
+    grad.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.5)');
+    grad.addColorStop(1, 'rgba(' + r + ',' + g + ',' + b + ',0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, cy2, nodeR * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Node circle
+    ctx.beginPath();
+    ctx.arc(x, cy2, nodeR, 0, Math.PI * 2);
+    ctx.fillStyle = hex;
+    ctx.fill();
+
+    // Glyph label
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '8px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(e.glyph || '△', x, cy2);
+  });
+
+  // Legend
+  if (legendEl) {
+    legendEl.innerHTML = allArchetypes.map(function(a) {
+      var hex = archColors[a] || '#e8c86a';
+      return '<div class="profile-timeline-legend-item"><div class="legend-dot" style="background:' + hex + ';"></div>' + a + '</div>';
+    }).join('');
+  }
+}
+
 // ── PROFILE ──
 function initProfile() {
   document.getElementById('btnLogout').onclick = () => {
@@ -1963,18 +2500,50 @@ function initProfile() {
     location.reload();
   };
   refreshProfile();
+  renderFractalTimeline();
 }
 
 function refreshProfile() {
   const el = document.getElementById('profileContent');
   if (!profile) return;
+  var totalInteractions = sigilEvolution.totalInteractions || 0;
+  var stage = totalInteractions < 10 ? 'Seed' :
+              totalInteractions < 25 ? 'Bridge' :
+              totalInteractions < 50 ? 'Axis' :
+              totalInteractions < 100 ? 'Star' :
+              totalInteractions < 200 ? 'Convergence' : 'Return';
+  var glyphsHtml = Object.keys(sigilEvolution.glyphs).map(function(g) {
+    var gd = sigilEvolution.glyphs[g];
+    var pct = Math.round(gd.weight * 100);
+    var isUser = userSigil.includes(g);
+    return '<div class="profile-glyph-row' + (isUser ? ' user-sigil' : '') + '">' +
+           '<span class="pgr-glyph">' + g + '</span>' +
+           '<div class="pgr-bar-wrap"><div class="pgr-bar" style="width:' + pct + '%"></div></div>' +
+           '<span class="pgr-pct">' + pct + '%</span>' +
+           '<span class="pgr-count">' + gd.interactions + '\u21ba</span></div>';
+  }).join('');
   el.innerHTML = `
-    <div class="profile-row"><span>Sigil</span><span>${profile.sigil.join('')}</span></div>
+    <div class="profile-sigil-section">
+      <div class="pss-label">Your Sigil</div>
+      <div class="pss-glyphs">${userSigil.join('')}</div>
+      <div class="pss-stage">\u25c8 ${stage} Stage</div>
+    </div>
+    <div class="profile-evolution-section">
+      <div class="pes-label">Sigil Resonance</div>
+      ${glyphsHtml}
+    </div>
     <div class="profile-row"><span>Cycles completed</span><span>${profile.cycles || 0}</span></div>
     <div class="profile-row"><span>Journal entries</span><span>${profile.journal?.length || 0}</span></div>
-    <div class="profile-row"><span>Sigils sealed</span><span>${profile.sigils?.length || 0}</span></div>
+    <div class="profile-row"><span>Total interactions</span><span>${totalInteractions}</span></div>
+    <div class="profile-row"><span>Milestones</span><span>${sigilEvolution.milestones?.length || 0}</span></div>
     <div class="profile-row"><span>Personal tone</span><span>${toneFreq} Hz</span></div>
+    <button class="logout-btn" id="btnLogout">\u2298 Exit Portal</button>
   `;
+  var logoutBtn = document.getElementById('btnLogout');
+  if (logoutBtn) logoutBtn.onclick = function() {
+    localStorage.removeItem(STORAGE_KEYS.lastSigil);
+    location.reload();
+  };
 }
 
 // ── INIT CONTROLS ──

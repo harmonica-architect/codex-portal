@@ -29,6 +29,22 @@
   <div class="login-new" id="loginNew">Create new Codex profile</div>
 </div>
 
+<!-- Breath gate overlay — shown when accessing locked features -->
+<div class="breath-gate-overlay" id="breathGateOverlay" style="display:none">
+  <div class="breath-gate-icon" id="bgoIcon">◎</div>
+  <div class="breath-gate-text" id="bgoText">Sync with the breath to unlock deeper layers…</div>
+  <div class="breath-gate-progress" id="bgoProgress">
+    <div class="breath-gate-dot" id="bgd0"></div>
+    <div class="breath-gate-dot" id="bgd1"></div>
+    <div class="breath-gate-dot" id="bgd2"></div>
+    <div class="breath-gate-dot" id="bgd3"></div>
+    <div class="breath-gate-dot" id="bgd4"></div>
+    <div class="breath-gate-dot" id="bgd5"></div>
+    <div class="breath-gate-dot" id="bgd6"></div>
+    <div class="breath-gate-dot" id="bgd7"></div>
+  </div>
+</div>
+
 <!-- ═══════════════ MAIN PORTAL ═══════════════ -->
 <div class="portal" id="portal" style="display:none">
   <div class="breath-bg"></div>
@@ -436,6 +452,10 @@
         <span class="mirror-strength" id="mirrorStrength">—</span>
         <span class="mirror-archetype-badge" id="mirrorArchetypeBadge">△ Seed</span>
       </div>
+      <div class="mirror-calibration-arc" id="mirrorCalibrationArc">
+        <canvas class="mirror-calibration-canvas" id="mirrorCalibCanvas" width="80" height="40"></canvas>
+        <div class="mirror-calibration-label" id="mirrorCalibLabel">Field: —</div>
+      </div>
       <!-- PRIORITY 3: matAddr Geometric Resonance Panel -->
       <div class="mataddr-resonance-panel" id="mataddrResPanel">
         <div class="mataddr-panel-header">⬡ Matrix Resonance</div>
@@ -539,7 +559,22 @@
         <button class="logout-btn" id="btnLogout">⊘ Exit Portal</button>
       </div>
     </div>
+
+    <div class="collapse-section" id="profileTimelineCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('profileTimelineCollapse')">
+        <span class="collapse-title">◡ Fractal Timeline</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body">
+        <div class="profile-timeline-label">Your resonance journey</div>
+        <canvas class="fractal-timeline-canvas" id="fractalTimelineCanvas" width="320" height="200"></canvas>
+        <div class="profile-timeline-legend" id="fractalTimelineLegend"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- Hidden canvas for temporary glyphic echo generation (off-screen) -->
+  <canvas id="jecEchoTmp" width="80" height="80" style="position:absolute;left:-9999px;top:-9999px;pointer-events:none;"></canvas>
 
 </div>
 

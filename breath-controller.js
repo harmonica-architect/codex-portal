@@ -115,6 +115,9 @@ class BreathController {
     // Custom event for cascade animation (full cycle = 24 breaths = 3 ring rotations)
     this.cascadeListeners = [];
 
+    // Cycle-complete listeners — fire after 1 full 8-phase breath cycle
+    this._cycleCompleteListeners = [];
+
     // Bind
     this._tick = this._tick.bind(this);
   }
@@ -187,6 +190,12 @@ class BreathController {
 
     // Advance
     this.currentPhase = (this.currentPhase + 1) % this.phases.length;
+
+    // Detect full cycle completion — fires when phase returns to 0
+    if (this.currentPhase === 0) {
+      this._fireCycleComplete();
+    }
+
     const next = this.phases[this.currentPhase];
 
     // Play breath phase tone — Pythagorean 24-tone series keyed to wheelPos
@@ -206,7 +215,17 @@ class BreathController {
 
   _fireCascade() {
     this.cascadeListeners.forEach(fn => { try { fn(this.breathCount, this); } catch(e) { } });
-  if (typeof COHERENCE_BUS !== "undefined") COHERENCE_BUS._syncFromBreath(this);
+    if (typeof COHERENCE_BUS !== "undefined") COHERENCE_BUS._syncFromBreath(this);
+  }
+
+  // ── Cycle-complete — fire after every full 8-phase breath cycle ──
+  onCycleComplete(fn) {
+    this._cycleCompleteListeners.push(fn);
+    return () => { this._cycleCompleteListeners = this._cycleCompleteListeners.filter(f => f !== fn); };
+  }
+
+  _fireCycleComplete() {
+    this._cycleCompleteListeners.forEach(fn => { try { fn(this.breathCount); } catch(e) { } });
   }
 
   // ── Public API ──

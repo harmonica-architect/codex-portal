@@ -1689,6 +1689,74 @@ body.mirror-active {
   50% { transform: scale(calc(1 - (1 - var(--breath-ring-scale)) * 0.05)); }
 }
 
+/* ── TASK 1 — Glyph Resonance Feedback ── */
+@keyframes glyph-resonance-flash {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(232,200,106,0); }
+  40%  { transform: scale(1.15);  box-shadow: 0 0 12px 4px rgba(232,200,106,0.7); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(232,200,106,0); }
+}
+.login-g.chosen.glyph-resonance-flash {
+  animation: glyph-resonance-flash 0.35s ease-out;
+}
+/* Ring pulse on login screen */
+@keyframes login-ring-expand {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.login-ring-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  animation: login-ring-expand 0.7s ease-out forwards;
+  pointer-events: none;
+}
+/* ── Breath gate overlay ── */
+.breath-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(10,12,20,0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+}
+.breath-gate-icon {
+  font-size: 3rem;
+  color: var(--gold);
+  animation: breath-gate-pulse 2s ease-in-out infinite;
+}
+@keyframes breath-gate-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%       { transform: scale(1.15); opacity: 1; }
+}
+.breath-gate-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+}
+.breath-gate-progress {
+  display: flex;
+  gap: 8px;
+}
+.breath-gate-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  opacity: 0.4;
+  transition: opacity 0.3s, background 0.3s;
+}
+.breath-gate-dot.active {
+  opacity: 1;
+  background: var(--gold);
+}
 /* ----------------------------------------------
    SPIRAL LOG � Journey Memory Visualization
    ---------------------------------------------- */
@@ -2327,4 +2395,112 @@ canvas#wheel {
   .journey-section { grid-column: 1 / 2; }
   .dash-nav { grid-column: 1 / -1; }
   .mobile-nav-drawer { display: none !important; }
+}
+
+/* ── TASK 3: JOURNAL GLYPHIC ECHO ── */
+.journal-entry-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(232,200,106,0.1);
+}
+.journal-entry-card:last-child { border-bottom: none; }
+.jec-echo {
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(232,200,106,0.3);
+}
+.jec-text {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.jec-meta {
+  font-size: 0.62rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── TASK 3: FRACTAL TIMELINE ── */
+.profile-timeline-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.fractal-timeline-canvas {
+  width: 100%;
+  border-radius: 8px;
+  background: rgba(232,200,106,0.03);
+}
+.profile-timeline-legend {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+.profile-timeline-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* -- TASK 5: MIRROR LAYER GEOMETRIC OVERLAYS -- */
+.mirror-overlay-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.mirror-canvas-wrap {
+  position: relative;
+  display: inline-block;
+}
+.mirror-canvas-wrap canvas {
+  display: block;
+}
+/* Reflection flash animation */
+@keyframes mirror-flash {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+.mirror-flash-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  pointer-events: none;
+  opacity: 0;
+}
+.mirror-flash-ring.active {
+  animation: mirror-flash 0.6s ease-out forwards;
+}
+/* Mirror coherence calibration arc */
+.mirror-calibration-arc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+.mirror-calibration-canvas {
+  width: 80px; height: 40px;
+}
+.mirror-calibration-label {
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
 }

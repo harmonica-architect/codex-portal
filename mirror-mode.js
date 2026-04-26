@@ -451,6 +451,133 @@ class MirrorMode {
 // Singleton
 const mirrorMode = new MirrorMode();
 
+// ── Icositetragon overlay on the mirror canvas ──
+// Renders the 24-gon ring + monadic double-spiral on the mirror canvas,
+// breathing with the current breath phase and coherence level.
+function renderIcositetragonOverlay(ctx, cx, cy, r, wheelPos, coherence, phaseIdx, breathUnlocked) {
+  // Breath-phase scales — 8 phases mapped to ring breath expansion
+  var breathScales = [1.12, 1.15, 0.92, 1.0, 1.10, 1.18, 0.90, 1.0];
+  var bs = breathScales[phaseIdx] || 1.0;
+  var rScaled = r * bs;
+
+  // Opacity gated by breath cycle unlock
+  var baseOpacity = breathUnlocked ? 0.7 : 0.3;
+
+  // Coherence → spiral tightness (higher coh = tighter spiral)
+  var cohNorm = Math.max(0.05, Math.min(1, (coherence || 50) / 100));
+  var spiralPitch = 0.18 + (1 - cohNorm) * 0.3;  // 0.18 (tight) to 0.48 (loose)
+
+  // Slow rotation of spiral arms (0.1 rad/s)
+  var spiralAngle = (Date.now() / 10000) % (Math.PI * 2);
+
+  // Prime positions on the 24-gon
+  var PRIME_POS = [0, 4, 6, 10, 12, 16, 18, 22];
+
+  // ── Draw the 24-gon ring ──
+  ctx.save();
+  ctx.globalAlpha = baseOpacity;
+
+  // Edges of the 24-gon
+  ctx.beginPath();
+  for (var i = 0; i <= 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var x = cx + rScaled * Math.cos(angle);
+    var y = cy + rScaled * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(232,200,106,0.25)';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+
+  // 24 vertices
+  for (var i = 0; i < 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var vx = cx + rScaled * Math.cos(angle);
+    var vy = cy + rScaled * Math.sin(angle);
+    var isPrime = PRIME_POS.includes(i);
+    var isActive = i === wheelPos;
+
+    var vr = isPrime ? 3.5 : (isActive ? 4.5 : 2.2);
+
+    if (isActive) {
+      // Glowing active vertex
+      var grd = ctx.createRadialGradient(vx, vy, 0, vx, vy, vr * 5);
+      grd.addColorStop(0, 'rgba(232,200,106,0.8)');
+      grd.addColorStop(0.5, 'rgba(200,160,70,0.3)');
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(vx, vy, vr * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(vx, vy, vr, 0, Math.PI * 2);
+    ctx.fillStyle = isActive
+      ? 'rgba(255,240,180,1)'
+      : isPrime
+      ? 'rgba(200,160,80,0.9)'
+      : 'rgba(150,130,180,0.5)';
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  // ── Monadic double-spiral ──
+  ctx.save();
+  ctx.globalAlpha = baseOpacity * 0.65;
+  ctx.translate(cx, cy);
+  ctx.rotate(spiralAngle);
+
+  // Two arms: clockwise and counter-clockwise (starting at offset angles)
+  for (var arm = 0; arm < 2; arm++) {
+    var armOffset = arm * Math.PI; // 2nd arm starts opposite
+    ctx.beginPath();
+    var firstPt = true;
+    for (var t = 0; t <= 90; t++) {
+      // Logarithmic spiral: r = r0 * e^(pitch * angle)
+      var theta = armOffset + (t / 90) * Math.PI * 3; // 1.5 turns = 3π
+      var logR = rScaled * 0.12 * Math.exp(spiralPitch * (t / 90) * 5);
+      var sx = logR * Math.cos(theta);
+      var sy = logR * Math.sin(theta);
+      if (firstPt) { ctx.moveTo(sx, sy); firstPt = false; }
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.strokeStyle = 'rgba(232,200,106,0.4)';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// ── Flash the mirror overlay on a new reflection ──
+function flashMirrorOverlay() {
+  // Flash the ring overlay brightness
+  var canvas = getMirror24CellCanvas();
+  if (!canvas) return;
+  var flashClass = 'mirror-flash-ring';
+  var ring = document.createElement('div');
+  ring.className = flashClass + ' active';
+  var wrap = canvas.parentElement;
+  if (wrap) {
+    wrap.style.position = 'relative';
+    ring.style.position = 'absolute';
+    ring.style.top = '50%';
+    ring.style.left = '50%';
+    ring.style.transform = 'translate(-50%,-50%)';
+    ring.style.width = '120px';
+    ring.style.height = '120px';
+    ring.style.borderRadius = '50%';
+    ring.style.border = '2px solid var(--gold)';
+    ring.style.pointerEvents = 'none';
+    wrap.appendChild(ring);
+    setTimeout(function() { ring.remove(); }, 700);
+  }
+}
+
 // ══════════════════════════════════════════════════════
 // BREATH-GEOMETRIC MIRROR — 24-cell projection in Mirror tab
 // ══════════════════════════════════════════════════════
@@ -493,6 +620,17 @@ function renderMirror24Cell() {
 
   // Clear canvas
   ctx.clearRect(0, 0, W, H);
+
+  // ── Draw icositetragon overlay first (underneath the 24-cell) ──
+  const phaseIdx = (typeof breathCtrl !== 'undefined' && breathCtrl.getPhaseIndex)
+    ? breathCtrl.getPhaseIndex()
+    : 0;
+  const wheelPosOverlay = activeWheelPos >= 0 ? activeWheelPos
+    : (typeof breathCtrl !== 'undefined' && breathCtrl.phases && breathCtrl.phases[breathCtrl.currentPhase]
+      ? breathCtrl.phases[breathCtrl.currentPhase].wheelPos
+      : 0);
+  const breathUnlocked = (typeof breathCycleUnlocked !== 'undefined') ? breathCycleUnlocked : false;
+  renderIcositetragonOverlay(ctx, cx, cy, 80, wheelPosOverlay, coh, phaseIdx, breathUnlocked);
 
   // Draw the 24-cell with current state
   if (typeof window.draw24CellProjection === 'function') {
