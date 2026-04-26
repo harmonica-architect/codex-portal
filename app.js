@@ -1160,6 +1160,9 @@ function startCycle() {
   cohInterval = setInterval(updateCoherence, 300);
   startCoherenceUpdates();
   connectWebSocket();
+  // Start BreathController for phase-change animations (sigil nav, cascade)
+  const el = document.getElementById('snHub');
+  if (typeof breathCtrl !== 'undefined') breathCtrl.start(el);
 }
 
 function endCycle() {
