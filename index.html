@@ -398,6 +398,41 @@
       </div>
     </div>
 
+    <!-- Icositetragon Expansion Node -->
+    <div class="collapse-section" id="icoxNodeCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('icoxNodeCollapse')">
+        <span class="collapse-title">✦ Icositetragon Expansion Node</span>
+        <span class="collapse-icon">▶</span>
+      </div>
+      <div class="collapse-body" id="icoxNodeBody">
+        <div class="icox-intro">The 24-fold harmonic structure. Each position is a node of resonance — a place where breath, geometry, and meaning converge. Click any position to explore its dimensional axis.</div>
+        <div class="icox-layout">
+          <div class="icox-canvas-wrap">
+            <canvas id="icoxNodeCanvas" width="280" height="280"></canvas>
+          </div>
+          <div class="icox-info-panel" id="icoxInfoPanel">
+            <div class="icox-pos-label" id="icoxPosLabel">24</div>
+            <div class="icox-pos-glyph" id="icoxPosGlyph">◈</div>
+            <div class="icox-pos-name" id="icoxPosName">Origin</div>
+            <div class="icox-pos-archetype" id="icoxPosArchetype">Star</div>
+            <div class="icox-pos-frequency" id="icoxPosFrequency">— Hz</div>
+            <div class="icox-pos-gate" id="icoxPosGate">—</div>
+            <div class="icox-pos-meaning" id="icoxPosMeaning">Click any position on the 24-gon to explore its harmonic meaning.</div>
+            <div class="icox-zone-legend" id="icoxZoneLegend"></div>
+          </div>
+        </div>
+        <div class="icox-teach-section" id="icoxTeachSection">
+          <div class="icox-teach-title">The Dimensional Framework</div>
+          <div class="icox-teach-body" id="icoxTeachBody">
+            <p>The <strong>icositetragon</strong> (24-gon) is the 2D shadow of the <strong>icositetrachoron</strong> (24-cell) — a 4-dimensional polyhedron with 24 vertices, 96 edges, and 24 octahedral cells.</p>
+            <p>In the Codex Universalis framework, the 4th dimension is not orthogonal space — it is the <strong>depth of recursion</strong>. The 24-cell is the icositetragon folding into itself.</p>
+            <p>The <strong>quasi-prime positions</strong> (1,3,5,7,9,11,13,15,17,19,21,23) are the "open" nodes — positions that are not prime but sit between primes. They act as reflection surfaces, allowing the field to resonate broadly.</p>
+            <p>The <strong>prime positions</strong> (0,4,6,10,12,16,18,22) are resonance anchors — stable, crystalline frequencies where the field holds coherence without fluctuation.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ══ DREAM / MIRROR TAB ══ -->
@@ -563,6 +598,17 @@
             <span class="toggle-label">Auto-log coherence peaks</span>
           </label>
         </div>
+        <div class="settings-row" id="soundscapeRow">
+          <label class="settings-label">
+            <span class="settings-label-icon">♪</span>
+            Harmonic Soundscape
+            <span class="settings-label-sub">Ambient tones synced to breath</span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="soundscapeToggle" onchange="window.TOGGLE_SOUNDSCAPE && window.TOGGLE_SOUNDSCAPE(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
         <button class="logout-btn" id="btnLogout">⊘ Exit Portal</button>
       </div>
     </div>
@@ -576,6 +622,16 @@
         <div class="profile-timeline-label">Your resonance journey</div>
         <canvas class="fractal-timeline-canvas" id="fractalTimelineCanvas" width="320" height="200"></canvas>
         <div class="profile-timeline-legend" id="fractalTimelineLegend"></div>
+      </div>
+    </div>
+
+    <div class="collapse-section" id="glyphIntelCollapse">
+      <div class="collapse-header" onclick="toggleCollapse('glyphIntelCollapse')">
+        <span class="collapse-title">◈ Glyph Intelligence</span>
+        <span class="collapse-icon">▼</span>
+      </div>
+      <div class="collapse-body" id="glyphIntelBody">
+        <div class="gi-placeholder">Select glyphs across the portal to build your intelligence map.</div>
       </div>
     </div>
   </div>

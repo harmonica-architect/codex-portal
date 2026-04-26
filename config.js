@@ -234,3 +234,27 @@ const EXPORT_CONFIG = {
   sigilFontSize: 72,
   includeGlyphs: ['△', '◁△▷', '◇', '⬟', '△̅', '⊕', '⊗', '◈'],
 };
+
+// ── HARMONIC SOUNDSCAPES CONFIG ──
+const SOUNDSCAPE_CONFIG = {
+  enabled: false,          // user must opt in
+  baseVolume: 0.04,         // base drone volume
+  layerVolume: 0.025,       // breath phase layer volume
+  droneFadeTime: 2.0,      // seconds to fade drone in/out
+  layerFadeTime: 0.8,      // seconds to fade layers
+  octaves: [0, 1, 2],      // which octaves to layer (fundamental + harmonics)
+  // The 24-tone wheel mapped to frequencies (A4 = 432Hz reference)
+  // Position 0 = C (256Hz in C-major 432Hz tuning), each step = 18 Hz (432/24)
+  wheelFrequencies: (function() {
+    var freqs = [];
+    var base = 256; // C below A=432Hz
+    for (var i = 0; i < 24; i++) {
+      freqs.push(base + i * 18);
+    }
+    return freqs;
+  })()
+};
+
+// Map wheelPos 0–23 to actual frequencies
+// 0=C, 1=C#, 2=D, 3=D#, 4=E, 5=F, 6=F#, 7=G, 8=G#, 9=A, 10=A#, 11=B
+// A=432Hz corresponds to wheelPos 9

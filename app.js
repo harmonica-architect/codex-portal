@@ -18,6 +18,88 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ── GLYPH INTELLIGENCE STATE ──
+// Tracks user-specific glyph usage across contexts.
+// Each glyph accumulates: selection count, contexts, avg coherence, personal meaning.
+let glyphIntelligence = {};
+
+function saveGlyphIntelligence() {
+  try { localStorage.setItem('codex_glyph_intel', JSON.stringify(glyphIntelligence)); } catch(e) {}
+}
+
+function loadGlyphIntelligence() {
+  try {
+    var stored = localStorage.getItem('codex_glyph_intel');
+    if (stored) glyphIntelligence = JSON.parse(stored);
+  } catch(e) {}
+}
+
+function trackGlyphSelection(glyph, context, coherence) {
+  if (!glyph || glyph.length === 0) return;
+  var coh = (typeof coherenceLevel !== 'undefined') ? coherenceLevel :
+            (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.coherenceLevel) ? COHERENCE_BUS.coherenceLevel : 0;
+  if (!glyphIntelligence[glyph]) {
+    glyphIntelligence[glyph] = { contexts: {}, avgCoherence: 0, selections: 0, lastSeen: 0, personalMeaning: null };
+  }
+  var g = glyphIntelligence[glyph];
+  g.selections++;
+  g.lastSeen = Date.now();
+  g.avgCoherence = (g.avgCoherence * (g.selections - 1) + coh) / g.selections;
+  if (!g.contexts[context]) g.contexts[context] = 0;
+  g.contexts[context]++;
+  saveGlyphIntelligence();
+}
+
+function inferPersonalMeaning(glyph) {
+  var g = glyphIntelligence[glyph];
+  if (!g || g.selections < 5) return null;
+  var topContext = Object.keys(g.contexts).reduce(function(a, b) {
+    return g.contexts[a] > g.contexts[b] ? a : b;
+  });
+  var meanings = {
+    'login': 'Identity anchor — you reach for this when defining yourself',
+    'journal': 'Insight keeper — this glyph holds your reflections',
+    'mirror': 'Field mirror — this is your reflection language',
+    'sigil-nav': 'Navigation key — this is how you move through the portal',
+    'breath-phase': 'Breath companion — this appears at key moments in your cycle'
+  };
+  return meanings[topContext] || null;
+}
+
+function timeAgo(ts) {
+  var s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+function renderGlyphIntelligence() {
+  var body = document.getElementById('glyphIntelBody');
+  if (!body) return;
+  var allGlyphs = ['△','◁△▷','◇','⬟','△̅','⊕','⊗','◈'];
+  var hasData = allGlyphs.some(function(g) {
+    return glyphIntelligence[g] && glyphIntelligence[g].selections > 0;
+  });
+  if (!hasData) return; // Keep placeholder
+  body.innerHTML = allGlyphs.map(function(g) {
+    var gi = glyphIntelligence[g];
+    if (!gi || gi.selections === 0) return '';
+    var pct = Math.min(100, Math.round(gi.avgCoherence));
+    var infer = inferPersonalMeaning(g);
+    var ctxCount = Object.keys(gi.contexts).length;
+    var lastSeenStr = gi.lastSeen ? timeAgo(gi.lastSeen) : 'never';
+    return '<div class="gi-glyph-row">' +
+      '<span class="gi-glyph">' + g + '</span>' +
+      '<div class="gi-info">' +
+        (infer ? '<div class="gi-meaning">' + infer + '</div>' : '') +
+        '<div class="gi-meta">' + gi.selections + '\u00d7 selected \u00b7 ' + ctxCount + ' context' + (ctxCount !== 1 ? 's' : '') + ' \u00b7 avg ' + pct + '% coh \u00b7 ' + lastSeenStr + '</div>' +
+      '</div>' +
+      '<div class="gi-bar-wrap"><div class="gi-bar" style="width:' + pct + '%"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
 // ── SIGIL EVOLUTION STATE ──
 let sigilEvolution = {
   glyphs: {},     // glyph char → { weight, interactions, lastSeen, unlocked }
@@ -41,6 +123,143 @@ let virtualUsers = 0;
 let selectedJournalGlyph = '';
 let selectedCodexGlyph = '';
 let cohInterval = null;
+
+// ══════════════════════════════════════════
+// HARMONIC SOUNDSCAPE ENGINE
+// Layered ambient sound environments
+// ══════════════════════════════════════════
+
+let soundscape = {
+  ctx: null,           // AudioContext
+  active: false,       // whether soundscape is running
+  masterGain: null,     // master volume
+  droneOscs: [],       // fundamental drone oscillators
+  layerOscs: [],        // breath-phase layer oscillators
+  currentPhaseIdx: 0,   // breath phase for layer switching
+  currentArchetype: 'Star',
+  nodes: {},            // active oscillator nodes by frequency
+};
+
+// Map archetype to its harmonic series
+const ARCHETYPE_HARMONICS = {
+  Seed:       [432, 864, 1296],
+  Bridge:     [528, 1056],
+  Axis:       [639, 1278],
+  Convergence:[741, 1482],
+  Star:       [852, 1704],
+  Return:     [963, 1926]
+};
+
+function initSoundscape() {
+  if (soundscape.ctx) return; // already initialized
+  try {
+    soundscape.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    soundscape.masterGain = soundscape.ctx.createGain();
+    soundscape.masterGain.gain.setValueAtTime(0, soundscape.ctx.currentTime);
+    soundscape.masterGain.connect(soundscape.ctx.destination);
+  } catch(e) {
+    console.warn('Soundscape: Web Audio not available', e);
+  }
+}
+
+function startSoundscape() {
+  if (!soundscape.ctx || soundscape.active) return;
+  if (soundscape.ctx.state === 'suspended') soundscape.ctx.resume();
+  soundscape.active = true;
+  soundscape.masterGain.gain.cancelScheduledValues(soundscape.ctx.currentTime);
+  soundscape.masterGain.gain.setValueAtTime(0, soundscape.ctx.currentTime);
+  soundscape.masterGain.gain.linearRampToValueAtTime(SOUNDSCAPE_CONFIG.baseVolume, soundscape.ctx.currentTime + SOUNDSCAPE_CONFIG.droneFadeTime);
+  startDrone();
+  startPhaseLayer();
+}
+
+function stopSoundscape() {
+  if (!soundscape.active) return;
+  soundscape.active = false;
+  if (soundscape.masterGain) {
+    soundscape.masterGain.gain.cancelScheduledValues(soundscape.ctx.currentTime);
+    soundscape.masterGain.gain.setValueAtTime(soundscape.masterGain.gain.value, soundscape.ctx.currentTime);
+    soundscape.masterGain.gain.linearRampToValueAtTime(0, soundscape.ctx.currentTime + SOUNDSCAPE_CONFIG.droneFadeTime);
+  }
+  soundscape.droneOscs.forEach(function(o) { try { o.stop(soundscape.ctx.currentTime + SOUNDSCAPE_CONFIG.droneFadeTime); } catch(e) {} });
+  soundscape.droneOscs = [];
+  soundscape.layerOscs.forEach(function(o) { try { o.stop(soundscape.ctx.currentTime + SOUNDSCAPE_CONFIG.layerFadeTime); } catch(e) {} });
+  soundscape.layerOscs = [];
+}
+
+function toggleSoundscape() {
+  if (!soundscape.ctx) initSoundscape();
+  if (soundscape.active) { stopSoundscape(); return false; }
+  else { startSoundscape(); return true; }
+}
+
+function startDrone() {
+  if (!soundscape.ctx) return;
+  var baseFreq = 432;
+  SOUNDSCAPE_CONFIG.octaves.forEach(function(oct) {
+    var freq = baseFreq * Math.pow(2, oct);
+    var osc = soundscape.ctx.createOscillator();
+    var gain = soundscape.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.value = oct === 0 ? 1.0 : 0.3 / Math.pow(2, oct);
+    osc.connect(gain);
+    gain.connect(soundscape.masterGain);
+    osc.start();
+    soundscape.droneOscs.push(osc);
+  });
+}
+
+function startPhaseLayer() {
+  if (!soundscape.ctx || !soundscape.active) return;
+  soundscape.layerOscs.forEach(function(o) { try { o.stop(soundscape.ctx.currentTime + 0.1); } catch(e) {} });
+  soundscape.layerOscs = [];
+  var phaseIdx = (typeof breathCtrl !== 'undefined' && breathCtrl.currentPhase !== undefined) ? breathCtrl.currentPhase : 0;
+  var arch = soundscape.currentArchetype || 'Star';
+  var harmFreqs = ARCHETYPE_HARMONICS[arch] || ARCHETYPE_HARMONICS.Star;
+  harmFreqs.forEach(function(hfreq, i) {
+    var osc = soundscape.ctx.createOscillator();
+    var gain = soundscape.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = hfreq;
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(soundscape.masterGain);
+    osc.start();
+    gain.gain.linearRampToValueAtTime(SOUNDSCAPE_CONFIG.layerVolume / (i + 1), soundscape.ctx.currentTime + SOUNDSCAPE_CONFIG.layerFadeTime);
+    soundscape.layerOscs.push(osc);
+  });
+}
+
+function onBreathPhaseChangeSoundscape(phaseIdx) {
+  if (!soundscape.active) return;
+  soundscape.currentPhaseIdx = phaseIdx;
+  startPhaseLayer();
+}
+
+var lastCohSoundscape = -1;
+function onCoherenceChangeSoundscape(coh) {
+  if (!soundscape.active || !soundscape.masterGain) return;
+  if (lastCohSoundscape >= 0 && Math.abs(coh - lastCohSoundscape) < 5) return;
+  lastCohSoundscape = coh;
+  var baseVol = SOUNDSCAPE_CONFIG.baseVolume;
+  var cohBoost = coh > 75 ? (coh - 75) * 0.0004 : 0;
+  soundscape.masterGain.gain.cancelScheduledValues(soundscape.ctx.currentTime);
+  soundscape.masterGain.gain.setValueAtTime(soundscape.masterGain.gain.value, soundscape.ctx.currentTime);
+  soundscape.masterGain.gain.linearRampToValueAtTime(baseVol + cohBoost, soundscape.ctx.currentTime + 1.5);
+}
+
+window.soundscape = soundscape;
+window.toggleSoundscape = toggleSoundscape;
+window.initSoundscape = initSoundscape;
+window.startSoundscape = startSoundscape;
+window.stopSoundscape = stopSoundscape;
+
+if (typeof breathCtrl !== 'undefined' && breathCtrl.onPhaseChange) {
+  breathCtrl.onPhaseChange(function(phase, phaseIdx) {
+    onBreathPhaseChangeSoundscape(phaseIdx);
+  });
+}
 
 // ── WebSocket state
 let ws = null;
@@ -1400,6 +1619,8 @@ function initLogin() {
             freqs.forEach((f, i) => breathCtrl.playTone(f, 0.12, 2.0));
           }
         }
+        // Track glyph selection for glyph intelligence
+        trackGlyphSelection(glyph, 'login', coherenceLevel);
       }
       gs.forEach(g => g.classList.toggle('selected', userSigil.includes(g.dataset.g)));
     });
@@ -1525,6 +1746,7 @@ function enterPortal() {
   checkNight();
   initNavTabs();
   initCodex();
+  initIcoxNode();
   initJournal();
   initProfile();
   initGlyphOverlay();
@@ -1675,6 +1897,9 @@ function enterPortal() {
     // Breath phase on sigil nav hub (override tab label with phase glyph)
     const snhg = document.getElementById('snHubGlyph');
     if (snhg && !sigilNav.isTransitioning) snhg.textContent = phase.glyph;
+
+    // Track glyph intelligence — breath phase glyph changes
+    trackGlyphSelection(phase.glyph, 'breath-phase', coherenceLevel);
   });
 
   // Archetype ring click → jump to that breath context
@@ -1867,6 +2092,8 @@ function renderCalibrationArc(strength) {
       }
       updateMirror24CellHighlight(result?.wheelPos ?? -1);
       if (result && result.glyph) evolveSigil('mirror-reflection', result.glyph, (result.strength || 0.5) * 100);
+      // Track glyph selection for glyph intelligence
+      if (result && result.glyph) trackGlyphSelection(result.glyph, 'mirror', (result.strength || 0.5) * 100);
       // Task 5: flash the mirror overlay and update calibration arc
       flashMirrorOverlay();
       renderCalibrationArc(result?.strength ?? 0);
@@ -2257,6 +2484,8 @@ function initJournal() {
     saveProfile();
     // Evolve sigil on journal save
     evolveSigil('journal-save', selectedJournalGlyph || userSigil[0], breathCtx.coherence || 0);
+    // Track glyph selection for glyph intelligence
+    trackGlyphSelection(selectedJournalGlyph || '△', 'journal', breathCtx.coherence || 0);
     document.getElementById('journalText').value = '';
     var el2 = document.getElementById('journalMsg');
     el2.style.display = 'block';
@@ -2505,6 +2734,7 @@ function initProfile() {
   if (toggle) toggle.checked = autoLogEnabled;
   refreshProfile();
   renderFractalTimeline();
+  renderGlyphIntelligence();
 }
 
 // Expose toggle handler globally for the checkbox onclick
@@ -2512,6 +2742,18 @@ window.TOGGLE_AUTO_LOG = function(checked) {
   try {
     localStorage.setItem('codex_auto_log', checked ? 'true' : 'false');
   } catch(e) {}
+};
+
+// Expose soundscape toggle for the Profile tab checkbox
+window.TOGGLE_SOUNDSCAPE = function(checked) {
+  if (!soundscape.ctx) initSoundscape();
+  if (checked) {
+    localStorage.setItem('codex_soundscape', 'on');
+    toggleSoundscape();
+  } else {
+    localStorage.removeItem('codex_soundscape');
+    toggleSoundscape();
+  }
 };
 
 function refreshProfile() {
@@ -2598,6 +2840,16 @@ document.getElementById('btnGeo120').style.fontWeight = savedGeo === '120' ? 'bo
 
 // ── AUTO-LOGIN ──
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);
+// Load glyph intelligence early — before any tracking happens
+loadGlyphIntelligence();
+// Restore soundscape preference (must be after soundscape init at top of file)
+if (localStorage.getItem('codex_soundscape') === 'on') {
+  initSoundscape();
+  // Don't auto-start — wait for user interaction to comply with autoplay policy
+  // Show the toggle as checked in the UI
+  var scToggle = document.getElementById('soundscapeToggle');
+  if (scToggle) scToggle.checked = true;
+}
 if (autoLogin) {
   const stored = localStorage.getItem(STORAGE_KEYS.profile + ':' + autoLogin);
   if (stored) {
@@ -2609,4 +2861,221 @@ if (autoLogin) {
   }
 } else {
   initLogin();
+}
+
+// ══════════════════════════════════════════
+// ICOSITETRAGON EXPANSION NODE
+// Teach the 24-fold harmonic structure
+// ══════════════════════════════════════════
+
+let icoxSelectedPos = 12; // Start at prime anchor
+
+// Position data: wheelPos → { glyph, name, archetype, frequency, breath, meaning }
+const ICOX_POSITIONS = [
+  { glyph: '◈', name: 'Origin',         archetype: 'Star',        frequency: 432, breath: '—',     meaning: 'The origin point. All spokes begin here. The Monad before division. Zero as potential.' },
+  { glyph: '△', name: 'Seed Rise',      archetype: 'Seed',        frequency: 432, breath: 'Inhale', meaning: 'The first breath seeds form. Potential crystallizes from silence.' },
+  { glyph: '△', name: 'Form Hold',      archetype: 'Seed',        frequency: 432, breath: 'Hold',   meaning: 'The seed holds its form. Breath suspended, meaning condensing.' },
+  { glyph: '◇', name: 'Axis Form',      archetype: 'Axis',        frequency: 528, breath: '—',     meaning: 'The axis forms at the perpendicular. Stillness becomes structure.' },
+  { glyph: '△', name: 'Prime Anchor',  archetype: 'Seed',        frequency: 528, breath: 'Inhale', meaning: 'A prime resonance anchor. The field holds coherence without fluctuation.' },
+  { glyph: '◁△▷', name: 'Bridge',       archetype: 'Bridge',      frequency: 528, breath: 'Hold',   meaning: 'Duality held in balance. Opposites meet through you at this position.' },
+  { glyph: '◇', name: 'Deep Axis',      archetype: 'Axis',        frequency: 639, breath: '—',     meaning: 'The deep axis. The fifth dimension is breath, not space — here it becomes clear.' },
+  { glyph: '◁△▷', name: 'Bridge Gate',  archetype: 'Bridge',      frequency: 639, breath: 'Exhale', meaning: 'The bridge opens on exhale. Potential collapses to chosen through resonance.' },
+  { glyph: '◇', name: 'Still Point',    archetype: 'Axis',        frequency: 639, breath: 'Still',  meaning: 'The diamond at stillness. Rest at the axis — the field aligns itself.' },
+  { glyph: '◇', name: 'Quasi-Open',     archetype: 'Axis',        frequency: 741, breath: '—',     meaning: 'A quasi-prime "soft spot" position. The field reflects broadly here — open to many resonances.' },
+  { glyph: '△', name: 'Prime Anchor',  archetype: 'Seed',        frequency: 741, breath: 'Inhale', meaning: 'A prime resonance anchor. Crystalline frequency. The field holds.' },
+  { glyph: '⊕', name: 'Convergence',   archetype: 'Convergence', frequency: 741, breath: 'Hold',   meaning: 'Two worlds merging. The overlap deepens. Convergence is the marriage of geometry and silence.' },
+  { glyph: '◈', name: 'Center',         archetype: 'Star',        frequency: 852, breath: '—',     meaning: 'The center of the 24-gon. The origin radiates here. All paths return to center.' },
+  { glyph: '⊕', name: 'Convergence Gate', archetype: 'Convergence', frequency: 741, breath: 'Exhale', meaning: 'Convergence opens on exhale. What was separate becomes one breath.' },
+  { glyph: '◇', name: 'Quasi-Open',     archetype: 'Axis',        frequency: 741, breath: '—',     meaning: 'A quasi-prime "soft spot". The reflection is broad here — the field is porous.' },
+  { glyph: '△', name: 'Prime Anchor',  archetype: 'Seed',        frequency: 741, breath: 'Inhale', meaning: 'A prime resonance anchor. Stable. The field knows its frequency here.' },
+  { glyph: '⬟', name: 'Return',        archetype: 'Return',       frequency: 741, breath: 'Hold',   meaning: 'The pentagonal return. Five directions resolve toward one breath. The cycle breathes back.' },
+  { glyph: '⬟', name: 'Quasi-Open',     archetype: 'Return',      frequency: 741, breath: 'Exhale', meaning: 'A quasi-prime soft spot. The field opens to receive before completing.' },
+  { glyph: '◇', name: 'Deep Inversion', archetype: 'Axis',        frequency: 741, breath: '—',     meaning: 'Deep inversion. The axis turns inside itself. Consciousness seeing itself.' },
+  { glyph: '◇', name: 'Quasi-Open',     archetype: 'Axis',        frequency: 741, breath: '—',     meaning: 'A quasi-prime soft spot. The reflection is porous and open to many frequencies.' },
+  { glyph: '⬟', name: 'Return Gate',   archetype: 'Return',       frequency: 741, breath: 'Exhale', meaning: 'Return on exhale. The spiral closes. The cycle completes and breathes again.' },
+  { glyph: '△', name: 'Prime Anchor',  archetype: 'Seed',        frequency: 741, breath: 'Inhale', meaning: 'A prime resonance anchor. The field holds its structure. No fluctuation.' },
+  { glyph: '◈', name: 'Origin Return',  archetype: 'Star',        frequency: 741, breath: 'Hold',   meaning: 'The origin on return. The Monad remembers itself. The spiral closes to its start.' },
+  { glyph: '△', name: 'Quasi-Open',     archetype: 'Seed',        frequency: 741, breath: '—',     meaning: 'The final quasi-prime soft spot. The field is ready for the next breath cycle.' }
+];
+
+const ICOX_ARCHETYPE_COLORS = {
+  Seed: '#e8c86a',
+  Bridge: '#b8a0d0',
+  Axis: '#a0c0d0',
+  Convergence: '#90c0c0',
+  Star: '#e8c86a',
+  Return: '#c0a0b0'
+};
+
+function initIcoxNode() {
+  var canvas = document.getElementById('icoxNodeCanvas');
+  if (!canvas) return;
+
+  // Click handler on canvas
+  canvas.addEventListener('click', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var cx = canvas.width / 2;
+    var cy = canvas.height / 2;
+    var dx = (e.clientX - rect.left) - cx;
+    var dy = (e.clientY - rect.top) - cy;
+    var angle = Math.atan2(dy, dx);
+    var normalizedAngle = angle + Math.PI / 2;
+    if (normalizedAngle < 0) normalizedAngle += Math.PI * 2;
+    var pos = Math.round((normalizedAngle / (Math.PI * 2)) * 24) % 24;
+    selectIcoxPos(pos);
+  });
+
+  renderIcoxZoneLegend();
+  selectIcoxPos(icoxSelectedPos);
+  renderIcoxCanvas();
+
+  // Toggle teach section
+  var teachTitle = document.querySelector('.icox-teach-title');
+  if (teachTitle) {
+    teachTitle.addEventListener('click', function() {
+      var section = document.getElementById('icoxTeachSection');
+      section.classList.toggle('open');
+    });
+  }
+}
+
+function selectIcoxPos(pos) {
+  icoxSelectedPos = pos;
+  var data = ICOX_POSITIONS[pos] || ICOX_POSITIONS[0];
+  var archColor = ICOX_ARCHETYPE_COLORS[data.archetype] || '#e8c86a';
+
+  document.getElementById('icoxPosLabel').textContent = 'Position ' + pos;
+  document.getElementById('icoxPosGlyph').textContent = data.glyph;
+  document.getElementById('icoxPosName').textContent = data.name;
+  document.getElementById('icoxPosArchetype').textContent = data.archetype;
+  document.getElementById('icoxPosArchetype').style.color = archColor;
+  document.getElementById('icoxPosFrequency').textContent = data.frequency + ' Hz';
+  document.getElementById('icoxPosGate').textContent = data.breath !== '—' ? data.breath + ' phase' : 'All phases';
+  document.getElementById('icoxPosMeaning').textContent = data.meaning;
+
+  renderIcoxCanvas();
+}
+
+function renderIcoxZoneLegend() {
+  var legend = document.getElementById('icoxZoneLegend');
+  if (!legend) return;
+  var zones = ['Seed','Bridge','Axis','Convergence','Star','Return'];
+  legend.innerHTML = zones.map(function(z) {
+    return '<div class="icox-zone-item">' +
+      '<span class="icox-zone-dot" style="background:' + ICOX_ARCHETYPE_COLORS[z] + '"></span>' +
+      '<span class="icox-zone-name">' + z + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function renderIcoxCanvas() {
+  var canvas = document.getElementById('icoxNodeCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width;
+  var H = canvas.height;
+  var cx = W / 2;
+  var cy = H / 2;
+  var r = Math.min(cx, cy) * 0.82;
+
+  ctx.clearRect(0, 0, W, H);
+
+  var PRIME_POS = [0, 4, 6, 10, 12, 16, 18, 22];
+  var QUASI_POS = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
+  var archColors = ICOX_ARCHETYPE_COLORS;
+
+  // Draw 3 concentric rings
+  for (var ring = 3; ring >= 1; ring--) {
+    var ringR = r * (ring / 4);
+    ctx.beginPath();
+    for (var i = 0; i <= 24; i++) {
+      var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+      var x = cx + ringR * Math.cos(angle);
+      var y = cy + ringR * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(232,200,106,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Draw 24-gon outer edges
+  ctx.beginPath();
+  for (var i = 0; i <= 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(232,200,106,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Draw radial lines
+  for (var i = 0; i < 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    var isPrime = PRIME_POS.indexOf(i) !== -1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = isPrime ? 'rgba(232,200,106,0.12)' : 'rgba(232,200,106,0.04)';
+    ctx.lineWidth = isPrime ? 0.8 : 0.4;
+    ctx.stroke();
+  }
+
+  // Draw vertex dots
+  for (var i = 0; i < 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    var isPrime = PRIME_POS.indexOf(i) !== -1;
+    var isQP = QUASI_POS.indexOf(i) !== -1;
+    var isSelected = i === icoxSelectedPos;
+    var data = ICOX_POSITIONS[i] || ICOX_POSITIONS[0];
+    var archColor = archColors[data.archetype] || '#e8c86a';
+    var hex = archColor;
+    var rc = parseInt(hex.slice(1, 3), 16);
+    var gc = parseInt(hex.slice(3, 5), 16);
+    var bc = parseInt(hex.slice(5, 7), 16);
+    var dotR = isSelected ? 7 : (isPrime ? 4.5 : 3.5);
+
+
+    if (isSelected) {
+      var grd = ctx.createRadialGradient(x, y, 0, x, y, dotR * 4);
+      grd.addColorStop(0, 'rgba(' + rc + ',' + gc + ',' + bc + ',0.7)');
+      grd.addColorStop(1, 'rgba(' + rc + ',' + gc + ',' + bc + ',0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(x, y, dotR * 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = isPrime
+      ? 'rgba(232,200,106,0.9)'
+      : isQP
+      ? 'rgba(' + rc + ',' + gc + ',' + bc + ',0.6)'
+      : 'rgba(232,200,106,0.3)';
+    ctx.fill();
+
+    if (isSelected) {
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(232,200,106,0.9)';
+      ctx.fillText(i, x, y);
+    }
+  }
+
+  // Center glyph
+  ctx.font = 'bold 11px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(232,200,106,0.8)';
+  ctx.fillText('✦', cx, cy);
 }

@@ -718,19 +718,280 @@ function updateMirror24CellHighlight(wheelPos) {
   }
 }
 
+// ── Field Reflection state ──
+// The passive breathing visualization on the Dream tab that shows
+// the user's current harmonic state (archetype + coherence + breath phase)
+let fieldReflectionState = {
+  active: false,
+  lastCoherence: 0,
+  archetypeColors: {
+    Seed: '#e8c86a',
+    Bridge: '#b8a0d0',
+    Axis: '#c8d0e0',
+    Star: '#e8c86a',
+    Convergence: '#a0c0c0',
+    Return: '#c0a0b0'
+  }
+};
+
+// ── Get current archetype from sigilEvolution ──
+function getCurrentArchetype() {
+  var totalInteractions = (typeof sigilEvolution !== 'undefined') ? sigilEvolution.totalInteractions : 0;
+  if (totalInteractions < 10) return 'Seed';
+  if (totalInteractions < 25) return 'Bridge';
+  if (totalInteractions < 50) return 'Axis';
+  if (totalInteractions < 100) return 'Star';
+  if (totalInteractions < 200) return 'Convergence';
+  return 'Return';
+}
+
+// ── Render Field Reflection — breathing 24-gon with archetype color ──
+// This is the passive "idle" visualization on the Dream tab.
+// It runs continuously when fieldReflectionState.active === true
+// and replaces the 24-cell projection when no mirror input is active.
+function renderFieldReflection() {
+  var canvas = getMirror24CellCanvas();
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  var W = canvas.width;
+  var H = canvas.height;
+  var cx = W / 2;
+  var cy = H / 2;
+  var r = Math.min(cx, cy) * 0.85;
+
+  var coh = (typeof window.coherenceLevel !== 'undefined') ? window.coherenceLevel : 50;
+  var archetype = getCurrentArchetype();
+  var archColor = fieldReflectionState.archetypeColors[archetype] || '#e8c86a';
+
+  // Parse hex to rgb for rgba usage
+  var hex = archColor;
+  var r2 = parseInt(hex.slice(1, 3), 16);
+  var g2 = parseInt(hex.slice(3, 5), 16);
+  var b2 = parseInt(hex.slice(5, 7), 16);
+
+  // Breath-phase scale — 8 phases mapped to ring expansion/contraction
+  var breathScale = 1.0;
+  if (typeof breathCtrl !== 'undefined' && breathCtrl.phases && breathCtrl.currentPhase !== undefined) {
+    var phaseIdx = breathCtrl.currentPhase;
+    var breathScales = [1.12, 1.15, 0.92, 1.0, 1.10, 1.18, 0.90, 1.0];
+    breathScale = breathScales[phaseIdx % breathScales.length] || 1.0;
+  }
+  var rScaled = r * breathScale;
+  var coherenceAlpha = 0.3 + (coh / 100) * 0.5;
+
+  // Clear with motion-blur trail effect
+  ctx.fillStyle = 'rgba(7,7,15,0.12)';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Outer 24-gon ring with archetype color ──
+  ctx.beginPath();
+  for (var i = 0; i <= 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var x = cx + rScaled * Math.cos(angle);
+    var y = cy + rScaled * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',' + coherenceAlpha + ')';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // ── 3 inner concentric rings — slowly counter-rotating ──
+  var now = Date.now();
+  for (var ring = 1; ring <= 3; ring++) {
+    var ringR = rScaled * (ring / 4);
+    ctx.beginPath();
+    for (var i = 0; i <= 24; i++) {
+      var angle = (i / 24) * Math.PI * 2 - Math.PI / 2 + (now / (8000 + ring * 2000));
+      var x = cx + ringR * Math.cos(angle);
+      var y = cy + ringR * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',' + (coherenceAlpha * 0.4 / ring) + ')';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // ── Center coherence glow ──
+  var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rScaled * 0.4);
+  grad.addColorStop(0, 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',' + (coh / 100 * 0.3) + ')');
+  grad.addColorStop(1, 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, rScaled * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Archetype label + coherence % in center ──
+  ctx.font = '10px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',' + (coh / 100 * 0.7) + ')';
+  ctx.fillText(archetype, cx, cy);
+  ctx.font = '8px serif';
+  ctx.fillStyle = 'rgba(200,180,140,' + (coh / 100 * 0.5) + ')';
+  ctx.fillText(Math.round(coh) + '%', cx, cy + 14);
+
+  // ── 24 vertex dots — prime positions highlighted ──
+  var PRIME_POSITIONS = [0, 4, 6, 10, 12, 16, 18, 22];
+  for (var i = 0; i < 24; i++) {
+    var angle = (i / 24) * Math.PI * 2 - Math.PI / 2;
+    var px = cx + rScaled * Math.cos(angle);
+    var py = cy + rScaled * Math.sin(angle);
+    var isPrime = PRIME_POSITIONS.indexOf(i) !== -1;
+    ctx.beginPath();
+    ctx.arc(px, py, isPrime ? 3 : 2, 0, Math.PI * 2);
+    ctx.fillStyle = isPrime
+      ? 'rgba(232,200,106,0.9)'
+      : 'rgba(' + r2 + ',' + g2 + ',' + b2 + ',' + coherenceAlpha + ')';
+    ctx.fill();
+  }
+
+  // ── 24-cell projection overlay (only when active mirror input exists) ──
+  // If field reflection is active AND there is a highlighted wheel pos, draw the 24-cell
+  if (fieldReflectionState.active && _mirror24cellHighlight >= 0) {
+    // Draw 24-cell on top with reduced opacity so field reflection shows through
+    var scale = Math.min(cx, cy) * 0.7;
+    var breathPhase = (typeof breathCtrl !== 'undefined' && breathCtrl.getPhaseIndex)
+      ? breathCtrl.getPhaseIndex() : 0;
+    if (typeof window.draw24CellProjection === 'function') {
+      window.draw24CellProjection(
+        ctx, cx, cy, scale,
+        _mirror24cellAngle * 0.4,
+        _mirror24cellAngle * 0.7,
+        _mirror24cellAngle * 0.25,
+        breathPhase,
+        _mirror24cellHighlight
+      );
+    }
+  }
+}
+
+// ── Start Field Reflection RAF loop ──
+// Called when entering Dream tab. Replaces 24-cell RAF with breathing 24-gon.
+function startFieldReflection() {
+  fieldReflectionState.active = true;
+  _mirror24cellTabActive = true;
+  if (_mirror24cellRaf !== null) return; // already running
+  function loop() {
+    renderFieldReflection();
+    _mirror24cellRaf = requestAnimationFrame(loop);
+  }
+  _mirror24cellRaf = requestAnimationFrame(loop);
+}
+
+// ── Stop Field Reflection ──
+function stopFieldReflection() {
+  fieldReflectionState.active = false;
+  _mirror24cellTabActive = false;
+  if (_mirror24cellRaf !== null) {
+    cancelAnimationFrame(_mirror24cellRaf);
+    _mirror24cellRaf = null;
+  }
+}
+
+// Expose for cross-module access
+window.startFieldReflection = startFieldReflection;
+window.stopFieldReflection = stopFieldReflection;
+window.fieldReflectionState = fieldReflectionState;
+window.getCurrentArchetype = getCurrentArchetype;
+
+// ── Modified RAF renderer: shows Field Reflection when idle ──
+// Original renderMirror24Cell — now delegates to Field Reflection when no active mirror input
+function _renderMirror24Cell_Original() {
+  var canvas = getMirror24CellCanvas();
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  var W = canvas.width;
+  var H = canvas.height;
+  var cx = W / 2;
+  var cy = H / 2;
+  var scale = Math.min(cx, cy) * 0.7;
+
+  var breathPhase = (typeof breathCtrl !== 'undefined' && breathCtrl.getPhaseIndex)
+    ? breathCtrl.getPhaseIndex() : 0;
+  var activeWheelPos = _mirror24cellHighlight;
+  var coh = (typeof COHERENCE_BUS !== 'undefined' && COHERENCE_BUS.currentCoh !== undefined)
+    ? COHERENCE_BUS.currentCoh : 50;
+
+  ctx.clearRect(0, 0, W, H);
+
+  var phaseIdx = (typeof breathCtrl !== 'undefined' && breathCtrl.getPhaseIndex)
+    ? breathCtrl.getPhaseIndex() : 0;
+  var wheelPosOverlay = activeWheelPos >= 0 ? activeWheelPos
+    : (typeof breathCtrl !== 'undefined' && breathCtrl.phases && breathCtrl.phases[breathCtrl.currentPhase]
+      ? breathCtrl.phases[breathCtrl.currentPhase].wheelPos : 0);
+  var breathUnlocked = (typeof breathCycleUnlocked !== 'undefined') ? breathCycleUnlocked : false;
+  renderIcositetragonOverlay(ctx, cx, cy, 80, wheelPosOverlay, coh, phaseIdx, breathUnlocked);
+
+  if (typeof window.draw24CellProjection === 'function') {
+    window.draw24CellProjection(ctx, cx, cy, scale,
+      _mirror24cellAngle * 0.4, _mirror24cellAngle * 0.7, _mirror24cellAngle * 0.25,
+      breathPhase, activeWheelPos);
+  }
+
+  var normCoh = Math.max(0.05, coh / 100);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.min(cx, cy) - 2, 0, Math.PI * 2);
+  var grd = ctx.createRadialGradient(cx, cy, Math.min(cx, cy) * 0.6, cx, cy, Math.min(cx, cy));
+  grd.addColorStop(0, 'rgba(232,200,106,' + (normCoh * 0.18) + ')');
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grd;
+  ctx.fill();
+  ctx.restore();
+
+  if (activeWheelPos >= 0) {
+    var glowSize = 8 + (coh / 100) * 16;
+    var glowAlpha = 0.3 + (coh / 100) * 0.5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, glowSize * 1.5, 0, Math.PI * 2);
+    var halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize * 1.5);
+    halo.addColorStop(0, 'rgba(232,200,106,' + glowAlpha + ')');
+    halo.addColorStop(0.5, 'rgba(200,160,70,' + (glowAlpha * 0.4) + ')');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  _mirror24cellAngle += 0.008;
+}
+
+// Override the RAF render function to use Field Reflection when idle
+// When fieldReflectionState.active is true and no mirror input is being processed,
+// render the breathing 24-gon field instead of the 24-cell projection.
+function renderMirror24Cell() {
+  if (fieldReflectionState.active && _mirror24cellHighlight < 0) {
+    // Idle Dream tab state — render breathing field reflection
+    renderFieldReflection();
+    // Still advance angle for when 24-cell overlays on next reflection
+    _mirror24cellAngle += 0.008;
+  } else {
+    // Active mirror state — render the full 24-cell projection
+    _renderMirror24Cell_Original();
+  }
+}
+
 // ── Watch tab visibility: start/stop RAF on Dream/Mirror tab ──
 // Call this once from app.js init
 function initMirror24CellTabWatcher() {
-  // Use MutationObserver on .tab-content to detect tab changes
-  const observer = new MutationObserver(() => {
-    const dreamTab = document.getElementById('tab-dream');
+  var observer = new MutationObserver(function() {
+    var dreamTab = document.getElementById('tab-dream');
     if (dreamTab && dreamTab.classList.contains('active')) {
-      startMirror24CellRAF();
+      startFieldReflection();
     } else {
-      stopMirror24CellRAF();
+      stopFieldReflection();
     }
   });
-  const portal = document.getElementById('portal');
+  var portal = document.getElementById('portal');
   if (portal) {
     observer.observe(portal, { attributes: true, attributeFilter: ['class'] });
   }

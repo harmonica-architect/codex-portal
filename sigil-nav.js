@@ -36,7 +36,15 @@
     document.querySelectorAll('.sn-dot').forEach(function(dot) {
       dot.addEventListener('click', function() {
         var idx = parseInt(dot.getAttribute('data-idx'), 10);
-        if (!isNaN(idx)) navigateToSigil(idx);
+        if (!isNaN(idx)) {
+          navigateToSigil(idx);
+          // Track glyph intelligence for sigil-nav context
+          // Dot firstChild is the glyph text (before the label span)
+          var glyph = (dot.firstChild && dot.firstChild.nodeType === 3) ? dot.firstChild.textContent.trim() : '';
+          if (glyph && typeof window.trackGlyphSelection === 'function') {
+            window.trackGlyphSelection(glyph, 'sigil-nav', window.coherenceLevel || 0);
+          }
+        }
       });
     });
 

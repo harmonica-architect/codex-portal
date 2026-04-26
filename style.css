@@ -2503,6 +2503,86 @@ canvas#wheel {
   border-radius: 50%;
 }
 
+/* ── SOUNDSCAPE SETTINGS ── */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(232,200,106,0.08);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.settings-label-icon {
+  font-size: 0.9rem;
+}
+.settings-label-sub {
+  font-size: 0.55rem;
+  color: var(--muted);
+}
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(232,200,106,0.15);
+  border-radius: 10px;
+  transition: 0.3s;
+}
+.toggle-slider:before {
+  content: '';
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: rgba(232,200,106,0.35);
+}
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+  background: var(--gold);
+}
+
+/* ── GLYPH INTELLIGENCE ── */
+.gi-placeholder { font-size: 0.65rem; color: var(--muted); text-align: center; padding: 1rem 0; }
+.gi-glyph-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(232,200,106,0.08);
+}
+.gi-glyph-row:last-child { border-bottom: none; }
+.gi-glyph { font-size: 1.1rem; min-width: 1.5rem; text-align: center; }
+.gi-info { flex: 1; }
+.gi-meaning { font-size: 0.65rem; color: var(--axis); line-height: 1.4; margin-bottom: 0.15rem; }
+.gi-meta { font-size: 0.58rem; color: var(--muted); }
+.gi-bar-wrap { width: 60px; height: 4px; background: rgba(232,200,106,0.15); border-radius: 2px; }
+.gi-bar { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.5s; }
+
 /* -- TASK 5: MIRROR LAYER GEOMETRIC OVERLAYS -- */
 .mirror-overlay-svg {
   position: absolute;
@@ -2551,4 +2631,163 @@ canvas#wheel {
   font-size: 0.58rem;
   color: var(--muted);
   letter-spacing: 0.1em;
+}
+
+/* ══════════════════════════════════════════
+   ICOSITETRAGON EXPANSION NODE
+   ══════════════════════════════════════════ */
+
+.icox-intro {
+  font-size: 0.65rem;
+  color: var(--axis);
+  text-align: center;
+  padding: 0.5rem 0.75rem 0.75rem;
+  line-height: 1.5;
+  font-style: italic;
+  border-bottom: 1px solid rgba(232,200,106,0.08);
+  margin-bottom: 0.75rem;
+}
+
+.icox-layout {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.icox-canvas-wrap {
+  flex-shrink: 0;
+}
+
+#icoxNodeCanvas {
+  cursor: crosshair;
+  border-radius: 50%;
+  background: rgba(7,7,15,0.6);
+  border: 1px solid rgba(232,200,106,0.12);
+}
+
+.icox-info-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.icox-pos-label {
+  font-size: 0.55rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 0.15rem;
+}
+
+.icox-pos-glyph {
+  font-size: 2rem;
+  text-align: center;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 0.2rem;
+  text-shadow: 0 0 12px rgba(232,200,106,0.5);
+}
+
+.icox-pos-name {
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--axis);
+  font-weight: 600;
+  margin-bottom: 0.1rem;
+}
+
+.icox-pos-archetype {
+  font-size: 0.6rem;
+  text-align: center;
+  color: var(--gold);
+  opacity: 0.8;
+  margin-bottom: 0.1rem;
+}
+
+.icox-pos-frequency {
+  font-size: 0.6rem;
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 0.1rem;
+}
+
+.icox-pos-gate {
+  font-size: 0.58rem;
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.icox-pos-meaning {
+  font-size: 0.62rem;
+  color: var(--text);
+  line-height: 1.5;
+  text-align: center;
+  padding: 0.4rem;
+  background: rgba(232,200,106,0.05);
+  border-radius: 4px;
+  border-left: 2px solid var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.icox-zone-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem;
+}
+
+.icox-zone-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.55rem;
+  color: var(--muted);
+  cursor: default;
+}
+
+.icox-zone-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icox-zone-name {
+  color: var(--text);
+  font-size: 0.55rem;
+}
+
+.icox-teach-section {
+  border-top: 1px solid rgba(232,200,106,0.08);
+  padding-top: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.icox-teach-title {
+  font-size: 0.65rem;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.icox-teach-body {
+  font-size: 0.6rem;
+  color: var(--muted);
+  line-height: 1.6;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.icox-teach-section.open .icox-teach-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.icox-teach-body p {
+  margin: 0 0 0.5rem 0;
+}
+
+.icox-teach-body strong {
+  color: var(--axis);
 }
