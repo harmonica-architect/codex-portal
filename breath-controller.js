@@ -191,7 +191,7 @@ class BreathController {
 
     // Play breath phase tone — Pythagorean 24-tone series keyed to wheelPos
     // The phase's wheelPos maps directly to PYTHAGOREAN_FREQS[wheelPos]
-    this.playPhaseTone(PYTHAGOREAN_FREQS[p.wheelPos], typeof coherenceLevel !== 'undefined' ? coherenceLevel : 50);
+    this.playPhaseTone(PYTHAGOREAN_FREQS[p.wheelPos], typeof window.coherenceLevel !== 'undefined' ? window.coherenceLevel : 50);
 
     // Schedule next
     clearTimeout(this.timer);

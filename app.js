@@ -28,6 +28,7 @@ let animId = null;
 let wheel24Rot = 0; // 24-cell rotation angle
 let isShowing120Cell = localStorage.getItem('wheelGeometry') === '120'; // 120-cell toggle
 let coherenceLevel = 0;
+window.coherenceLevel = 0; // expose to breath-controller
 let virtualUsers = 0;
 let selectedJournalGlyph = '';
 let selectedCodexGlyph = '';
@@ -228,7 +229,7 @@ function drawCohSparkline(samples) {
   }
   ctx.lineTo(px, py);
   ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 0.75;
   ctx.lineJoin = 'round';
   ctx.stroke();
 
@@ -532,7 +533,7 @@ function drawWheel() {
     ctx.strokeStyle = act ? `rgba(232,200,106,${0.5 + glowP * 0.4})`
       : pp ? (night ? 'rgba(150,130,180,0.5)' : 'rgba(232,200,106,0.5)')
       : (night ? 'rgba(40,40,70,0.5)' : 'rgba(50,50,75,0.4)');
-    ctx.lineWidth = act ? 3 : (pp ? 1.8 : 1.2);
+    ctx.lineWidth = act ? 1.5 : (pp ? 1.0 : 0.7);
     ctx.stroke();
   }
 
@@ -540,7 +541,7 @@ function drawWheel() {
   const fifthsCycle = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
   ctx.setLineDash([3, 5]);
   ctx.strokeStyle = `rgba(232,200,106,${0.15 + breathHold() * 0.2})`;
-  ctx.lineWidth = 0.8;
+  ctx.lineWidth = 0.4;
   for (let i = 0; i < fifthsCycle.length; i++) {
     const a1 = pAngle(fifthsCycle[i]);
     const a2 = pAngle(fifthsCycle[(i + 1) % fifthsCycle.length]);
@@ -884,7 +885,7 @@ function handleWSMessage(msg) {
       );
       // Apply server phase sync bonus to local display
       if (serverPhase === currentPhase && isRunning) {
-        coherenceLevel = Math.min(95, coherenceLevel + COHERENCE.syncBonus / 10);
+        coherenceLevel = Math.min(95, coherenceLevel + COHERENCE.syncBonus / 10); window.coherenceLevel = coherenceLevel;
       }
       break;
 
@@ -1014,7 +1015,7 @@ function updateCoherence() {
 
   if (isRunning) {
     virtualUsers = Math.min(5, virtualUsers + (virtualUsers < 1 ? 1 : Math.random() > 0.7 ? 1 : 0));
-    coherenceLevel = Math.min(
+    coherenceLevel = window.coherenceLevel = Math.min(
       COHERENCE.ceiling,
       COHERENCE.virtualUserBase + virtualUsers * COHERENCE.virtualUserBoost +
       Math.sin(Date.now() / 2000) * COHERENCE.waveAmplitude

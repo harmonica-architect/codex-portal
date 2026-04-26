@@ -115,6 +115,7 @@ const COHERENCE_BUS = {
   // ── Coherence update ──
   updateCoherence(val) {
     this.currentCoh = val;
+    if (typeof window !== 'undefined') window.coherenceLevel = val;
     this.coherenceHistory.push(val);
     if (this.coherenceHistory.length > 30) this.coherenceHistory.shift();
     // Push coherence into CSS vars — drives sigil nav, ring, visual feedback
