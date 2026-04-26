@@ -131,7 +131,7 @@ class BreathController {
   // Play a soft sine tone for the breath phase — volume scales with coherence
   playPhaseTone(freq, coherenceLevel = 0) {
     if (!this.audioCtx || this.audioMuted) return;
-    const vol = 0.03 + (coherenceLevel / 100) * 0.05; // 0.03–0.08
+    const vol = 0.08 + (coherenceLevel / 100) * 0.17; // 0.08–25
     const osc = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();
     osc.type = 'sine';
@@ -146,7 +146,7 @@ class BreathController {
   }
 
   // Legacy tone method — used by glyph ring, nav tones, etc.
-  playTone(freq, vol = 0.06, dur = 1.8) {
+  playTone(freq, vol = 0.15, dur = 1.8) {
     try {
       if (!this.audioCtx) this._initAudio();
       if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
@@ -237,12 +237,12 @@ class BreathController {
   playSigilTone(sigilIndex) {
     // Each sigil in the ring plays its own frequency
     const freqs = [432, 456, 483, 510, 539, 570, 603, 638];
-    this.playTone(freqs[sigilIndex % freqs.length], 0.07, 1.2);
+    this.playTone(freqs[sigilIndex % freqs.length], 0.15, 1.2);
   }
 
   playNavTone(tabIndex) {
     const tones = [432, 528, 639, 741, 396, 468, 594, 702];
-    this.playTone(tones[tabIndex % tones.length], 0.08, 1.4);
+    this.playTone(tones[tabIndex % tones.length], 0.18, 1.4);
   }
 }
 

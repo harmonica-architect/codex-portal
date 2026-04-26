@@ -413,7 +413,7 @@ const GLYPH_RING_FREQS = [
 ];
 
 function playGlyphTone(freq, vol) {
-  vol = vol !== undefined ? vol : 0.12;
+  vol = vol !== undefined ? vol : 0.25;
   try {
     var ctx = ac();
     if (ctx.state === 'suspended') ctx.resume();
@@ -955,7 +955,7 @@ function ac() {
   return audioCtx;
 }
 
-function tone(f, dur = 2.5, vol = 0.12) {
+function tone(f, dur = 2.5, vol = 0.25) {
   try {
     const ctx = ac();
     // Fundamental + octave

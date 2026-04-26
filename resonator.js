@@ -20,7 +20,7 @@ let breathStartTime = 0;
 let audioCtx = null;
 let oscillators = {};
 let isAudioOn = true; // auto-on
-let masterVol = 0.3;
+let masterVol = 0.5;
 let selectedSnapshotGlyph = '▲';
 let wavePoints = [];
 let wavePhase = 0;
@@ -75,13 +75,13 @@ setInterval(() => {
 /* ▔▔▔▔▔▔▔▔▔ BREATH GUIDANCE SYSTEM ▔▔▔▔▔▔▔▔▔ */
 function playGuidanceTone(freq, dur = 0.6) {
   if (!breathGuidanceOn || !isAudioOn) return;
-  createOsc(freq, masterVol * 0.08, dur);
+  createOsc(freq, masterVol * 0.5, dur);
 }
 
 function playGuidanceChime() {
   if (!breathGuidanceOn || !isAudioOn) return;
   [523, 659, 784].forEach((f, i) => {
-    setTimeout(() => createOsc(f, masterVol * 0.06, 0.5), i * 120);
+    setTimeout(() => createOsc(f, masterVol * 0.5, 0.5), i * 120);
   });
 }
 
@@ -258,11 +258,11 @@ function createOsc(freq, vol, dur = 2) {
 
 function playTransitionCue(stepN) {
   const freqs = [261.6, 329.6, 392, 523.2];
-  createOsc(freqs[stepN - 1] || 432, masterVol * 0.1, 0.8);
+  createOsc(freqs[stepN - 1] || 432, masterVol * 0.6, 0.8);
 }
 
 function playPhaseCue(freq) {
-  createOsc(freq, masterVol * 0.15, 1.2);
+  createOsc(freq, masterVol * 0.6, 1.2);
 }
 
 function startSoundscapeLayer(freq, vol) {
@@ -291,8 +291,8 @@ function updateSoundscapeVolumes() {
   [432, 456.9, 483.3, 510.6, 539.8, 570.6, 603.4, 637.9, 674.0, 712.0, 752.4, 795.0].forEach(f => {
     if (oscillators[f]) {
       const volSlider = document.getElementById('sndVol' + f);
-      const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.12;
-      const adjVol = vol * (0.4 + coherence / 200);
+      const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.5;
+      const adjVol = vol * (0.4 + Math.min(1, coherence / 100));
       try { oscillators[f].g.gain.setValueAtTime(adjVol, audioCtx.currentTime); } catch (e) {}
     }
   });
@@ -321,7 +321,7 @@ document.getElementById('audioMiniPill')?.addEventListener('click', () => {
 });
 
 document.getElementById('volSliderMini')?.addEventListener('input', e => {
-  masterVol = e.target.value / 100;
+  masterVol = Math.max(0.05, e.target.value / 100);
   const volVal = document.getElementById('volValMini');
   if (volVal) volVal.textContent = e.target.value + '%';
 });
@@ -340,7 +340,7 @@ document.getElementById('volSliderMini')?.addEventListener('input', e => {
     } else {
       toggle.classList.add('on');
       if (isAudioOn) {
-        const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.12;
+        const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.5;
         startSoundscapeLayer(f, vol);
       }
     }
@@ -600,10 +600,10 @@ function handleWheelClick() {
   if (step === 1) {
     setStep(2);
     startBreath();
-    if (isAudioOn) createOsc(261.6, masterVol * 0.12, 1.5);
+    if (isAudioOn) createOsc(261.6, masterVol * 0.6, 1.5);
   } else if (step === 2) {
     setStep(3);
-    if (isAudioOn) createOsc(392, masterVol * 0.12, 1.5);
+    if (isAudioOn) createOsc(392, masterVol * 0.6, 1.5);
   } else {
     if (breathActive) {
       breathActive = false;
@@ -763,7 +763,7 @@ function loadProfile(name) {
     inhaleS = d.inhaleS || 5;
     holdS = d.holdS || 5;
     exhaleS = d.exhaleS || 10;
-    masterVol = d.masterVol || 0.3;
+    masterVol = d.masterVol || 0.5;
     syncCycleUI();
     const vs = document.getElementById('volSliderMini');
     if (vs) vs.value = masterVol * 100;

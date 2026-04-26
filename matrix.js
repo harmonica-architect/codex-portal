@@ -151,7 +151,7 @@ function getAudioCtx() {
 }
 
 function playTone(freq, vol, dur, type) {
-  vol = vol === undefined ? 0.25 : vol;
+  vol = vol === undefined ? 0.35 : vol;
   dur = dur === undefined ? 1.2 : dur;
   type = type === undefined ? 'sine' : type;
   try {
@@ -169,7 +169,7 @@ function playTone(freq, vol, dur, type) {
 }
 
 function playChord(freqs, vol, dur) {
-  vol = vol === undefined ? 0.2 : vol;
+  vol = vol === undefined ? 0.35 : vol;
   dur = dur === undefined ? 2.0 : dur;
   try {
     var ctx = getAudioCtx();
@@ -190,13 +190,13 @@ function playChord(freqs, vol, dur) {
 
 function playSelectChime(info) {
   var vol = (intensities[info.row + '_' + info.col] || 65) / 400;
-  if (vol < 0.05) vol = 0.18;
+  if (vol < 0.08) vol = 0.25;
   playTone(info.freq, vol, 1.4);
 }
 
 function playGlyphTone(col) {
   var gf = GLYPH_FREQS[col % GLYPH_FREQS.length];
-  if (gf) playTone(gf.f, 0.18, 1.5);
+  if (gf) playTone(gf.f, 0.25, 1.5);
 }
 
 function playBreathChime(pd) {
