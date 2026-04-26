@@ -3126,3 +3126,38 @@ canvas#wheel {
   font-style: italic;
   margin-bottom: 0.3rem;
 }
+
+/* ── PHASE 6: COMMUNITY FIELD POLISH ── */
+.profile-community-section {
+  margin: 0.6rem 0;
+  border-top: 1px solid rgba(200,180,140,0.12);
+  padding-top: 0.5rem;
+}
+.pcs-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: rgba(200,180,140,0.6);
+  margin-bottom: 0.25rem;
+}
+.pcs-text {
+  font-size: 0.58rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+.pcs-btn {
+  background: transparent;
+  border: 1px solid rgba(200,180,140,0.25);
+  color: rgba(200,180,140,0.7);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.58rem;
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.3s;
+}
+.pcs-btn:hover {
+  border-color: rgba(200,180,140,0.5);
+  color: rgba(200,180,140,0.9);
+}

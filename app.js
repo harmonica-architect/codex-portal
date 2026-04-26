@@ -2907,11 +2907,25 @@ function refreshProfile() {
   '<div class="profile-row"><span>Total interactions</span><span>' + totalInteractions + '</span></div>' +
   '<div class="profile-row"><span>Milestones</span><span>' + (sigilEvolution.milestones?.length || 0) + '</span></div>' +
   '<div class="profile-row"><span>Personal tone</span><span>' + toneFreq + ' Hz</span></div>' +
+  '<div class="profile-community-section">' +
+    '<div class="pcs-label">\u25cf Coherence Resonance</div>' +
+    '<div class="pcs-text">Your field contributes to the collective harmonic matrix.</div>' +
+    '<button class="pcs-btn" id="pcsBtn">View Collective Field</button>' +
+  '</div>' +
   '<button class="logout-btn" id="btnLogout">\u2298 Exit Portal</button>';
   var logoutBtn = document.getElementById('btnLogout');
   if (logoutBtn) logoutBtn.onclick = function() {
     localStorage.removeItem(STORAGE_KEYS.lastSigil);
     location.reload();
+  };
+  // Phase 6: Wire community field button
+  var pcsBtn = document.getElementById('pcsBtn');
+  if (pcsBtn) pcsBtn.onclick = function() {
+    var cs = document.getElementById('communitySection');
+    if (cs) {
+      navTo('home');
+      setTimeout(function() { cs.scrollIntoView({ behavior: 'smooth' }); }, 100);
+    }
   };
 }
 

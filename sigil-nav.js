@@ -34,8 +34,31 @@
   function getTransRing()  { return document.getElementById('snTransitionRing'); }
   function getOrbitOuter() { return document.getElementById('snOrbitOuter'); }
 
+  // ── Phase 6: Hover tooltip for Codex dot (community field) ──
+  function initCodexTooltip() {
+    var dot2 = document.querySelector('.sn-dot-2');
+    if (!dot2) return;
+    var tip = document.createElement('div');
+    tip.id = 'sn-codex-tooltip';
+    tip.style.cssText = 'position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(15,13,24,0.97);border:1px solid rgba(200,180,140,0.25);border-radius:6px;padding:0.35rem 0.6rem;font-size:0.58rem;color:rgba(220,210,190,0.85);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.3s ease;z-index:100;';
+    dot2.parentNode.appendChild(tip);
+    dot2.addEventListener('mouseover', function() {
+      var nodes = [];
+      if (typeof COMMUNITY_FIELD !== 'undefined' && COMMUNITY_FIELD.state) {
+        nodes = COMMUNITY_FIELD.state.nodes || [];
+      }
+      var n = nodes.length;
+      tip.textContent = n > 0 ? n + ' resonance connection' + (n !== 1 ? 's' : '') + ' active' : 'No active connections';
+      tip.style.opacity = '1';
+    });
+    dot2.addEventListener('mouseout', function() {
+      tip.style.opacity = '0';
+    });
+  }
+
   // Init
   function initSigilNav() {
+    initCodexTooltip();
     document.querySelectorAll('.sn-dot').forEach(function(dot) {
       dot.addEventListener('click', function() {
         var idx = parseInt(dot.getAttribute('data-idx'), 10);
