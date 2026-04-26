@@ -3,7 +3,7 @@
 // Stereographic projection from 4D → 3D → 2D canvas
 // The breath phase's wheelPos (0–23) maps to 4D vertex index
 
-constcell24Instance = (() => {
+const cell24Instance = (() => {
   // ── Generate 24-cell 4D vertices ──
   function genVerts() {
     const vs = [];
