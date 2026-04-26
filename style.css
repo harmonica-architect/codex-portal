@@ -763,7 +763,7 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 
 /* Show sigil nav on desktop at all times (wheel is the primary entry) */
 @media (min-width: 600px) {
-  .sigil-nav-wrap { display: block; }
+  .sigil-nav-wrap { display: flex; flex-direction: column; align-items: center; }
 }
 
 .sigil-nav-ring {
@@ -804,6 +804,27 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
 .sn-dot-5 { top: 85%;  left: 15%;  transform: translate(-50%,-50%); }
 .sn-dot-6 { top: 50%;  left: 0%;   transform: translate(-50%,-50%); margin-left: -56px; }
 .sn-dot-7 { top: 15%;  left: 15%;  transform: translate(-50%,-50%); }
+
+/* Labels below each sigil dot */
+.sn-dot-label {
+  display: none;
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.42rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  white-space: nowrap;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+@media (min-width: 600px) {
+  .sn-dot:hover .sn-dot-label,
+  .sn-dot.active .sn-dot-label {
+    display: block;
+  }
+}
 
 /* Hub — center of the sigil ring */
 .sn-hub {

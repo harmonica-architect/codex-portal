@@ -1,345 +1,276 @@
-// ══════════════════════════════════════════════
-// SIGIL NAVIGATOR — Glyph Portal Navigation
-// Replaces linear tab bar with breath-gated
-// glyph portals. Each sigil is a thread.
-// ══════════════════════════════════════════════
+// sigil-nav.js - Sigil Navigator v4 (clean rebuild)
+(function() {
+  'use strict';
 
-const SIGIL_TABS = [
-  { sigil: '⊙', glyph: '⊙', label: 'Home',    tab: 'home',     freq: 432, desc: 'Dashboard · Field breath · Coherence pulse' },
-  { sigil: '◎', glyph: '◎', label: 'Wheel',   tab: 'wheel',    freq: 528, desc: '24-spoke breath wheel · Prime axis spiral' },
-  { sigil: '◇', glyph: '◇', label: 'Codex',   tab: 'codex',    freq: 639, desc: 'Glyph library · Recursion seals · Archetypes' },
-  { sigil: '◉', glyph: '◉', label: 'Dream',   tab: 'dream',    freq: 741, desc: 'Post-cycle dream record · Symbol emergence' },
-  { sigil: '○', glyph: '○', label: 'Journal', tab: 'journal',  freq: 396, desc: 'Field journal · Breath-integrated entries' },
-  { sigil: '◈', glyph: '◈', label: 'Matrix',  tab: 'matrix',   freq: 468, desc: '12×12 harmonic resonance grid · Sigil mapping' },
-  { sigil: '◇', glyph: '◇', label: 'Resonator', tab: 'resonator', freq: 594, desc: 'Sound geometry · Waveform collapse · Soundscapes' },
-  { sigil: '·', glyph: '·', label: 'Profile', tab: 'profile',  freq: 702, desc: 'Cycles · Sigil memory · Harmonic signature' }
-];
+  var SIGIL_TABS = [
+    { sigil: '⊙', glyph: '⊙', label: 'Home',      tab: 'home',     freq: 432, desc: 'Dashboard · Field breath · Coherence pulse' },
+    { sigil: '◎', glyph: '◎', label: 'Wheel',     tab: 'wheel',    freq: 528, desc: '24-cell · Prime wheel · Harmonic mapping' },
+    { sigil: '◇', glyph: '◇', label: 'Codex',     tab: 'codex',    freq: 444, desc: 'Matrix explorer · Domain resonance · Entry mode' },
+    { sigil: '◉', glyph: '◉', label: 'Dream',     tab: 'dream',    freq: 639, desc: '24-cell mirror · Standing wave · Monadic field' },
+    { sigil: '○', glyph: '○', label: 'Journal',   tab: 'journal',  freq: 741, desc: 'Wave function · Collapse history · Harmonic log' },
+    { sigil: '◈', glyph: '◈', label: 'Matrix',    tab: 'matrix',   freq: 852, desc: 'Domain explorer · matAddr index · Frequency map' },
+    { sigil: '◇', glyph: '◇', label: 'Resonator', tab: 'resonator', freq: 963, desc: 'Field tuning · Monadic spiral · Harmonic resonance' },
+    { sigil: '·', glyph: '·', label: 'Profile',   tab: 'profile',  freq: 174, desc: 'Personal field · Breath history · Coherence history' },
+  ];
 
-let sigilNav = {
-  activeIndex: 0,
-  isTransitioning: false,
-  pendingTab: null,
-  breathLocked: false,
-  unlockTimer: null,
-  orbitAngle: 0,
-  orbitAnimId: null,
-  coherenceLevel: 0,
-  globalCoherence: 0,
-};
+  var sn = {
+    activeIndex: 0,
+    isTransitioning: false,
+    pendingTab: null,
+    coherenceLevel: 50,
+    globalCoherence: 0,
+    breathLocked: false,
+    orbitAnimId: null,
+  };
 
-// Expose globally for tests and debugging
-window.sigilNav = sigilNav;
+  // DOM helpers
+  function getSn()     { return document.getElementById('sigilNavWrap'); }
+  function getHub()    { return document.getElementById('snHub'); }
+  function getHubGlyph() { return document.getElementById('snHubGlyph'); }
+  function getHubLabel() { return document.getElementById('snHubLabel'); }
+  function getOrbitOuter() { return document.getElementById('snOrbitOuter'); }
 
-// ── Init sigil navigator ──
-function initSigilNav() {
-  console.log('[initSigilNav] called, pendingTab=', localStorage.getItem('pendingTab'));
-  // Click on orbit dots
-  document.querySelectorAll('.sn-dot').forEach(dot => {
-    dot.addEventListener('click', () => {
-      const idx = parseInt(dot.dataset.idx);
-      navigateToSigil(idx);
+  // Init
+  function initSigilNav() {
+    document.querySelectorAll('.sn-dot').forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        var idx = parseInt(dot.getAttribute('data-idx'), 10);
+        if (!isNaN(idx)) navigateToSigil(idx);
+      });
     });
-  });
 
-  // Listen to breath controller
-  if (typeof breathCtrl !== 'undefined') {
-    breathCtrl.onPhaseChange((phase, phaseIdx, ctrl) => {
-      updateSigilNavBreath(phase, phaseIdx, ctrl);
-    });
-    // Cascade animation on full breath cycle (every 24 breaths)
-    breathCtrl.onCascade((breathCount, ctrl) => {
-      triggerBreathCascade();
-    });
-  }
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.onPhaseChange) {
+      breathCtrl.onPhaseChange(function(phase, phaseIdx, ctrl) {
+        if (typeof updateSigilNavBreath === 'function') {
+          updateSigilNavBreath(phase, phaseIdx, ctrl);
+        }
+      });
+    }
 
-  // Coherence-aware orbit animation
-  startOrbitAnimation();
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.onCascade) {
+      breathCtrl.onCascade(function(breathCount, ctrl) {
+        if (typeof triggerBreathCascade === 'function') triggerBreathCascade();
+      });
+    }
 
-  // Restore active tab from sigil nav cross-page navigation
-  const pendingTab = localStorage.getItem('pendingTab');
-  if (pendingTab) {
-    localStorage.removeItem('pendingTab');
-    const idx = SIGIL_TABS.findIndex(t => t.tab === pendingTab);
-    if (idx !== -1) {
-      // Activate the dot and tab silently (skip breath gate after page reload)
-      // NOTE: we update window.sigilNav which is already initialized above
-      activateDot(idx);
-      window.sigilNav.activeIndex = idx;
-      window.sigilNav.isTransitioning = false;
-      const tabEl = document.getElementById('tab-' + pendingTab);
-      if (tabEl) {
-        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-        tabEl.classList.add('active');
+    // Restore tab from cross-page navigation
+    var pendingTab = localStorage.getItem('pendingTab');
+    if (pendingTab) {
+      localStorage.removeItem('pendingTab');
+      var idx = -1;
+      for (var t = 0; t < SIGIL_TABS.length; t++) {
+        if (SIGIL_TABS[t].tab === pendingTab) { idx = t; break; }
+      }
+      if (idx !== -1) {
+        activateDot(idx);
+        sn.activeIndex = idx;
+        sn.isTransitioning = false;
+        var tabEl = document.getElementById('tab-' + pendingTab);
+        if (tabEl) {
+          document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+          tabEl.classList.add('active');
+        }
       }
     }
-}
 
-// ── Navigate to a sigil tab ──
-function navigateToSigil(idx, skipBreathGate = false) {
-  const sn = window.sigilNav;
-  // Sigil nav is always immediate — no breath gate (home tab breath ring handles breath navigation)
-  if (idx === sn.activeIndex) return;
-  if (sn.isTransitioning) return;
-
-  const target = SIGIL_TABS[idx];
-  if (!target) return;
-
-  // Stop wheel animations when navigating away from wheel tab
-  if (typeof stopWheelAnimation === 'function') stopWheelAnimation();
-  if (typeof stopMiniWheelAnimation === 'function') stopMiniWheelAnimation();
-  // Stop prime axis tracker when navigating away from wheel tab
-  if (typeof stopPrimeTracker === 'function') stopPrimeTracker();
-  // Stop mirror 24-cell RAF when leaving the Dream/Mirror tab
-  if (target.tab !== 'dream' && typeof stopMirror24CellRAF === 'function') {
-    stopMirror24CellRAF();
+    startOrbitAnimation();
   }
 
-  performSigilTransition(idx, sn, target);
-}
+  // Navigate
+  function navigateToSigil(idx) {
+    if (idx === sn.activeIndex) return;
+    if (sn.isTransitioning) return;
 
-// ── ANIMATION CLEANUP ──
-function stopOrbitAnimation() {
-  if (sigilNav.orbitAnimId) {
-    cancelAnimationFrame(sigilNav.orbitAnimId);
-    sigilNav.orbitAnimId = null;
-  }
-}
+    var target = SIGIL_TABS[idx];
+    if (!target) return;
 
-window.addEventListener('beforeunload', () => {
-  stopOrbitAnimation();
-});
-
-function performSigilTransition(idx, sn, target) {
-  if (!target) { target = SIGIL_TABS[idx]; if (!target) return; }
-  stopOrbitAnimation();  // cancel orbit RAF before tab switch
-  sn.isTransitioning = true;
-
-  // Play sigil tone
-  if (typeof breathCtrl !== 'undefined') {
-    breathCtrl.playNavTone(idx);
-  }
-
-  // Animate the orbit dot
-  activateDot(idx);
-
-  // Update hub
-  updateSigilHub(idx, true);
-
-  // Switch tab content with breath transition
-  const tabEl = document.getElementById('tab-' + target.tab);
-  if (!tabEl) {
-    // Internal tab rendered in index.html — save active tab to localStorage, navigate to index
-    localStorage.setItem('pendingTab', target.tab);
-    window.location.href = 'index.html';
-    sn.isTransitioning = false;
-    sn.activeIndex = idx;
-    return;
-  }
-
-  // Breath-phase tab transition
-  breathPhaseTransition(tabEl, () => {
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-    // Show target
-    tabEl.classList.add('active');
-    sn.activeIndex = idx;
-    sn.isTransitioning = false;
-
-    // Sigil nav is always visible — no non-home class needed
-    const portal = document.getElementById('portal');
-    if (portal) portal.classList.remove('non-home');
-
-    // Start mirror 24-cell RAF when entering Dream/Mirror tab
-    if (target.tab === 'dream' && typeof startMirror24CellRAF === 'function') {
-      startMirror24CellRAF();
+    if (typeof stopWheelAnimation === 'function') stopWheelAnimation();
+    if (typeof stopMiniWheelAnimation === 'function') stopMiniWheelAnimation();
+    if (typeof stopPrimeTracker === 'function') stopPrimeTracker();
+    if (target.tab !== 'dream' && typeof stopMirror24CellRAF === 'function') {
+      stopMirror24CellRAF();
     }
 
-    // Clear breath lock
-    sn.breathLocked = false;
-    sn.pendingTab = null;
-  });
-}
+    sn.isTransitioning = true;
 
-// ── Breath-phase-gated tab transition ──
-function breathPhaseTransition(tabEl, callback) {
-  // Add breath-transitioning class (CSS handles the animation)
-  tabEl.classList.add('breath-transitioning');
+    if (typeof breathCtrl !== 'undefined') breathCtrl.playNavTone(idx);
 
-  // Duration based on current breath phase
-  const dur = breathCtrl.getPhase().duration || 4000;
-  const phaseName = breathCtrl.getPhase().name;
+    activateDot(idx);
+    updateSigilHub(idx, true);
 
-  // During exhale/hold — transitions are faster (field is receptive)
-  // During inhale — transitions are slower (field is contracting)
-  let transitionMs;
-  if (breathCtrl.isExhale() || breathCtrl.isStill()) {
-    transitionMs = Math.min(dur * 0.4, 800);
+    var tabEl = document.getElementById('tab-' + target.tab);
+    if (!tabEl) {
+      localStorage.setItem('pendingTab', target.tab);
+      window.location.href = 'index.html';
+      sn.isTransitioning = false;
+      sn.activeIndex = idx;
+      return;
+    }
+
+    breathPhaseTransition(tabEl, function() {
+      document.querySelectorAll('.tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+      tabEl.classList.add('active');
+      sn.activeIndex = idx;
+      sn.isTransitioning = false;
+      if (target.tab === 'dream' && typeof startMirror24CellRAF === 'function') {
+        startMirror24CellRAF();
+      }
+      sn.breathLocked = false;
+      sn.pendingTab = null;
+    });
+  }
+
+  // Breath-phase transition
+  function breathPhaseTransition(tabEl, callback) {
+    tabEl.classList.add('breath-transitioning');
+    var dur = 4000;
+    if (typeof breathCtrl !== 'undefined' && breathCtrl.getPhase) {
+      var ph = breathCtrl.getPhase();
+      if (ph && ph.duration) dur = ph.duration;
+    }
+    var transitionMs = Math.min(dur * 0.4, 800);
+    setTimeout(function() {
+      tabEl.classList.remove('breath-transitioning');
+      callback();
+    }, transitionMs);
+  }
+
+  // Update hub glyph + label
+  function updateSigilHub(idx, animate) {
+    var hg = getHubGlyph();
+    var hl = getHubLabel();
+    if (!hg || !hl) return;
+    var e = SIGIL_TABS[idx];
+    if (!e) return;
+    if (animate) {
+      hg.style.transform = 'scale(1.3) rotate(15deg)';
+      setTimeout(function() {
+        hg.textContent = e.glyph;
+        hg.style.transform = '';
+      }, 150);
+    } else {
+      hg.textContent = e.glyph;
+    }
+    hl.textContent = e.label;
+  }
+
+  // Activate dot
+  function activateDot(idx) {
+    document.querySelectorAll('.sn-dot').forEach(function(d, i) {
+      d.classList.toggle('sn-dot-active', i === idx);
+    });
+  }
+
+  // Flash dot
+  function flashDot(idx, state) {
+    var dot = document.querySelector('.sn-dot[data-idx="' + idx + '"]');
+    if (dot) dot.classList.toggle('flash', state === 'on');
+  }
+
+  // Breath update - scale dots + glow hub
+  function updateSigilNavBreath(phase, phaseIdx, ctrl) {
+    var dots = document.querySelectorAll('.sn-dot');
+    dots.forEach(function(dot, i) {
+      var bs = 1.0;
+      if (ctrl.isInhale()) bs = 1.0 + (phaseIdx < 2 ? 0.12 : 0.08);
+      if (ctrl.isHold())   bs = 1.15;
+      if (ctrl.isExhale()) bs = 0.92;
+      if (ctrl.isStill())  bs = 1.0;
+      dot.style.transform = 'translate(-50%,-50%) scale(' + bs.toFixed(2) + ')';
+      if (i === sn.activeIndex) {
+        dot.classList.toggle('glow-breathe', ctrl.isInhale());
+      }
+    });
+
+    var hub = getHub();
+    if (hub) {
+      var coh = (sn.coherenceLevel + sn.globalCoherence) / 2;
+      hub.style.boxShadow = '0 0 ' + Math.min(coh / 100 * 20, 20) + 'px rgba(232,200,106,' + Math.min(coh / 100 * 0.6, 0.6) + ')';
+    }
+
+    var hg = getHubGlyph();
+    if (hg && !sn.isTransitioning) hg.textContent = phase.glyph;
+  }
+
+  // Orbit animation
+  function stopOrbitAnimation() {
+    if (sn && sn.orbitAnimId) {
+      cancelAnimationFrame(sn.orbitAnimId);
+      sn.orbitAnimId = null;
+    }
+  }
+
+  function startOrbitAnimation() {
+    var outer = getOrbitOuter();
+    if (!outer) return;
+    var angle = 0;
+
+    function animate() {
+      var speed = 0.0003 + (sn.coherenceLevel / 100) * 0.0007;
+      angle = (angle + speed * 16.67) % (Math.PI * 2);
+      outer.style.transform = 'rotateX(' + (Math.sin(angle * 2) * 15) + 'deg) rotateY(' + (Math.cos(angle * 2) * 15) + 'deg)';
+      sn.orbitAnimId = requestAnimationFrame(animate);
+    }
+
+    stopOrbitAnimation();
+    sn.orbitAnimId = requestAnimationFrame(animate);
+  }
+
+  // Cascade flash
+  function triggerBreathCascade() {
+    var dots = document.querySelectorAll('.sn-dot');
+    dots.forEach(function(dot, i) {
+      setTimeout(function() {
+        dot.classList.add('flash');
+        setTimeout(function() { dot.classList.remove('flash'); }, 600);
+      }, i * 80);
+    });
+  }
+
+  // Coherence
+  function setSigilNavCoherence(local, global) {
+    sn.coherenceLevel = local;
+    sn.globalCoherence = global;
+    var wrap = getSn();
+    if (wrap) {
+      var avg = (local + global) / 2;
+      wrap.style.setProperty('--sigil-glow-opacity', Math.min(avg / 100 * 0.5, 0.5).toFixed(2));
+      wrap.style.setProperty('--sigil-glow-spread', Math.min(avg / 100 * 15, 15).toFixed(1) + 'px');
+    }
+  }
+
+  // Public helpers
+  function navTo(tab) {
+    for (var t = 0; t < SIGIL_TABS.length; t++) {
+      if (SIGIL_TABS[t].tab === tab) { navigateToSigil(t); return; }
+    }
+  }
+
+  function navToMatrix()   { window.location.href = 'matrix.html'; }
+  function navToResonator() { window.location.href = 'resonator.html'; }
+
+  // Cleanup
+  window.addEventListener('beforeunload', function() { stopOrbitAnimation(); });
+
+  // Expose globals
+  window.sigilNav = sn;
+  window.SIGIL_TABS = SIGIL_TABS;
+  window.navigateToSigil = navigateToSigil;
+  window.initSigilNav = initSigilNav;
+  window.updateSigilNavBreath = updateSigilNavBreath;
+  window.navTo = navTo;
+  window.navToMatrix = navToMatrix;
+  window.navToResonator = navToResonator;
+  window.setSigilNavCoherence = setSigilNavCoherence;
+  window.triggerBreathCascade = triggerBreathCascade;
+  window.startOrbitAnimation = startOrbitAnimation;
+  window.stopOrbitAnimation = stopOrbitAnimation;
+
+  // Auto-init
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSigilNav);
   } else {
-    transitionMs = Math.min(dur * 0.25, 600);
+    initSigilNav();
   }
 
-  setTimeout(() => {
-    tabEl.classList.remove('breath-transitioning');
-    callback();
-  }, transitionMs);
-}
-
-// ── Update sigil hub display ──
-function updateSigilHub(idx, animate = true) {
-  const glyph = SIGIL_TABS[idx].glyph;
-  const label = SIGIL_TABS[idx].label;
-  const hubGlyph = document.getElementById('snHubGlyph');
-  const hubLabel = document.getElementById('snHubLabel');
-  if (!hubGlyph || !hubLabel) return;
-
-  if (animate) {
-    // Breath-scale animation
-    hubGlyph.classList.remove('breath-pop');
-    void hubGlyph.offsetWidth;
-    hubGlyph.classList.add('breath-pop');
-  }
-
-  hubGlyph.textContent = glyph;
-  hubLabel.textContent = label;
-}
-
-// ── Dot activation states ──
-function activateDot(idx) {
-  document.querySelectorAll('.sn-dot').forEach((d, i) => {
-    d.classList.remove('active', 'passed', 'queued');
-    if (i === idx) d.classList.add('active');
-    else if (i < idx) d.classList.add('passed');
-  });
-}
-
-function flashDot(idx, state) {
-  const dot = document.querySelectorAll('.sn-dot')[idx];
-  if (!dot) return;
-  dot.classList.add(state);
-  setTimeout(() => dot.classList.remove(state), 600);
-}
-
-// ── Breath-driven sigil updates ──
-function updateSigilNavBreath(phase, phaseIdx, ctrl) {
-  // Update dot positions based on breath phase
-  const dots = document.querySelectorAll('.sn-dot');
-  dots.forEach((dot, i) => {
-    // Breath expansion effect
-    const baseScale = 1.0;
-    let breathScale = baseScale;
-    if (ctrl.isInhale()) breathScale = 1.0 + (phaseIdx < 2 ? 0.12 : 0.08);
-    if (ctrl.isHold()) breathScale = 1.15;
-    if (ctrl.isExhale()) breathScale = 1.0 - 0.08;
-    if (ctrl.isStill()) breathScale = 1.0;
-
-    // Direct inline transform — more reliable in Edge than CSS custom property
-    dot.style.transform = `translate(-50%,-50%) scale(${breathScale.toFixed(2)})`;
-
-    // Active tab gets extra glow during inhale
-    if (i === sigilNav.activeIndex) {
-      if (ctrl.isInhale()) {
-        dot.classList.add('glow-breathe');
-      } else {
-        dot.classList.remove('glow-breathe');
-      }
-    }
-  });
-
-  // Coherence glow on the hub
-  const hub = document.getElementById('snHub');
-  if (hub) {
-    const coh = (sigilNav.coherenceLevel + sigilNav.globalCoherence) / 2;
-    const glowOpacity = Math.min(coh / 100 * 0.6, 0.6);
-    const glowSpread = Math.min(coh / 100 * 20, 20);
-    hub.style.boxShadow = `0 0 ${glowSpread}px rgba(232,200,106,${glowOpacity})`;
-  }
-
-  // Check pending tab
-  if (sigilNav.pendingTab !== null && (ctrl.isStill() || ctrl.isHold())) {
-    const pending = sigilNav.pendingTab;
-    sigilNav.pendingTab = null;
-    // Small delay to let the still phase settle
-    setTimeout(() => performSigilTransition(pending), 300);
-  }
-
-  // Update hub glyph to match breath phase
-  const hubGlyph = document.getElementById('snHubGlyph');
-  if (hubGlyph && !sigilNav.isTransitioning) {
-    hubGlyph.textContent = phase.glyph;
-  }
-}
-
-// ── Stop orbit animation ──
-function stopOrbitAnimation() {
-  if (sigilNav && sigilNav.orbitAnimId) {
-    cancelAnimationFrame(sigilNav.orbitAnimId);
-    sigilNav.orbitAnimId = null;
-  }
-}
-
-// ── Orbit animation — dots orbit at speed ∝ coherence ──
-function startOrbitAnimation() {
-  const outer = document.getElementById('snOrbitOuter');
-  if (!outer) return;
-  let angle = 0;
-
-  function animate() {
-    // Base rotation speed modified by coherence
-    const baseSpeed = 0.0003;
-    const cohBoost = (sigilNav.coherenceLevel / 100) * 0.0007;
-    const speed = baseSpeed + cohBoost;
-    angle += speed;
-
-    if (outer) {
-      outer.style.transform = `rotate(${angle}rad)`;
-    }
-
-    sigilNav.orbitAnimId = requestAnimationFrame(animate);
-  }
-  animate();
-}
-
-// ── Cascade animation on full breath cycle ──
-function triggerBreathCascade() {
-  const dots = document.querySelectorAll('.br-dot');
-  if (!dots || dots.length === 0) return;
-  dots.forEach((dot, i) => {
-    setTimeout(() => {
-      dot.classList.add('cascade');
-      setTimeout(() => dot.classList.remove('cascade'), 600);
-    }, i * 60);
-  });
-}
-
-// ── Set coherence levels ──
-function setSigilNavCoherence(local, global) {
-  sigilNav.coherenceLevel = local || 0;
-  sigilNav.globalCoherence = global || 0;
-
-  // Update glow intensity CSS vars on sigil-nav-wrap
-  const snWrap = document.querySelector('.sigil-nav-wrap');
-  if (snWrap) {
-    const cohAvg = (sigilNav.coherenceLevel + sigilNav.globalCoherence) / 2;
-    const glowBase = 0.15;
-    const glowBoost = (cohAvg / 100) * 0.55; // 0.15 → 0.70
-    const glowSpread = 4 + (cohAvg / 100) * 16; // 4px → 20px
-    snWrap.style.setProperty('--sigil-glow-opacity', (glowBase + glowBoost).toFixed(3));
-    snWrap.style.setProperty('--sigil-glow-spread', glowSpread.toFixed(1) + 'px');
-  }
-}
-
-// ── Public navigation helpers ──
-function navTo(tab) {
-  const idx = SIGIL_TABS.findIndex(s => s.tab === tab);
-  if (idx !== -1) {
-    navigateToSigil(idx, true);
-  }
-}
-
-function navToMatrix() {
-  window.location.href = 'matrix.html';
-}
-
-function navToResonator() {
-  window.location.href = 'resonator.html';
-}
+}());
