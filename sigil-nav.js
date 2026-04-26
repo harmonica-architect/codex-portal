@@ -17,6 +17,7 @@
     activeIndex: 0,
     isTransitioning: false,
     pendingTab: null,
+    pendingTarget: null, // guards against enterPortal's double-call race
     coherenceLevel: 50,
     globalCoherence: 0,
     breathLocked: false,
@@ -36,6 +37,20 @@
       dot.addEventListener('click', function() {
         var idx = parseInt(dot.getAttribute('data-idx'), 10);
         if (!isNaN(idx)) navigateToSigil(idx);
+      });
+    });
+
+    // Mobile nav drawer items — map data-tab to SIGIL_TABS index and navigate
+    document.querySelectorAll('.mnd-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        var tab = item.getAttribute('data-tab');
+        if (!tab) return;
+        for (var t = 0; t < SIGIL_TABS.length; t++) {
+          if (SIGIL_TABS[t].tab === tab) {
+            navigateToSigil(t);
+            return;
+          }
+        }
       });
     });
 
@@ -78,8 +93,13 @@
 
   // Navigate
   function navigateToSigil(idx) {
+    // Guard: if a transition is running, queue this target instead of dropping it
+    if (sn.isTransitioning) {
+      sn.pendingTarget = idx;
+      return;
+    }
+    // Skip if already on this target
     if (idx === sn.activeIndex) return;
-    if (sn.isTransitioning) return;
 
     var target = SIGIL_TABS[idx];
     if (!target) return;
@@ -126,6 +146,12 @@
       }
       sn.breathLocked = false;
       sn.pendingTab = null;
+      // Flush any queued target that arrived during this transition
+      if (sn.pendingTarget !== null && sn.pendingTarget !== idx) {
+        var next = sn.pendingTarget;
+        sn.pendingTarget = null;
+        navigateToSigil(next);
+      }
     });
   }
 
@@ -167,6 +193,11 @@
   function activateDot(idx) {
     document.querySelectorAll('.sn-dot').forEach(function(d, i) {
       d.classList.toggle('sn-dot-active', i === idx);
+    });
+    // Also update mobile drawer active state
+    var targetTab = SIGIL_TABS[idx] ? SIGIL_TABS[idx].tab : null;
+    document.querySelectorAll('.mnd-item').forEach(function(item) {
+      item.classList.toggle('active', item.getAttribute('data-tab') === targetTab);
     });
   }
 
