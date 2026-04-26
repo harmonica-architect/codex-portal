@@ -249,3 +249,4 @@ class BreathController {
 
 // Singleton
 const breathCtrl = new BreathController();
+window.breathCtrl = breathCtrl; // expose globally for cross-module access

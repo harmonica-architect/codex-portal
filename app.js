@@ -1,3 +1,5 @@
+// Sync coherenceLevel to window for cross-module access
+setInterval(() => { if (typeof coherenceLevel !== 'undefined') window.coherenceLevel = coherenceLevel; }, 250);
 ﻿// ══════════════════════════════════════════════
 // CODEX PORTAL — APP.JS
 // ══════════════════════════════════════════════
@@ -928,7 +930,8 @@ function handleWSMessage(msg) {
       );
       // Apply server phase sync bonus to local display
       if (serverPhase === currentPhase && isRunning) {
-        coherenceLevel = Math.min(95, coherenceLevel + COHERENCE.syncBonus / 10); window.coherenceLevel = coherenceLevel;
+coherenceLevel = Math.min(95, coherenceLevel + COHERENCE.syncBonus / 10);
+window.coherenceLevel = coherenceLevel;
       }
       break;
 
