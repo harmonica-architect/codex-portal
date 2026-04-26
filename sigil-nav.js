@@ -71,15 +71,7 @@ function initSigilNav() {
         document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
         tabEl.classList.add('active');
       }
-      // Toggle .non-home on portal (CSS reads this for visibility)
-      document.getElementById('portal').classList.toggle('non-home', pendingTab !== 'home');
-      if (pendingTab === 'home') updateSigilHub(idx, false);
     }
-  } else {
-    // First load on index.html — home tab is active, hide sigil nav
-    const portal = document.getElementById('portal');
-    if (portal) portal.classList.remove('non-home');
-  }
 }
 
 // ── Navigate to a sigil tab ──
@@ -153,9 +145,9 @@ function performSigilTransition(idx, sn, target) {
     sn.activeIndex = idx;
     sn.isTransitioning = false;
 
-    // Show sigil nav header unless on home tab
+    // Sigil nav is always visible — no non-home class needed
     const portal = document.getElementById('portal');
-    if (portal) portal.classList.toggle('non-home', target.tab !== 'home');
+    if (portal) portal.classList.remove('non-home');
 
     // Start mirror 24-cell RAF when entering Dream/Mirror tab
     if (target.tab === 'dream' && typeof startMirror24CellRAF === 'function') {

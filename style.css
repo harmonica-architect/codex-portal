@@ -472,6 +472,27 @@ body {
 
 /* ── WHEEL SECTION ── */
 .wheel-section { position: relative; width: 340px; height: 340px; flex-shrink: 0; margin-bottom: 0.5rem; }
+.wheel-subpages {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+.btn-subpage {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  border: 1px solid rgba(232,200,106,0.3);
+  background: rgba(232,200,106,0.05);
+  padding: 0.3rem 0.9rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.btn-subpage:hover {
+  background: rgba(232,200,106,0.15);
+  border-color: rgba(232,200,106,0.5);
+}
 canvas { position: absolute; top: 0; left: 0; }
 .axis-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 .axis-band {
@@ -740,15 +761,9 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   z-index: 10;
 }
 
-/* Show sigil nav on desktop only when a non-home tab is active */
+/* Show sigil nav on desktop at all times (wheel is the primary entry) */
 @media (min-width: 600px) {
-  /* Default: hidden (home tab uses breath ring instead) */
-  .sigil-nav-wrap { display: none; }
-
-  /* Show sigil nav when .portal has .non-home class (JS-driven, reliable) */
-  .portal.non-home .sigil-nav-wrap {
-    display: block;
-  }
+  .sigil-nav-wrap { display: block; }
 }
 
 .sigil-nav-ring {

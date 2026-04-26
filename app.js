@@ -1318,6 +1318,8 @@ function enterPortal() {
   localStorage.setItem(STORAGE_KEYS.lastSigil, userSigil.join(''));
   // Sync sigil to shared state
   updateState({ sigil: [...userSigil] });
+  // Navigate to Wheel tab as the primary entry point
+  navigateToSigil(1);
   animateWheel();
   if (cohInterval) clearInterval(cohInterval);
   cohInterval = setInterval(updateCoherence, 600);
