@@ -340,7 +340,6 @@ function runGuidanceSequence() {
 function checkAdaptiveSuggestion() {
   if (difficultyLevel >= 4) return;
   if (!breathActive) return;
-  if (!window.suggestedCycle) return;
   if (Date.now() - lastSuggestionTime < 60000) return;
 
   const avgCoherence = coherenceHistory.length > 0
@@ -356,8 +355,10 @@ function checkAdaptiveSuggestion() {
   }
 }
 
+let suggestedCycle = null;
+
 function suggestCycle(cycle, reason) {
-  window.suggestedCycle = cycle;
+  suggestedCycle = cycle;
   const box = document.getElementById('suggestionBox');
   if (!box) return;
   box.style.display = 'block';
@@ -369,14 +370,14 @@ function suggestCycle(cycle, reason) {
 }
 
 document.getElementById('btnAcceptSuggestion')?.addEventListener('click', () => {
-  if (!window.suggestedCycle) return;
-  inhaleS = window.suggestedCycle.in;
-  holdS = window.suggestedCycle.h;
-  exhaleS = window.suggestedCycle.out;
+  if (!suggestedCycle) return;
+  inhaleS = suggestedCycle.in;
+  holdS = suggestedCycle.h;
+  exhaleS = suggestedCycle.out;
   syncCycleUI();
   if (breathActive) breathStartTime = Date.now();
   document.getElementById('suggestionBox').style.display = 'none';
-  window.suggestedCycle = null;
+  suggestedCycle = null;
   difficultyLevel = Math.min(4, difficultyLevel + 1);
   syncDifficultyUI();
 });
