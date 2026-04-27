@@ -9,7 +9,7 @@
     { sigil: '◉', glyph: '◉', label: 'Dream',     tab: 'dream',    freq: 639, desc: 'Mirror · Standing wave · Monadic reflection', locked: false },
     { sigil: '○', glyph: '○', label: 'Journal',   tab: 'journal',  freq: 741, desc: 'Wave collapse · Harmonic log · Breath journal', locked: false },
     { sigil: '◈', glyph: '◈', label: 'Matrix',    tab: 'matrix',   freq: 852, desc: 'Domain explorer · matAddr · Frequency map', locked: true },
-    { sigil: '⟁', glyph: '⟁', label: 'Resonator', tab: 'resonator', freq: 963, desc: 'Field tuning · Harmonic spiral · Coherence tool', locked: true },
+    { sigil: '⟁', glyph: '⟁', label: 'Resonator', tab: 'resonator', freq: 963, desc: 'Solfeggio · Harmonic tuning · 8 frequencies', locked: false },
     { sigil: '·', glyph: '·', label: 'Profile',   tab: 'profile',  freq: 174, desc: 'Sigil evolution · Breath history · Personal field', locked: false },
   ];
 
@@ -230,7 +230,7 @@
 
   // Update hub glyph + label
   function isBreathLocked(tab) {
-    return ['matrix', 'resonator'].indexOf(tab) !== -1;
+    return ['matrix'].indexOf(tab) !== -1;
   }
 
   function updateSigilHub(idx, animate) {

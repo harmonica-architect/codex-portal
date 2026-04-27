@@ -74,8 +74,8 @@
       <div class="bnav-item locked" data-tab="matrix">
         <span class="bnav-glyph">◈</span><span class="bnav-lock">🔒</span><span class="bnav-label">Matrix</span>
       </div>
-      <div class="bnav-item locked" data-tab="resonator">
-        <span class="bnav-glyph">⟁</span><span class="bnav-lock">🔒</span><span class="bnav-label">Resonator</span>
+      <div class="bnav-item" data-tab="resonator">
+        <span class="bnav-glyph">⟁</span><span class="bnav-label">Resonator</span>
       </div>
       <div class="bnav-item" data-tab="profile">
         <span class="bnav-glyph">·</span><span class="bnav-label">Profile</span>
@@ -672,6 +672,11 @@
   <!-- Hidden canvas for temporary glyphic echo generation (off-screen) -->
   <canvas id="jecEchoTmp" width="80" height="80" style="position:absolute;left:-9999px;top:-9999px;pointer-events:none;"></canvas>
 
+
+  <!-- ══ RESONATOR TAB ══ -->
+  <div class="tab-content" id="tab-resonator">
+    <iframe id="resonatorFrame" src="resonator.html" style="width:100%;height:100%;border:none;display:block;"></iframe>
+  </div>
 </div>
 
 

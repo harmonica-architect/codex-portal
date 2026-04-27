@@ -1,12 +1,29 @@
-/* ▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐
-   FIELD RESONATOR v5
-   ▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐ */
+/* ▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐
+   FIELD RESONATOR v6 — Solfeggio Frequency Device
+   ▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐▐ */
 
 const SEGMENTS = 24;
 const PRIME_POS = [0, 4, 6, 10, 12, 16, 18, 22];
 const ARC_CIRCUMFERENCE = 314;
 
-/* ▔▔▔▔▔▔▔▔▔ STATE ▔▔▔▔▔▔▔▔▔ */
+// ── SOLFEGGIO FREQUENCIES ──────────────────────────────────────────────────
+// The 8 core Solfeggio tones. Each maps to a breath phase as the "resonant frequency".
+// Additional tones can be layered via the sidebar.
+const SOLFEGGIO = {
+  396: { name: '396 Hz', sig: '△', meaning: 'Liberation · Guilt removal', color: '#5a7a6a', phase: null },
+  417: { name: '417 Hz', sig: '◁', meaning: 'Letting go · Facilitation', color: '#7a6a5a', phase: null },
+  432: { name: '432 Hz', sig: '⊙', meaning: 'Natural tuning · Grounding', color: '#d4b896', phase: 'base' },
+  528: { name: '528 Hz', sig: '◎', meaning: 'DNA repair · Miracles', color: '#7a6a9a', phase: 'inhale' },
+  639: { name: '639 Hz', sig: '◇', meaning: 'Connection · Relationships', color: '#8a7aaa', phase: 'hold' },
+  741: { name: '741 Hz', sig: '◉', meaning: 'Expression · Solutions', color: '#5a8a7a', phase: 'exhale' },
+  852: { name: '852 Hz', sig: '◈', meaning: 'Intuition · Truth', color: '#6a7a9a', phase: 'still' },
+  963: { name: '963 Hz', sig: '⟁', meaning: 'Divine awakening', color: '#9a7aaa', phase: 'peak' }
+};
+
+// Which frequency is "active" at each breath phase
+const PHASE_FREQS = { idle: 432, inhale: 528, hold: 639, exhale: 741, still: 852 };
+
+// ── STATE ────────────────────────────────────────────────────────────────────
 let step = 1;
 let rotation = 0;
 let coherence = 0;
@@ -18,10 +35,11 @@ let entrainmentLevel = 0;
 let inhaleS = 5, holdS = 5, exhaleS = 5;
 let breathStartTime = 0;
 let audioCtx = null;
-let oscillators = {};
-let isAudioOn = true; // auto-on
+let oscillators = {};       // freq → { o, g }
+let layerState = {};       // freq → { on: bool, vol: 0-1 }
+let isAudioOn = true;
 let masterVol = 0.5;
-let selectedSnapshotGlyph = '▲';
+let selectedSnapshotGlyph = '△';
 let wavePoints = [];
 let wavePhase = 0;
 let breathGuidanceOn = true;
@@ -29,13 +47,10 @@ let difficultyLevel = 1;
 let coherenceHistory = [];
 let lastSuggestionTime = 0;
 let suggestedCycle = null;
+let activeFreq = 432;       // currently highlighted/primary frequency
+let baseFreq = 432;        // the base drone frequency
 
-/* Guided breath state */
-let guidancePhase = 'none'; // 'inhale' | 'hold' | 'exhale'
-let guidanceTimer = null;
-let guidanceActive = false;
-
-/* ▔▔▔▔▔▔▔▔▔ CANVAS SETUP ▔▔▔▔▔▔▔▔▔ */
+// ── CANVAS SETUP ─────────────────────────────────────────────────────────────
 const canvas = document.getElementById('resonatorCanvas');
 const ctx = canvas.getContext('2d');
 const waveCanvas = document.getElementById('waveCanvas');
@@ -45,12 +60,13 @@ let canvasSize = 320;
 
 function resizeCanvases() {
   const wrap = document.getElementById('wheelWrap');
-  const rect = wrap ? wrap.getBoundingClientRect() : null; const s = rect ? Math.min(rect.width, rect.height) : 320;
+  const rect = wrap ? wrap.getBoundingClientRect() : null;
+  const s = rect ? Math.min(rect.width, rect.height) : 320;
   canvas.width = s * dpr;
   canvas.height = s * dpr;
   canvas.style.width = s + 'px';
   canvas.style.height = s + 'px';
-  canvasSize = s; // set AFTER dimensions so canvasSize always equals display px
+  canvasSize = s;
   waveCanvas.width = waveCanvas.offsetWidth * dpr;
   waveCanvas.height = 18 * dpr;
 }
@@ -58,10 +74,8 @@ resizeCanvases();
 window.addEventListener('resize', resizeCanvases);
 
 function dims() {
-  // canvasSize = display px (set after canvas.width assignment in resizeCanvases)
   const s = canvasSize;
-  return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 }
-;
+  return { cx: s / 2, cy: s / 2, r: s * 0.42, ir: s * 0.285, hr: s * 0.038 };
 }
 
 // Broadcast coherence + phase to shared localStorage for cross-tool sync
@@ -72,16 +86,204 @@ setInterval(() => {
   }
 }, 300);
 
-/* ▔▔▔▔▔▔▔▔▔ BREATH GUIDANCE SYSTEM ▔▔▔▔▔▔▔▔▔ */
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function createOsc(freq, vol, dur = 2) {
+  try {
+    initAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+
+function playTransitionCue(stepN) {
+  const freqs = [261.6, 329.6, 392, 523.2];
+  createOsc(freqs[stepN - 1] || 432, masterVol * 0.5, 0.8);
+}
+
+function playPhaseCue(freq) {
+  createOsc(freq, masterVol * 0.5, 1.2);
+}
+
+// Start a continuous oscillator layer
+function startLayer(freq, vol) {
+  if (!audioCtx) initAudio();
+  if (oscillators[freq]) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  oscillators[freq] = { o, g };
+  layerState[freq] = { on: true, vol };
+}
+
+// Stop a continuous oscillator layer
+function stopLayer(freq) {
+  if (oscillators[freq]) {
+    try { oscillators[freq].o.stop(); } catch (e) {}
+    delete oscillators[freq];
+    layerState[freq] = { on: false, vol: 0 };
+  }
+}
+
+// Update volumes of all running oscillators based on coherence + phase
+function updateSoundscapeVolumes() {
+  if (!isAudioOn) return;
+  const coh = Math.min(1, coherence / 100);
+  const cohBoost = 0.3 + coh * 0.7;  // 0.3 at 0% coherence, 1.0 at 100%
+
+  Object.keys(oscillators).forEach(f => {
+    const freq = parseFloat(f);
+    const state = layerState[freq];
+    if (!state) return;
+    const baseVol = state.vol * masterVol * 0.35;
+    // Boost the active phase frequency
+    const isActivePhase = PHASE_FREQS[breathPhase] === freq;
+    const adjVol = baseVol * cohBoost * (isActivePhase ? 1.5 : 1.0);
+    try {
+      oscillators[f].g.gain.setValueAtTime(Math.min(adjVol, masterVol * 0.5), audioCtx.currentTime);
+    } catch (e) {}
+  });
+}
+
+// Auto-start: 432Hz base drone + 528Hz (default active layer)
+function autoStartSound() {
+  try {
+    initAudio();
+    startLayer(432, 0.4);   // base drone — always on
+    startLayer(528, 0.25);  // miracles tone — active by default
+    activeFreq = 528;
+    const toggle528 = document.getElementById('sndToggle528');
+    const toggle432 = document.getElementById('sndToggle432');
+    if (toggle528) toggle528.classList.add('on');
+    if (toggle432) toggle432.classList.add('on');
+    const pill = document.getElementById('audioMiniPill');
+    if (pill) pill.classList.add('on');
+  } catch (e) {}
+}
+
+// ── AUDIO TOGGLE ──────────────────────────────────────────────────────────────
+document.getElementById('audioMiniPill')?.addEventListener('click', () => {
+  isAudioOn = !isAudioOn;
+  const pill = document.getElementById('audioMiniPill');
+  pill?.classList.toggle('on', isAudioOn);
+  if (isAudioOn) {
+    initAudio();
+    // Restart all layers that were on
+    Object.keys(layerState).forEach(f => {
+      if (layerState[f].on) startLayer(parseFloat(f), layerState[f].vol);
+    });
+  } else {
+    Object.keys(oscillators).forEach(f => stopLayer(parseFloat(f)));
+  }
+});
+
+document.getElementById('volSliderMini')?.addEventListener('input', e => {
+  masterVol = Math.max(0.05, e.target.value / 100);
+  const volVal = document.getElementById('volValMini');
+  if (volVal) volVal.textContent = e.target.value + '%';
+});
+
+// ── SOLFEGGIO LAYER TOGGLES ──────────────────────────────────────────────────
+Object.keys(SOLFEGGIO).forEach(f => {
+  const freq = parseInt(f);
+  const toggle = document.getElementById('sndToggle' + freq);
+  const volSlider = document.getElementById('sndVol' + freq);
+  if (!toggle) return;
+
+  // Init layer state
+  layerState[freq] = { on: false, vol: 0.3 };
+
+  toggle.addEventListener('click', () => {
+    const on = toggle.classList.contains('on');
+    if (on) {
+      toggle.classList.remove('on');
+      if (oscillators[freq]) stopLayer(freq);
+      layerState[freq].on = false;
+    } else {
+      toggle.classList.add('on');
+      layerState[freq].on = true;
+      if (isAudioOn) {
+        const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100;
+        startLayer(freq, vol);
+      }
+    }
+  });
+
+  if (volSlider) {
+    volSlider.addEventListener('input', e => {
+      const vol = parseInt(e.target.value) / 100;
+      layerState[freq].vol = vol;
+      if (oscillators[freq] && isAudioOn) {
+        const adjVol = vol * masterVol * 0.35;
+        try { oscillators[freq].g.gain.setValueAtTime(adjVol, audioCtx.currentTime); } catch (e) {}
+      }
+    });
+  }
+});
+
+// ── STEP SYSTEM ───────────────────────────────────────────────────────────────
+const STEP_LABELS = {
+  1: { title: 'Solfeggio Field · Attune', glyph: '⊙', hint: 'click to begin', sub: '432 Hz · natural tuning' },
+  2: { title: 'Breathe · Attune', glyph: '▲', hint: 'follow the cycle', sub: 'frequencies shift with breath' },
+  3: { title: 'Resonate · Field Active', glyph: '◉', hint: 'sound amplifies', sub: 'coherence builds' }
+};
+
+function setStep(n) {
+  step = n;
+  updateStepUI();
+  if (isAudioOn) playTransitionCue(n);
+  if (n === 3) openSidebarNoToggle();
+}
+
+function updateStepUI() {
+  document.querySelectorAll('.step-pip').forEach(p => {
+    const s = parseInt(p.dataset.step);
+    p.classList.toggle('active', s === step);
+    p.classList.toggle('done', s < step);
+  });
+
+  const progress = (step - 1) / 2;
+  document.getElementById('stepArcFill').style.strokeDashoffset = ARC_CIRCUMFERENCE - ARC_CIRCUMFERENCE * progress;
+
+  const info = STEP_LABELS[step];
+  document.getElementById('centerGlyph').textContent = info.glyph;
+  document.getElementById('centerHint').textContent = info.hint;
+  document.getElementById('stageSubtitle').textContent = info.sub;
+  canvas.className = 'wheel-canvas ' + (step === 1 ? 'attract' : 'active');
+  document.getElementById('centerGlyph').classList.toggle('entrained', step > 1);
+
+  document.getElementById('tipsRow').style.opacity = step === 1 ? '1' : '0';
+  checkAdaptiveSuggestion();
+}
+
+// ── BREATH GUIDANCE ───────────────────────────────────────────────────────────
 function playGuidanceTone(freq, dur = 0.6) {
   if (!breathGuidanceOn || !isAudioOn) return;
-  createOsc(freq, masterVol * 0.5, dur);
+  createOsc(freq, masterVol * 0.4, dur);
 }
 
 function playGuidanceChime() {
   if (!breathGuidanceOn || !isAudioOn) return;
   [523, 659, 784].forEach((f, i) => {
-    setTimeout(() => createOsc(f, masterVol * 0.5, 0.5), i * 120);
+    setTimeout(() => createOsc(f, masterVol * 0.4, 0.5), i * 120);
   });
 }
 
@@ -97,6 +299,10 @@ function stopBreathGuidance() {
   guidancePhase = 'none';
 }
 
+let guidancePhase = 'none';
+let guidanceTimer = null;
+let guidanceActive = false;
+
 function runGuidanceSequence() {
   if (!guidanceActive || !breathActive) return;
 
@@ -105,7 +311,6 @@ function runGuidanceSequence() {
   const elapsed = Date.now() - breathStartTime;
   const progress = (elapsed % totalDur) / totalDur;
 
-  // Determine current phase from breath state
   let currentPhase = 'idle';
   if (progress < ratio.inhale) currentPhase = 'inhale';
   else if (progress < ratio.inhale + ratio.hold) currentPhase = 'hold';
@@ -114,15 +319,15 @@ function runGuidanceSequence() {
   if (currentPhase !== guidancePhase) {
     guidancePhase = currentPhase;
     if (currentPhase === 'inhale') {
-      playGuidanceTone(261.6, 0.5);  // C4
+      playGuidanceTone(261.6, 0.5);
       document.getElementById('breathLabel').textContent = '↑ Inhale';
       document.getElementById('breathLabel').style.color = '#7a6a9a';
     } else if (currentPhase === 'hold') {
-      playGuidanceTone(329.6, 0.5);  // E4
+      playGuidanceTone(329.6, 0.5);
       document.getElementById('breathLabel').textContent = '◼ Hold';
       document.getElementById('breathLabel').style.color = '#8a7aaa';
     } else if (currentPhase === 'exhale') {
-      playGuidanceTone(196, 0.5);   // G3
+      playGuidanceTone(196, 0.5);
       document.getElementById('breathLabel').textContent = '↓ Exhale';
       document.getElementById('breathLabel').style.color = '#5a7a6a';
     }
@@ -131,23 +336,26 @@ function runGuidanceSequence() {
   guidanceTimer = setTimeout(runGuidanceSequence, 200);
 }
 
+// ── ADAPTIVE SUGGESTIONS ──────────────────────────────────────────────────────
 function checkAdaptiveSuggestion() {
   if (difficultyLevel >= 4) return;
   if (!breathActive) return;
-  if (Date.now() - lastSuggestionTime < 60000) return; // Only suggest every 60s
+  if (Date.now() - lastSuggestionTime < 60000) return;
 
   const avgCoherence = coherenceHistory.length > 0
     ? coherenceHistory.reduce((a, b) => a + b, 0) / coherenceHistory.length
     : 0;
 
   if (avgCoherence > 70 && difficultyLevel === 1) {
-    suggestCycle({ in: 6, h: 0, out: 6 }, 'Coherence strong — try box breathing (6·0·6)');
+    suggestCycle({ in: 6, h: 0, out: 6 }, 'Strong coherence — try box breathing (6·0·6)');
   } else if (avgCoherence > 75 && difficultyLevel === 2) {
-    suggestCycle({ in: 4, h: 4, out: 8 }, 'Excellent coherence — extend exhale with 4·4·8');
+    suggestCycle({ in: 4, h: 4, out: 8 }, 'Excellent — extend exhale with 4·4·8');
   } else if (avgCoherence > 80 && difficultyLevel === 3) {
-    suggestCycle({ in: 4, h: 7, out: 8 }, 'Mastery detected — try 4·7·8 for deeper retention');
+    suggestCycle({ in: 4, h: 7, out: 8 }, 'Mastery — try 4·7·8 for deeper retention');
   }
 }
+
+let suggestedCycle = null;
 
 function suggestCycle(cycle, reason) {
   suggestedCycle = cycle;
@@ -195,172 +403,7 @@ document.getElementById('guidancePill')?.addEventListener('click', () => {
   else if (breathActive) startBreathGuidance();
 });
 
-/* ▔▔▔▔▔▔▔▔▔ STEP SYSTEM ▔▔▔▔▔▔▔▔▔ */
-const STEP_LABELS = {
-  1: { title: 'Monadic Spiral · 432Hz', glyph: '⊙', hint: 'click to begin', sub: 'attune to the field' },
-  2: { title: 'Breath · Inhale', glyph: '▲', hint: 'follow the cycle', sub: 'the field remembers' },
-  3: { title: 'Resonance Active', glyph: '◉', hint: 'sound amplifies', sub: 'coherence builds' }
-};
-
-function setStep(n) {
-  step = n;
-  updateStepUI();
-  if (isAudioOn) playTransitionCue(n);
-  if (n === 3) openSidebarNoToggle();
-}
-
-function updateStepUI() {
-  document.querySelectorAll('.step-pip').forEach(p => {
-    const s = parseInt(p.dataset.step);
-    p.classList.toggle('active', s === step);
-    p.classList.toggle('done', s < step);
-  });
-
-  const progress = (step - 1) / 2;
-  document.getElementById('stepArcFill').style.strokeDashoffset = ARC_CIRCUMFERENCE - ARC_CIRCUMFERENCE * progress;
-
-  const info = STEP_LABELS[step];
-  document.getElementById('centerGlyph').textContent = info.glyph;
-  document.getElementById('centerHint').textContent = info.hint;
-  document.getElementById('stageSubtitle').textContent = info.sub;
-  canvas.className = 'wheel-canvas ' + (step === 1 ? 'attract' : 'active');
-  document.getElementById('centerGlyph').classList.toggle('entrained', step > 1);
-
-  // Hide tips after step 1
-  document.getElementById('tipsRow').style.opacity = step === 1 ? '1' : '0';
-
-  // Check for adaptive suggestion
-  checkAdaptiveSuggestion();
-}
-
-/* ▔▔▔▔▔▔▔▔▔ AUDIO — auto-activated ▔▔▔▔▔▔▔▔▔ */
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function createOsc(freq, vol, dur = 2) {
-  try {
-    initAudio();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'sine';
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(0, audioCtx.currentTime);
-    g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.08);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    o.start();
-    o.stop(audioCtx.currentTime + dur);
-  } catch (e) {}
-}
-
-function playTransitionCue(stepN) {
-  const freqs = [261.6, 329.6, 392, 523.2];
-  createOsc(freqs[stepN - 1] || 432, masterVol * 0.6, 0.8);
-}
-
-function playPhaseCue(freq) {
-  createOsc(freq, masterVol * 0.6, 1.2);
-}
-
-function startSoundscapeLayer(freq, vol) {
-  if (!audioCtx) initAudio();
-  if (oscillators[freq]) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = 'sine';
-  o.frequency.value = freq;
-  g.gain.setValueAtTime(vol, audioCtx.currentTime);
-  o.connect(g);
-  g.connect(audioCtx.destination);
-  o.start();
-  oscillators[freq] = { o, g };
-}
-
-function stopSoundscapeLayer(freq) {
-  if (oscillators[freq]) {
-    try { oscillators[freq].o.stop(); } catch (e) {}
-    delete oscillators[freq];
-  }
-}
-
-function updateSoundscapeVolumes() {
-  if (!isAudioOn) return;
-  [432, 456.9, 483.3, 510.6, 539.8, 570.6, 603.4, 637.9, 674.0, 712.0, 752.4, 795.0].forEach(f => {
-    if (oscillators[f]) {
-      const volSlider = document.getElementById('sndVol' + f);
-      const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.5;
-      const adjVol = vol * (0.4 + Math.min(1, coherence / 100));
-      try { oscillators[f].g.gain.setValueAtTime(adjVol, audioCtx.currentTime); } catch (e) {}
-    }
-  });
-}
-
-// Auto-start 432Hz base drone
-function autoStartSound() {
-  try {
-    initAudio();
-    startSoundscapeLayer(432, masterVol * 0.12);
-    document.getElementById('audioMiniPill')?.classList.add('on');
-  } catch (e) {}
-}
-
-/* ▔▔▔▔▔▔▔▔▔ AUDIO TOGGLE ▔▔▔▔▔▔▔▔▔ */
-document.getElementById('audioMiniPill')?.addEventListener('click', () => {
-  isAudioOn = !isAudioOn;
-  const pill = document.getElementById('audioMiniPill');
-  pill?.classList.toggle('on', isAudioOn);
-  if (isAudioOn) {
-    initAudio();
-    startSoundscapeLayer(432, masterVol * 0.12);
-  } else {
-    Object.keys(oscillators).forEach(f => stopSoundscapeLayer(parseFloat(f)));
-  }
-});
-
-document.getElementById('volSliderMini')?.addEventListener('input', e => {
-  masterVol = Math.max(0.05, e.target.value / 100);
-  const volVal = document.getElementById('volValMini');
-  if (volVal) volVal.textContent = e.target.value + '%';
-});
-
-/* ▔▔▔▔▔▔▔▔▔ SOUNDSCAPE LAYER TOGGLES ▔▔▔▔▔▔▔▔▔ */
-[432, 528, 639, 741, 852].forEach(f => {
-  const toggle = document.getElementById('sndToggle' + f);
-  const volSlider = document.getElementById('sndVol' + f);
-  if (!toggle) return;
-
-  toggle.addEventListener('click', () => {
-    const on = toggle.classList.contains('on');
-    if (on) {
-      toggle.classList.remove('on');
-      if (oscillators[f]) stopSoundscapeLayer(f);
-    } else {
-      toggle.classList.add('on');
-      if (isAudioOn) {
-        const vol = (volSlider ? parseInt(volSlider.value) : 30) / 100 * masterVol * 0.5;
-        startSoundscapeLayer(f, vol);
-      }
-    }
-  });
-});
-
-/* ▔▔▔▔▔▔▔▔▔ PHASE STRIP ▔▔▔▔▔▔▔▔▔ */
-function updatePhaseStrip() {
-  const phases = ['inhale', 'hold', 'exhale', 'still'];
-  phases.forEach(p => {
-    const chip = document.getElementById('phase' + p.charAt(0).toUpperCase() + p.slice(1));
-    if (!chip) return;
-    chip.className = 'phase-chip';
-    if (breathPhase === p && breathActive) {
-      chip.classList.add('active-' + p);
-    }
-  });
-}
-
-/* ▔▔▔▔▔▔▔▔▔ BREATH CYCLE ▔▔▔▔▔▔▔▔▔ */
+// ── BREATH CYCLE ─────────────────────────────────────────────────────────────
 function getCycleDuration() { return inhaleS + holdS + exhaleS; }
 function getRatio() {
   const t = getCycleDuration();
@@ -368,9 +411,7 @@ function getRatio() {
 }
 
 const PHASE_LABELS = { idle: '', inhale: 'Inhale', hold: 'Hold', exhale: 'Exhale', still: 'Still' };
-const PHASE_COLORS = { inhale: '#7a6a9a', hold: '#8a7aaa', exhale: '#5a7a6a', still: '#d4b896' };
-const PHASE_GLYPHS = { inhale: '▲', hold: '◼', exhale: '▼▮', idle: '⊙', still: '◇' };
-const PHASE_FREQS = { inhale: 432, hold: 528, exhale: 639, still: 432 };
+const PHASE_COLORS = { inhale: '#7a6a9a', hold: '#8a7aaa', exhale: '#5a7a6a', still: '#d4b896', idle: 'transparent' };
 
 function updateBreathState() {
   if (!breathActive) {
@@ -385,23 +426,24 @@ function updateBreathState() {
   const progress = (elapsed % totalDur) / totalDur;
   const ratio = getRatio();
 
-
   if (progress < ratio.inhale) {
     breathPhase = 'inhale';
+    activeFreq = 528;
     targetCoherence = 40 + (progress / ratio.inhale) * 35;
     entrainmentLevel = Math.min(6, Math.floor((progress / ratio.inhale) * 6));
   } else if (progress < ratio.inhale + ratio.hold) {
     breathPhase = 'hold';
+    activeFreq = 639;
     targetCoherence = 75 + Math.sin((progress - ratio.inhale) / ratio.hold * Math.PI) * 20;
     entrainmentLevel = 6;
   } else {
     const exProg = (progress - ratio.inhale - ratio.hold) / ratio.exhale;
     breathPhase = 'exhale';
+    activeFreq = 741;
     targetCoherence = Math.max(0, 60 - exProg * 30);
     entrainmentLevel = Math.max(0, Math.floor((1 - exProg) * 6));
   }
 
-  // Track coherence for adaptive suggestions
   if (cycleCount > 0) {
     coherenceHistory.push(coherence);
     if (coherenceHistory.length > 30) coherenceHistory.shift();
@@ -414,19 +456,17 @@ function updateBreathUI() {
   bl.textContent = breathActive ? PHASE_LABELS[breathPhase] : '';
   bl.style.color = PHASE_COLORS[breathPhase] || 'transparent';
 
-  const glyph = PHASE_GLYPHS[breathPhase] || PHASE_GLYPHS.idle;
-  document.getElementById('centerGlyph').textContent = glyph;
-
-  if (breathActive) {
-    document.getElementById('centerFreq').textContent = (PHASE_FREQS[breathPhase] || 432) + ' Hz';
-  }
+  // Center glyph + freq reflects active frequency
+  const solf = SOLFEGGIO[activeFreq] || SOLFEGGIO[432];
+  document.getElementById('centerGlyph').textContent = solf.sig;
+  document.getElementById('centerFreq').textContent = activeFreq + ' Hz';
+  document.getElementById('centerHint').textContent = breathActive ? solf.meaning.split('·')[0].trim() : 'click to begin';
 
   // Entrainment cells
   document.querySelectorAll('.entrainment-cell').forEach((c, i) => {
     c.classList.toggle('lit', i < entrainmentLevel);
   });
 
-  // Coherence shimmer at high coherence
   const cohFill = document.getElementById('cohArcFill');
   cohFill?.classList.toggle('high', coherence > 70);
 }
@@ -440,7 +480,20 @@ function updateCoherence() {
   if (cohPct) cohPct.textContent = pct + '%';
 }
 
-/* ▔▔▔▔▔▔▔▔▔ WAVEFORM ▔▔▔▔▔▔▔▔▔ */
+// ── PHASE STRIP ──────────────────────────────────────────────────────────────
+function updatePhaseStrip() {
+  const phases = ['inhale', 'hold', 'exhale', 'still'];
+  phases.forEach(p => {
+    const chip = document.getElementById('phase' + p.charAt(0).toUpperCase() + p.slice(1));
+    if (!chip) return;
+    chip.className = 'phase-chip';
+    if (breathPhase === p && breathActive) {
+      chip.classList.add('active-' + p);
+    }
+  });
+}
+
+// ── WAVEFORM ─────────────────────────────────────────────────────────────────
 function drawWaveformStrip() {
   const w = waveCanvas.offsetWidth;
   const h = 18;
@@ -449,22 +502,37 @@ function drawWaveformStrip() {
   if (wavePoints.length < 80) {
     for (let i = 0; i < 80; i++) wavePoints.push({ v: 0.5 });
   }
-  wavePoints.push({ v: breathActive ? entrainmentLevel / 6 : Math.random() * 0.15 });
+  // Wave amplitude driven by entrainment level
+  const amp = breathActive ? (entrainmentLevel / 6) : Math.random() * 0.1;
+  wavePoints.push({ v: 0.5 + (Math.sin(wavePhase) * amp * 0.8) });
+  wavePoints.push({ v: 0.5 + (Math.sin(wavePhase * 1.5 + 0.3) * amp * 0.5) });
   if (wavePoints.length > 80) wavePoints.shift();
 
-  waveCtx.beginPath();
-  wavePoints.forEach((p, i) => {
-    const x = (i / 80) * w * dpr;
-    const y = p.v * h * dpr;
-    if (i === 0) waveCtx.moveTo(x, y);
-    else waveCtx.lineTo(x, y);
-  });
-  waveCtx.strokeStyle = `rgba(212,184,150,${0.15 + coherence / 100 * 0.4})`;
-  waveCtx.lineWidth = dpr;
-  waveCtx.stroke();
+  // Draw two layered waveforms — one for base freq, one for active freq
+  wavePhase += 0.08;
+
+  const drawLine = (offset, color, ampMult) => {
+    waveCtx.beginPath();
+    wavePoints.forEach((p, i) => {
+      const x = (i / 80) * w * dpr;
+      const baseY = h * dpr * 0.5;
+      const y = baseY + (p.v - 0.5) * h * dpr * ampMult;
+      if (i === 0) waveCtx.moveTo(x, y);
+      else waveCtx.lineTo(x, y);
+    });
+    waveCtx.strokeStyle = color;
+    waveCtx.lineWidth = dpr;
+    waveCtx.stroke();
+  };
+
+  // Base layer (gold)
+  drawLine(0, `rgba(212,184,150,${0.1 + coherence / 100 * 0.3})`, 0.8);
+  // Active frequency layer (phase color)
+  const phaseColor = PHASE_COLORS[breathPhase] || PHASE_COLORS.idle;
+  drawLine(0, phaseColor.replace(')', ', 0.3)').replace('rgb', 'rgba'), 0.5);
 }
 
-/* ▔▔▔▔▔▔▔▔▔ WHEEL RENDERER ▔▔▔▔▔▔▔▔▔ */
+// ── WHEEL RENDERER ───────────────────────────────────────────────────────────
 function getIcositetragonPoints(d, rot) {
   const pts = [];
   for (let i = 0; i < SEGMENTS; i++) {
@@ -529,6 +597,26 @@ function drawWheel() {
   ctx.closePath();
   ctx.stroke();
 
+  // Draw Solfeggio frequency nodes around the wheel (positions 0, 3, 6, 9, 12, 15, 18, 21)
+  const freqOrder = [432, 528, 639, 741, 852, 963, 417, 396];
+  freqOrder.forEach((freq, i) => {
+    const pt = pts[i * 3 % SEGMENTS];  // spread 8 freqs around 24 positions
+    const isActive = freq === activeFreq;
+    const solf = SOLFEGGIO[freq];
+    const alpha = isActive ? (0.6 + coherence / 100 * 0.4) : 0.25;
+    ctx.fillStyle = solf.color ? hexToRgba(solf.color, alpha) : `rgba(212,184,150,${alpha})`;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, isActive ? 4.5 : 3, 0, Math.PI * 2);
+    ctx.fill();
+    if (isActive) {
+      ctx.strokeStyle = solf.color ? hexToRgba(solf.color, 0.6) : 'rgba(212,184,150,0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+
   // Prime nodes
   pts.forEach(p => {
     if (p.prime) {
@@ -547,7 +635,7 @@ function drawWheel() {
     const ratio = getRatio();
     let pulseR = d.r;
     let alpha = 0.4;
-    let colors = { inhale: 'rgba(122,106,154,', hold: 'rgba(138,122,170,', exhale: 'rgba(90,122,106,', still: 'rgba(212,184,150,' };
+    const colors = { inhale: 'rgba(122,106,154,', hold: 'rgba(138,122,170,', exhale: 'rgba(90,122,106,', still: 'rgba(212,184,150,', idle: 'rgba(212,184,150,' };
 
     if (progress < ratio.inhale) {
       pulseR = d.r * (0.82 + (progress / ratio.inhale) * 0.18);
@@ -569,7 +657,7 @@ function drawWheel() {
     ctx.stroke();
   }
 
-  // Center dot
+  // Center
   const hg = ctx.createRadialGradient(d.cx, d.cy, 0, d.cx, d.cy, d.hr * 2.5);
   hg.addColorStop(0, `rgba(212,184,150,${0.08 + coherence / 100 * 0.2})`);
   hg.addColorStop(1, 'rgba(0,0,0,0)');
@@ -581,9 +669,24 @@ function drawWheel() {
   ctx.beginPath();
   ctx.arc(d.cx, d.cy, d.hr, 0, Math.PI * 2);
   ctx.fill();
+
+  // Active frequency glyph at center
+  const solf = SOLFEGGIO[activeFreq] || SOLFEGGIO[432];
+  ctx.fillStyle = solf.color ? hexToRgba(solf.color, 0.7 + coherence / 100 * 0.3) : `rgba(212,184,150,${0.7 + coherence / 100 * 0.3})`;
+  ctx.font = `bold ${d.hr * 1.2}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(solf.sig, d.cx, d.cy);
 }
 
-/* ▔▔▔▔▔▔▔▔▔ ANIMATION LOOP ▔▔▔▔▔▔▔▔▔ */
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ── ANIMATION LOOP ────────────────────────────────────────────────────────────
 function animate() {
   updateBreathState();
   updateBreathUI();
@@ -595,19 +698,20 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-/* ▔▔▔▔▔▔▔▔▔ WHEEL INTERACTION ▔▔▔▔▔▔▔▔▔ */
+// ── WHEEL INTERACTION ─────────────────────────────────────────────────────────
 function handleWheelClick() {
   if (step === 1) {
     setStep(2);
     startBreath();
-    if (isAudioOn) createOsc(261.6, masterVol * 0.6, 1.5);
+    if (isAudioOn) createOsc(261.6, masterVol * 0.5, 1.5);
   } else if (step === 2) {
     setStep(3);
-    if (isAudioOn) createOsc(392, masterVol * 0.6, 1.5);
+    if (isAudioOn) createOsc(392, masterVol * 0.5, 1.5);
   } else {
     if (breathActive) {
       breathActive = false;
       breathPhase = 'idle';
+      activeFreq = 432;
       targetCoherence = Math.max(0, coherence * 0.6);
       stopBreathGuidance();
     } else {
@@ -620,14 +724,16 @@ function startBreath() {
   breathActive = true;
   breathStartTime = Date.now();
   cycleCount++;
-  if (isAudioOn) playPhaseCue(432);
+  if (isAudioOn) {
+    playPhaseCue(PHASE_FREQS[breathPhase]);
+  }
   startBreathGuidance();
 }
 
 document.getElementById('wheelWrap')?.addEventListener('click', handleWheelClick);
 canvas.addEventListener('click', handleWheelClick);
 
-/* ▔▔▔▔▔▔▔▔▔ SIDEBAR ▔▔▔▔▔▔▔▔▔ */
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
 function openSidebarNoToggle() {
   document.getElementById('sidebar')?.classList.add('open');
   document.getElementById('mainStage')?.classList.add('sidebar-open');
@@ -646,7 +752,7 @@ document.getElementById('sidebarToggleBtn')?.addEventListener('click', () => {
 });
 document.getElementById('sidebarClose')?.addEventListener('click', closeSidebarNoToggle);
 
-/* ▔▔▔▔▔▔▔▔▔ CYCLE CONFIG ▔▔▔▔▔▔▔▔▔ */
+// ── CYCLE CONFIG ─────────────────────────────────────────────────────────────
 function syncCycleUI() {
   document.getElementById('inhaleMini').value = inhaleS;
   document.getElementById('holdMini').value = holdS;
@@ -678,7 +784,7 @@ document.querySelectorAll('.cycle-preset-mini').forEach(btn => {
   });
 });
 
-/* ▔▔▔▔▔▔▔▔▔ SNAPSHOT ▔▔▔▔▔▔▔▔▔ */
+// ── SNAPSHOT ─────────────────────────────────────────────────────────────────
 document.querySelectorAll('.snap-gly').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.snap-gly').forEach(x => x.classList.remove('sel'));
@@ -692,10 +798,11 @@ document.getElementById('btnSealSigil')?.addEventListener('click', () => {
     glyph: selectedSnapshotGlyph,
     coherence: Math.round(coherence),
     phase: breathPhase,
+    freq: activeFreq,
     cycle: inhaleS + '-' + holdS + '-' + exhaleS,
     ts: Date.now()
   }));
-  alert('Sigil sealed: ' + selectedSnapshotGlyph + ' · ' + Math.round(coherence) + '%');
+  alert('Sigil sealed: ' + selectedSnapshotGlyph + ' · ' + activeFreq + 'Hz · ' + Math.round(coherence) + '%');
 });
 
 document.getElementById('btnDownloadSigil')?.addEventListener('click', () => {
@@ -718,23 +825,24 @@ document.getElementById('btnDownloadSigil')?.addEventListener('click', () => {
     ox.fill();
   }
 
+  const solf = SOLFEGGIO[activeFreq] || SOLFEGGIO[432];
   ox.font = 'bold 96px serif';
-  ox.fillStyle = '#d4b896';
+  ox.fillStyle = solf.color || '#d4b896';
   ox.textAlign = 'center';
   ox.textBaseline = 'middle';
   ox.fillText(selectedSnapshotGlyph, s / 2, s / 2);
 
   ox.font = '13px monospace';
   ox.fillStyle = '#444460';
-  ox.fillText(`COHERENCE ${Math.round(coherence)}% | ${breathPhase} | ${inhaleS}-${holdS}-${exhaleS}s`, s / 2, s * 0.87);
+  ox.fillText(`${activeFreq}Hz · ${solf.name.split(' ')[0]} · ${breathPhase} · ${inhaleS}-${holdS}-${exhaleS}s · ${Math.round(coherence)}%`, s / 2, s * 0.87);
 
   const b = document.createElement('a');
   b.href = oc.toDataURL('image/png');
-  b.download = `codex-sigil-${selectedSnapshotGlyph}-${Math.round(coherence)}pct.png`;
+  b.download = `codex-sigil-${selectedSnapshotGlyph}-${activeFreq}hz.png`;
   b.click();
 });
 
-/* ▔▔▔▔▔▔▔▔▔ PROFILES ▔▔▔▔▔▔▔▔▔ */
+// ── PROFILES ─────────────────────────────────────────────────────────────────
 function loadProfiles() {
   const list = document.getElementById('profileList');
   if (!list) return;
@@ -751,7 +859,10 @@ function loadProfiles() {
 
 function saveProfile(name) {
   if (!name) return;
-  localStorage.setItem('resonator_profile_' + name, JSON.stringify({ inhaleS, holdS, exhaleS, masterVol }));
+  const layers = Object.keys(layerState).filter(f => layerState[f].on);
+  localStorage.setItem('resonator_profile_' + name, JSON.stringify({
+    inhaleS, holdS, exhaleS, masterVol, activeFreq, layers
+  }));
   loadProfiles();
 }
 
@@ -762,33 +873,43 @@ function loadProfile(name) {
     const d = JSON.parse(raw);
     inhaleS = d.inhaleS || 5;
     holdS = d.holdS || 5;
-    exhaleS = d.exhaleS || 10;
+    exhaleS = d.exhaleS || 5;
     masterVol = d.masterVol || 0.5;
+    activeFreq = d.activeFreq || 432;
+
     syncCycleUI();
     const vs = document.getElementById('volSliderMini');
     if (vs) vs.value = masterVol * 100;
     const vv = document.getElementById('volValMini');
     if (vv) vv.textContent = Math.round(masterVol * 100) + '%';
+
+    // Restore active layers
+    if (d.layers) {
+      d.layers.forEach(f => {
+        const toggle = document.getElementById('sndToggle' + f);
+        if (toggle) toggle.classList.add('on');
+        layerState[f] = { on: true, vol: 0.3 };
+        if (isAudioOn) startLayer(f, 0.3);
+      });
+    }
   } catch (e) {}
 }
 
 function resetToDefaults() {
-  inhaleS = 5; holdS = 5; exhaleS = 5; masterVol = 0.3;
+  inhaleS = 5; holdS = 5; exhaleS = 5; masterVol = 0.5; activeFreq = 432;
   syncCycleUI();
   const vs = document.getElementById('volSliderMini');
-  if (vs) vs.value = 30;
+  if (vs) vs.value = 50;
   const vv = document.getElementById('volValMini');
-  if (vv) vv.textContent = '30%';
-  // Reset soundscape toggles
-  [432, 528, 639, 741, 852].forEach(f => {
-    const t = document.getElementById('sndToggle' + f);
-    if (f === 432) t?.classList.add('on');
-    else t?.classList.remove('on');
-  });
-  // Reset difficulty
+  if (vv) vv.textContent = '50%';
   difficultyLevel = 1;
   syncDifficultyUI();
   document.getElementById('suggestionBox').style.display = 'none';
+  // Stop all layers
+  Object.keys(oscillators).forEach(f => stopLayer(parseFloat(f)));
+  Object.keys(layerState).forEach(f => layerState[f] = { on: false, vol: 0.3 });
+  // Re-auto-start
+  autoStartSound();
 }
 
 document.getElementById('btnSaveProfile')?.addEventListener('click', () => {
@@ -799,13 +920,17 @@ document.getElementById('btnLoadProfile')?.addEventListener('click', () => {
 });
 document.getElementById('btnResetDefault')?.addEventListener('click', resetToDefaults);
 
-/* ── INIT ── */
+// ── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Init layer state for all Solfeggio frequencies
+  Object.keys(SOLFEGGIO).forEach(f => {
+    layerState[parseInt(f)] = { on: false, vol: 0.3 };
+  });
   syncCycleUI();
   syncDifficultyUI();
   loadProfiles();
   updateStepUI();
   autoStartSound();
   animate();
-  console.log('◇ Field Resonator v5 — Guided breath · Adaptive difficulty · Auto-sound');
+  console.log('◇ Field Resonator v6 — Solfeggio Frequency Device · 8 tones · Breath-synchronized');
 });
