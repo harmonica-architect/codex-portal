@@ -431,7 +431,7 @@ async function run() {
 
   await test('Profile tab present', async (page) => {
     await login(page);
-    const tab = page.locator('#mobileNavDrawer .mnd-item[data-tab="profile"]');
+    const tab = page.locator('.bnav-item[data-tab="profile"]');
     if (await tab.count() === 0) throw new Error('Profile tab not found');
   });
 
