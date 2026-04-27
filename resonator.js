@@ -47,7 +47,6 @@ let difficultyLevel = 1;
 let coherenceHistory = [];
 let lastSuggestionTime = 0;
 let suggestedCycle = null;
-let rafId = null;           // requestAnimationFrame id for cleanup
 let activeFreq = 432;       // currently highlighted/primary frequency
 let baseFreq = 432;        // the base drone frequency
 
@@ -80,7 +79,7 @@ function dims() {
 }
 
 // Broadcast coherence + phase to shared localStorage for cross-tool sync
-const coherenceInterval = setInterval(() => {
+setInterval(() => {
   if (breathActive) {
     localStorage.setItem('codex_coherence_update', coherence.toString());
     localStorage.setItem('codex_phase_update', String(breathPhase === 'inhale' ? 0 : breathPhase === 'hold' ? 2 : 4));
@@ -696,7 +695,7 @@ function animate() {
   drawWheel();
   drawWaveformStrip();
   rotation += 0.004;
-  rafId = requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 }
 
 // ── WHEEL INTERACTION ─────────────────────────────────────────────────────────
@@ -932,12 +931,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProfiles();
   updateStepUI();
   autoStartSound();
-  rafId = requestAnimationFrame(animate);
+  animate();
   console.log('◇ Field Resonator v6 — Solfeggio Frequency Device · 8 tones · Breath-synchronized');
-});
-
-// Clean up animation frame and intervals when leaving the page
-window.addEventListener('beforeunload', () => {
-  if (rafId) cancelAnimationFrame(rafId);
-  clearInterval(coherenceInterval);
 });
