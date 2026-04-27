@@ -2968,16 +2968,16 @@ const savedGeo = localStorage.getItem('wheelGeometry') || '24';
 document.getElementById('btnGeo24').style.fontWeight = savedGeo === '24' ? 'bold' : 'normal';
 document.getElementById('btnGeo120').style.fontWeight = savedGeo === '120' ? 'bold' : 'normal';
 
+// ── Adaptive Breath Profile UI ──
+const PHASE_NAMES = ['Inhale','Hold-In','Exhale','Still','Inhale-2','Hold-Peak','Exhale-Release','Rest'];
+const PHASE_GLYPHS = ['◎','◉','○','·','◎','◉','○','◇'];
+
 // ── AUTO-LOGIN ──
 const autoLogin = localStorage.getItem(STORAGE_KEYS.lastSigil);
 // Load glyph intelligence early — before any tracking happens
 loadGlyphIntelligence();
-// Init adaptive breath profile UI (uses PHASE_GLYPHS defined below)
+// Init adaptive breath profile UI (uses PHASE_GLYPHS defined above)
 initBreathProfileUI();
-
-// ── Adaptive Breath Profile UI ──
-const PHASE_NAMES = ['Inhale','Hold-In','Exhale','Still','Inhale-2','Hold-Peak','Exhale-Release','Rest'];
-const PHASE_GLYPHS = ['◎','◉','○','·','◎','◉','○','◇'];
 
 function initBreathProfileUI() {
   const wrap = document.getElementById('bpPhases');
