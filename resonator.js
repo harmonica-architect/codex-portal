@@ -504,7 +504,8 @@ function drawWaveformStrip() {
   const amp = breathActive ? (entrainmentLevel / 6) : Math.random() * 0.1;
   wavePoints.push({ v: 0.5 + (Math.sin(wavePhase) * amp * 0.8) });
   wavePoints.push({ v: 0.5 + (Math.sin(wavePhase * 1.5 + 0.3) * amp * 0.5) });
-  if (wavePoints.length > 80) wavePoints.shift();
+  // Drain excess — 2 push per frame, only keep 80
+  while (wavePoints.length > 80) wavePoints.shift();
 
   // Draw two layered waveforms — one for base freq, one for active freq
   wavePhase += 0.08;
