@@ -61,9 +61,12 @@ async function login(page) {
 // Direct DOM tab activation — bypasses Playwright visibility issues with fixed-position drawer
 async function clickTab(page, tabName) {
   await page.evaluate((tab) => {
+    document.querySelectorAll('.bnav-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.mnd-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const bnavItem = document.querySelector(`.bnav-item[data-tab="${tab}"]`);
+    if (bnavItem) bnavItem.classList.add('active');
     const mndItem = document.querySelector(`.mnd-item[data-tab="${tab}"]`);
     if (mndItem) mndItem.classList.add('active');
     const navTab = document.querySelector(`.nav-tab[data-tab="${tab}"]`);

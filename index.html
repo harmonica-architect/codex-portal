@@ -53,29 +53,36 @@
 <div class="portal" id="portal" style="display:none">
   <div class="breath-bg"></div>
 
-  <!-- ══ SIGIL NAVIGATOR (replaces tab bar) ══ -->
-  <div class="sigil-nav-wrap" id="sigilNavWrap">
-    <div class="sigil-nav-ring">
-      <div class="sn-orbit sn-orbit-outer" id="snOrbitOuter">
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-0" data-idx="0">⊙</div><span class="sn-dot-label">Home</span><div class="sn-tooltip">Dashboard<div class="sn-tooltip-desc">Field breath · Coherence pulse</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-1" data-idx="1">◎</div><span class="sn-dot-label">Wheel</span><div class="sn-tooltip">24-Cell<div class="sn-tooltip-desc">Prime wheel · Harmonic mapping</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-2" data-idx="2">⬡</div><span class="sn-dot-label">Codex</span><div class="sn-tooltip">Glyph Library<div class="sn-tooltip-desc">Sigil library · 24-fold structure</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-3" data-idx="3">◉</div><span class="sn-dot-label">Dream</span><div class="sn-tooltip">Mirror<div class="sn-tooltip-desc">Standing wave · Monadic reflection</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-4" data-idx="4">○</div><span class="sn-dot-label">Journal</span><div class="sn-tooltip">Wave Collapse<div class="sn-tooltip-desc">Harmonic log · Breath journal</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-5 locked-dot" data-idx="5">◈<span class="sn-dot-lock">🔒</span></div><span class="sn-dot-label">Matrix</span><div class="sn-tooltip">Domain Explorer<div class="sn-tooltip-desc">matAddr · Frequency map</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-6 locked-dot" data-idx="6">⟁<span class="sn-dot-lock">🔒</span></div><span class="sn-dot-label">Resonator</span><div class="sn-tooltip">Field Tuning<div class="sn-tooltip-desc">Harmonic spiral · Breath gate</div></div></div>
-        <div class="sn-dot-wrap"><div class="sn-dot sn-dot-7" data-idx="7">·</div><span class="sn-dot-label">Profile</span><div class="sn-tooltip">Personal Field<div class="sn-tooltip-desc">Sigil evolution · Breath history</div></div></div>
+    <!-- ══ BOTTOM NAVIGATION ══ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="bnav-inner">
+      <div class="bnav-item" data-tab="home">
+        <span class="bnav-glyph">⊙</span><span class="bnav-label">Home</span>
       </div>
-      <!-- Center hub — current tab glyph -->
-      <div class="sn-hub" id="snHub">
-        <div class="sn-transition-ring" id="snTransitionRing"></div>
-        <div class="sn-hub-glyph" id="snHubGlyph">⊙</div>
-        <div class="sn-hub-label" id="snHubLabel">Home</div>
-        <div class="sn-hub-desc" id="snHubDesc">Dashboard · Field breath · Coherence pulse</div>
-        <div class="sn-lock-badge" id="snLockBadge" style="display:none">🔒</div>
+      <div class="bnav-item" data-tab="wheel">
+        <span class="bnav-glyph">◎</span><span class="bnav-label">Wheel</span>
+      </div>
+      <div class="bnav-item" data-tab="codex">
+        <span class="bnav-glyph">⬡</span><span class="bnav-label">Codex</span>
+      </div>
+      <div class="bnav-item" data-tab="dream">
+        <span class="bnav-glyph">◉</span><span class="bnav-label">Dream</span>
+      </div>
+      <div class="bnav-item" data-tab="journal">
+        <span class="bnav-glyph">○</span><span class="bnav-label">Journal</span>
+      </div>
+      <div class="bnav-item locked" data-tab="matrix">
+        <span class="bnav-glyph">◈</span><span class="bnav-lock">🔒</span><span class="bnav-label">Matrix</span>
+      </div>
+      <div class="bnav-item locked" data-tab="resonator">
+        <span class="bnav-glyph">⟁</span><span class="bnav-lock">🔒</span><span class="bnav-label">Resonator</span>
+      </div>
+      <div class="bnav-item" data-tab="profile">
+        <span class="bnav-glyph">·</span><span class="bnav-label">Profile</span>
       </div>
     </div>
-  </div>
+  </nav>
+    <div class="bnav-transition-ring" id="bnavTransRing"></div>
 
   <!-- Coherence + Field Status -->
   <div class="coherence-panel">
@@ -667,29 +674,7 @@
 
 </div>
 
-<!-- ══ MOBILE NAVIGATION DRAWER ══ -->
-<nav class="mobile-nav-drawer visible" id="mobileNavDrawer">
-  <div class="mnd-inner">
-    <div class="mnd-item" data-tab="home">
-      <span class="mnd-glyph">⊙</span><span class="mnd-label">Home</span>
-    </div>
-    <div class="mnd-item" data-tab="wheel">
-      <span class="mnd-glyph">◎</span><span class="mnd-label">Wheel</span>
-    </div>
-    <div class="mnd-item" data-tab="codex">
-      <span class="mnd-glyph">◇</span><span class="mnd-label">Codex</span>
-    </div>
-    <div class="mnd-item" data-tab="dream">
-      <span class="mnd-glyph">◉</span><span class="mnd-label">Dream</span>
-    </div>
-    <div class="mnd-item" data-tab="journal">
-      <span class="mnd-glyph">○</span><span class="mnd-label">Journal</span>
-    </div>
-    <div class="mnd-item" data-tab="profile">
-      <span class="mnd-glyph">·</span><span class="mnd-label">Profile</span>
-    </div>
-  </div>
-</nav>
+
 
 <button class="help-fab" id="helpFab">?</button>
 

@@ -31,7 +31,7 @@
   function getHubLabel() { return document.getElementById('snHubLabel'); }
   function getLockBadge()  { return document.getElementById('snLockBadge'); }
   function getHubDesc()    { return document.getElementById('snHubDesc'); }
-  function getTransRing()  { return document.getElementById('snTransitionRing'); }
+  function getTransRing()  { return document.getElementById('bnavTransRing'); }
   function getOrbitOuter() { return document.getElementById('snOrbitOuter'); }
 
   // ── Phase 6: Hover tooltip for Codex dot (community field) ──
@@ -74,7 +74,21 @@
       });
     });
 
-    // Mobile nav drawer items — map data-tab to SIGIL_TABS index and navigate
+    // Bottom nav items — map data-tab to SIGIL_TABS index and navigate
+    document.querySelectorAll('.bnav-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        var tab = item.getAttribute('data-tab');
+        if (!tab) return;
+        for (var t = 0; t < SIGIL_TABS.length; t++) {
+          if (SIGIL_TABS[t].tab === tab) {
+            navigateToSigil(t);
+            return;
+          }
+        }
+      });
+    });
+
+    // Legacy mobile nav items still referenced in some deployments
     document.querySelectorAll('.mnd-item').forEach(function(item) {
       item.addEventListener('click', function() {
         var tab = item.getAttribute('data-tab');
@@ -252,8 +266,12 @@
     document.querySelectorAll('.sn-dot').forEach(function(d, i) {
       d.classList.toggle('sn-dot-active', i === idx);
     });
-    // Also update mobile drawer active state
+    // Also update bottom nav active state
     var targetTab = SIGIL_TABS[idx] ? SIGIL_TABS[idx].tab : null;
+    document.querySelectorAll('.bnav-item').forEach(function(item) {
+      item.classList.toggle('active', item.getAttribute('data-tab') === targetTab);
+    });
+    // Legacy mobile nav items
     document.querySelectorAll('.mnd-item').forEach(function(item) {
       item.classList.toggle('active', item.getAttribute('data-tab') === targetTab);
     });
